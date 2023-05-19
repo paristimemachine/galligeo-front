@@ -1,0 +1,21 @@
+////
+/// Button Setting
+/// @group button
+////
+
+$pagination-build-settings:(
+  selector: pagination__link,
+  sizes: (
+    md: (
+      font-size: 4v,
+      min-height: 8v,
+      padding-x: 3v,
+      icon: md,
+      icon-margin-x: 2v,
+      icon-only: md
+    )
+  ),
+  display: flex
+);
+
+$pagination-nest-settings: map-merge($pagination-build-settings, (places: only left right));

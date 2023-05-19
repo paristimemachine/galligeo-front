@@ -1,0 +1,26 @@
+#map-left {
+    display: flex;
+    height: calc(100vh - 250px) 
+}
+
+#map-right {
+    display: flex;
+    height: calc(100vh - 250px) 
+}
+
+.leaflet-control-zoom-in[href], .leaflet-control-zoom-out[href] {
+    background-image: none;
+}
+
+.leaflet-control-layers-toggle[href] {
+    background-size: 30px;
+}
+
+.draw-control-disabled {
+    filter: contrast(22%) brightness(157%);
+    pointer-events:none;
+}
+
+/* .labels-points{
+    background-color: aqua;
+} */

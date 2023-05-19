@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "@gouvfr/dsfr": "^1.9.0",
+    "leaflet-geosearch": "^3.8.0",
+    "node-fetch": "^2.6.11"
+  }
+}

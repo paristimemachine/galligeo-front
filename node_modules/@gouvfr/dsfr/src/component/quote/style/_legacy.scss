@@ -1,0 +1,19 @@
+////
+/// Quote Legacy
+/// @group quote
+////
+
+@use 'module/legacy';
+
+@include legacy.is(ie11) {
+  /**
+  * Correction largeur max du texte
+  */
+  #{ns(quote)} {
+    @include icon-legacy(quote-line,lg);
+
+    blockquote {
+      max-width: 100%;
+    }
+  }
+}
