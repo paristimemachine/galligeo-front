@@ -143,7 +143,7 @@ function add_draw_on_leaflet(map, drawnItems) {
     var drawControl = new L.Control.Draw({
         position: drawToolBarPosition,
         draw: {
-            polygon: false,
+            polygon: true,
             marker: {
                 icon: new customMarker()
             },
@@ -278,10 +278,11 @@ function add_draw_on_leaflet(map, drawnItems) {
 
 function activateDrawButton(state) {
     //get button draw control
-    var buttons = document.getElementsByClassName("leaflet-draw-draw-marker");
+    var buttons_marker = document.getElementsByClassName("leaflet-draw-draw-marker");
+    var buttons_polygon = document.getElementsByClassName("leaflet-draw-draw-polygon");
 
-    for (let index = 0; index < buttons.length; index++) {
-        button = buttons[index];
+    for (let index1 = 0; index1 < buttons_marker.length; index1++) {
+        button = buttons_marker[index1];
         if (state) {
             // enable button
             button.onClick = null;
@@ -291,6 +292,18 @@ function activateDrawButton(state) {
             button.onClick = "preventEventDefault(); return false";
             button.className = "leaflet-draw-draw-marker draw-control-disabled";
         }
+    }
 
+    for (let index2 = 0; index2 < buttons_polygon.length; index2++) {
+        button = buttons_polygon[index2];
+        if (state) {
+            // enable button
+            button.onClick = null;
+            button.className = "leaflet-draw-draw-polygon leaflet-draw-toolbar-button-enabled";
+        } else {
+            // disable button
+            button.onClick = "preventEventDefault(); return false";
+            button.className = "leaflet-draw-draw-polygon draw-control-disabled";
+        }
     }
 }
