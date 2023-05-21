@@ -25,17 +25,31 @@ async function load_ark_picture() {
             document.querySelector('#search-784-input').value = "L'API de Gallica ne répond pas...";
         }
         
-        height_temp = Math.floor(parseInt(document.height_image)/3);
+        const size_img_max = 15000000; // around 2Mo
+        let size_img = document.height_image * document.width_image;
+        let ratio_img = size_img / size_img_max;
+        let ratio_wh = document.width_image / document.height_image;
+        let square_root_ratio_img = Math.sqrt(ratio_img);
 
-        //limit approximatively to 2Mo of map
-        //a better algo can be found
-        if( height_temp >= 3200){
-            height_temp = 3200;
+        if( size_img >= size_img_max){
+            height_temp = Math.floor(parseInt(document.height_image / square_root_ratio_img));
+            width_temp = Math.floor(parseInt(height_temp * ratio_wh));
+        }else{
+            height_temp = document.height_image;
+            width_temp = document.width_image;
         }
 
-        // Poor resolution bases on 1/3 of heigth full res
+        // console.log("width : " + document.width_image )
+        // console.log("heigth : " + document.height_image )
+        // console.log("ratio calc : " + ratio_img )
+        // console.log("heigth calc : " + height_temp )
+        
+        // Poor resolution bases on size approx 2Mo
+
         //var string_url = 'https://gallica.bnf.fr/ark:/12148/' + input_ark + '/highres';
-        var string_url = 'https://gallica.bnf.fr/iiif/ark:/12148/'+input_ark+'/f1/full/'+ height_temp +'/0/native.jpg';
+        var string_url = 'https://gallica.bnf.fr/iiif/ark:/12148/'+input_ark+'/f1/full/'+ width_temp +'/0/native.jpg';
+        https://gallica.bnf.fr/iiif/ark:/12148/btv1b84460142/f1/full/full/0/native.jpg
+        // var string_url = 'https://gallica.bnf.fr/iiif/ark:/12148/'+input_ark+'/f1/full/full/0/native.jpg';
         // var string_url = 'https://gallica.bnf.fr/ark:/12148/' + input_ark + '/f1.highres';
         
         // Doesn't work
