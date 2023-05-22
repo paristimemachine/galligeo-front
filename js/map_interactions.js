@@ -37,9 +37,12 @@ activateDrawButton(false);
 function add_neutral_control_layer(map) {
 
     var drawnItems = new L.FeatureGroup();
+    var drawnItemsEmprise = new L.FeatureGroup();
     drawnItems.addTo(map);
+    drawnItemsEmprise.addTo(map);
     var overlays = {
-        "Georef points": drawnItems
+        "Georef points": drawnItems,
+        "Emprise": drawnItemsEmprise
     };
 
     map.zoomControl.setPosition('topleft');
@@ -111,7 +114,7 @@ function add_wms_layers(map) {
     var drawnItems = new L.FeatureGroup();
     drawnItems.addTo(map);
     var overlays = {
-        "Georef points": drawnItems
+        "Georef points": drawnItems,
     };
 
     //set active and default layer
@@ -153,9 +156,13 @@ function add_draw_on_leaflet(map, drawnItems) {
             circlemarker : false
             },
         edit: {
-            featureGroup: drawnItems
+            featureGroup: drawnItems,
+
         }
     });
+
+    L.drawLocal.draw.toolbar.buttons.polygon = "Saisir une emprise";
+    L.drawLocal.draw.toolbar.buttons.marker = "Saisir des points de contrôle";
     map.addControl(drawControl);
 
     map.on(L.Draw.Event.DELETED, function (event) {
@@ -167,88 +174,97 @@ function add_draw_on_leaflet(map, drawnItems) {
     //event on toolbar
     map.on(L.Draw.Event.CREATED, function (event) {
         
-        var layer = event.layer;
-        var latlong = layer.getLatLng();
+        var type = event.layerType,
+        layer = event.layer;
 
-        // console.log(latlong);
+        console.log(type);
+        
+        if (type === 'marker') {
+            // Do marker specific actions for markers
+            // console.log(latlong);
+            var latlong = layer.getLatLng();
+            //write in table
+            tablebody = document.getElementById('table_body')
 
-        //write in table
-        tablebody = document.getElementById('table_body')
+            //has to be the first point
+            if( map === left_map & first_gallimap_clicked == false) {
+                
+                const row = document.createElement("tr");
+                temp_row = row;
+                randomColor = Math.floor(Math.random()*16777215).toString(16);
 
-        //has to be the first point
-        if( map === left_map & first_gallimap_clicked == false) {
-            
-            const row = document.createElement("tr");
-            temp_row = row;
-            randomColor = Math.floor(Math.random()*16777215).toString(16);
+                //point A is % on img
+                // on y = report from a 10 ratio in degrees
+                // on x report from the wh ratio to 10, then %
+                //console.log(-latlong.lat/10)
+                //console.log(latlong.lng/10)
+                //console.log(ratio_wh_img)
+                var latlong_percent = L.latLng(-latlong.lat/10, (latlong.lng / ratio_wh_img) / 10);
 
-            //point A is % on img
-            // on y = report from a 10 ratio in degrees
-            // on x report from the wh ratio to 10, then %
-            //console.log(-latlong.lat/10)
-            //console.log(latlong.lng/10)
-            //console.log(ratio_wh_img)
-            var latlong_percent = L.latLng(-latlong.lat/10, (latlong.lng / ratio_wh_img) / 10);
+                pointA_temp = new Point(latlong_percent);
 
-            pointA_temp = new Point(latlong_percent);
+                layer.bindTooltip(count_points.toString(),
+                                { //specific number, {
+                                permanent : true,
+                                direction : 'auto',
+                                className : "labels-points"
+                            }
+                            );
 
-            layer.bindTooltip(count_points.toString(),
-                            { //specific number, {
-                            permanent : true,
-                            direction : 'auto',
-                            className : "labels-points"
-                         }
-                         );
+                drawnItems.addLayer(layer);
 
-            drawnItems.addLayer(layer);
+                // document.querySelector('#georef_points').innerHTML += '(' + count_points + ') : ' + '(img)' + latlong_percent;
 
-            // document.querySelector('#georef_points').innerHTML += '(' + count_points + ') : ' + '(img)' + latlong_percent;
+                document.getElementById('table-control-points').hidden = false;
 
-            document.getElementById('table-control-points').hidden = false;
+                first_gallimap_clicked = !first_gallimap_clicked;
 
-            first_gallimap_clicked = !first_gallimap_clicked;
+                const cell1 = document.createElement("td");
+                const cellText1 = document.createTextNode(latlong_percent);
+                cell1.appendChild(cellText1);
+                row.appendChild(cell1);
+                tablebody.appendChild(row);
 
-            const cell1 = document.createElement("td");
-            const cellText1 = document.createTextNode(latlong_percent);
-            cell1.appendChild(cellText1);
-            row.appendChild(cell1);
-            tablebody.appendChild(row);
+            }
 
+            if( map === right_map & first_gallimap_clicked == true) {
+
+                var pointa_pointb_temp = new PointA_PointB(pointA_temp, new Point(latlong));
+
+                list_georef_points.push(pointa_pointb_temp);
+
+                layer.bindTooltip(count_points.toString(),
+                                { //specific number, {
+                                permanent : true,
+                                direction : 'auto',
+                                // className : "my-labels"
+                            }
+                            );
+
+                drawnItems.addLayer(layer);
+
+                // document.querySelector('#georef_points').innerHTML += ' --> ' + '(geo)' + latlong + '\n';
+
+                first_gallimap_clicked = !first_gallimap_clicked;
+                count_points++;
+
+                const cell2 = document.createElement("td");
+                const cellText2 = document.createTextNode(latlong);
+                cell2.appendChild(cellText2);
+                temp_row.appendChild(cell2);
+                
+                tablebody.appendChild(temp_row);
+
+            }
+
+
+            if(count_points>=3) {
+                document.getElementById('btn_georef').disabled = false;
+            }
         }
 
-        if( map === right_map & first_gallimap_clicked == true) {
-
-            var pointa_pointb_temp = new PointA_PointB(pointA_temp, new Point(latlong));
-
-            list_georef_points.push(pointa_pointb_temp);
-
-            layer.bindTooltip(count_points.toString(),
-                            { //specific number, {
-                            permanent : true,
-                            direction : 'auto',
-                            // className : "my-labels"
-                         }
-                         );
-
-            drawnItems.addLayer(layer);
-
-            // document.querySelector('#georef_points').innerHTML += ' --> ' + '(geo)' + latlong + '\n';
-
-            first_gallimap_clicked = !first_gallimap_clicked;
-            count_points++;
-
-            const cell2 = document.createElement("td");
-            const cellText2 = document.createTextNode(latlong);
-            cell2.appendChild(cellText2);
-            temp_row.appendChild(cell2);
-            
-            tablebody.appendChild(temp_row);
-
-        }
-
-
-        if(count_points>=3) {
-            document.getElementById('btn_georef').disabled = false;
+        if (type === 'polygon') {
+            map.addLayer(layer);
         }
         
     });

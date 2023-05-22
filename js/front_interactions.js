@@ -36,11 +36,9 @@ function toggleLegend(){
             document.getElementById("map-container-left").className = "fr-col-6";// fr-col-lg-10 fr-col-md-12 fr-col-sm-12";
             document.getElementById("map-container-right").className = "fr-col-6";// fr-col-lg-10 fr-col-md-12 fr-col-sm-12";
             document.getElementById("map-container-right").hidden = false;// fr-col-lg-10 fr-col-md-12 fr-col-sm-12";
+            
+            document.getElementById("map-container-left-at-startup").className = "fr-col-6";
 
-        // }else{
-        //     document.getElementById("map-container-left").className = "fr-col-12";// fr-col-lg-10 fr-col-md-12 fr-col-sm-12";
-        // }
-        
     }
     else
     {
@@ -57,9 +55,7 @@ function toggleLegend(){
             document.getElementById("map-container-right").className = "fr-col-5";// fr-col-lg-10 fr-col-md-12 fr-col-sm-12";
             document.getElementById("map-container-right").hidden = false;// fr-col-lg-10 fr-col-md-12 fr-col-sm-12";
 
-        // }else{
-        //     document.getElementById("map-container-left").className = "fr-col-10";
-        // }
+            document.getElementById("map-container-left-at-startup").className = "fr-col-5";
 
     }
     setTimeout(function(){ left_map.invalidateSize()}, 200);
@@ -80,26 +76,36 @@ function click_georef(image, points, input_ark) {
 
    georef_api_post(urlToAPI, { 
      "gallica_ark_url": urlToRessource,
+     "image_width": document.image_width_scaled,
+     "image_height": document.image_height_scaled,
      "gcp_pairs": points
    }).then((data) => {
      console.log(data);
    });
 }
 
+function display_result(input_ark) {
+  window.open('./georef/?ark=' + input_ark, '_blank').focus();
+}
+
 async function georef_api_post(url = urlToAPI, data = {}) {
-   const response = await fetch(url, {
-     method: "POST",
-     mode: "cors",
-     cache: "no-cache",
-     credentials: "same-origin",
-     headers: {
-       "Content-Type": "application/json",
-     },
-     redirect: "follow",
-     referrerPolicy: "no-referrer",
-     body: JSON.stringify(data),
-   });
-   return response.json();
+  const response = await fetch(url, {
+    method: "POST",
+    mode: "cors",
+    cache: "no-cache",
+    credentials: "same-origin",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    redirect: "follow",
+    referrerPolicy: "no-referrer",
+    body: JSON.stringify(data),
+  });
+
+  if (response.ok) {
+    document.getElementById('btn_display').disabled = false;
+  }
+  return response.json();
 }
 
 function clkGeoserver(){

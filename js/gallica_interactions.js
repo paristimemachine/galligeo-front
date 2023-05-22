@@ -18,6 +18,21 @@ async function load_ark_picture() {
 
         input_ark = input.substr(input.lastIndexOf("/")+1);
 
+        var splitUrl = input.split('/');
+        
+        console.log(splitUrl);
+        console.log(splitUrl[5]);
+        if( splitUrl[5].length > 13) {
+            temp_string = splitUrl[5]
+            temp_string2 = temp_string.split(".");
+            console.log(' . ' +temp_string2);
+            input_ark = temp_string2[0];
+        }else{
+            input_ark = splitUrl[5];
+        }
+
+        console.log(input_ark)
+
         //first get metadata
         try {
             const wait = await load_oai_metada(input_ark);
@@ -25,7 +40,8 @@ async function load_ark_picture() {
             document.querySelector('#search-784-input').value = "L'API de Gallica ne répond pas...";
         }
         
-        const size_img_max = 15000000; // around 2Mo
+        // const size_img_max = 15000000; // around 2Mo
+        const size_img_max = 8500000; // around 1.9Mo
         let size_img = document.height_image * document.width_image;
         let ratio_img = size_img / size_img_max;
         let ratio_wh = document.width_image / document.height_image;
@@ -38,6 +54,9 @@ async function load_ark_picture() {
             height_temp = document.height_image;
             width_temp = document.width_image;
         }
+
+        document.image_width_scaled = width_temp;
+        document.image_height_scaled = height_temp;
 
         // console.log("width : " + document.width_image )
         // console.log("heigth : " + document.height_image )
@@ -97,7 +116,7 @@ async function load_ark_picture() {
 
         activateDrawButton(true);
 
-        document.getElementById('titre-etape-georef').textContent = "Créer des poitns de contrôle";
+        document.getElementById('titre-etape-georef').textContent = "Créer des points de contrôle";
         // document.getElementById('etape-georef').textContent = "Étape 2 sur 4";
         document.getElementById('etape-suite').textContent = "Cliquer sur Géoréférencer";
         document.getElementById('steps').setAttribute('data-fr-current-step', '2');
