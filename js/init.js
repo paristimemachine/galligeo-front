@@ -28,7 +28,11 @@ var temp_row;
 
 var base_url = 'https://gallica.bnf.fr/ark:/12148/';
 
-var urlToAPI = 'http://127.0.0.1:8000/georef/';
+// var urlToAPI = 'http://127.0.0.1:8000/georef/';
+const urlToAPI = "https://ptm01.huma-num.fr/api/galligeo/georef/";
 
 let height_image;
 let width_image;
+
+let image_width_scaled;
+let image_height_scaled;
