@@ -71,8 +71,13 @@ var stringToHTML = function (str) {
 
 function click_georef(image, points, input_ark) {
 
+    console.log("click on georef")
+
     var urlToRessource = base_url + input_ark;
     // var points_serialized = JSON.stringify(points);
+
+    //waiting animation on map
+    right_map.fire('dataloading');
 
    georef_api_post(urlToAPI, { 
      "gallica_ark_url": urlToRessource,
@@ -81,6 +86,7 @@ function click_georef(image, points, input_ark) {
      "gcp_pairs": points
    }).then((data) => {
      console.log(data);
+     
    });
 }
 
@@ -104,6 +110,20 @@ async function georef_api_post(url = urlToAPI, data = {}) {
 
   if (response.ok) {
     document.getElementById('btn_display').disabled = false;
+    right_map.fire('dataload');
+    console.log("Carte géoréférencée !");
+
+    let galligeoLayer = L.tileLayer(URL_TILE_SERVER + 'tiles/12148/' + input_ark + '/{z}/{x}/{y}.png', {
+      // minNativeZoom: json.minzoom,
+      // maxNativeZoom: json.maxzoom,
+      minZoom: 10,
+      maxZoom: 23,
+      // bounds: tile_bounds,
+      attribution: '&copy; Gallica / PTM - Galligeo'
+    }).addTo(right_map);
+    galligeoLayer.bringToFront();
+
+    document.getElementById('btn_deposit').disabled = false;
   }
   return response.json();
 }
