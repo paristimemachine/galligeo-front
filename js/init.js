@@ -36,3 +36,5 @@ let width_image;
 
 let image_width_scaled;
 let image_height_scaled;
+
+const URL_TILE_SERVER = "https://ptm01.huma-num.fr/api/galligeo/tiles/";

@@ -66,7 +66,7 @@ async function load_ark_picture() {
         // Poor resolution bases on size approx 2Mo
 
         //var string_url = 'https://gallica.bnf.fr/ark:/12148/' + input_ark + '/highres';
-        var string_url = 'https://gallica.bnf.fr/iiif/ark:/12148/'+input_ark+'/f1/full/'+ width_temp +'/0/native.jpg';
+        var string_url = 'https://gallica.bnf.fr/iiif/ark:/12148/'+input_ark+'/f1/full/'+ '3200' +'/0/native.jpg';
         https://gallica.bnf.fr/iiif/ark:/12148/btv1b84460142/f1/full/full/0/native.jpg
         // var string_url = 'https://gallica.bnf.fr/iiif/ark:/12148/'+input_ark+'/f1/full/full/0/native.jpg';
         // var string_url = 'https://gallica.bnf.fr/ark:/12148/' + input_ark + '/f1.highres';
@@ -106,8 +106,10 @@ async function load_ark_picture() {
         img.src = string_url;
 
         //manage display hidden and visible div : map / video
-        document.getElementById('map-container-left-at-startup').style.display = "none";
-        document.getElementById('map-container-left-at-startup').style.visibility = "hidden";
+        // document.getElementById('map-container-left-at-startup').style.display = "none";
+        // document.getElementById('map-container-left-at-startup').style.visibility = "hidden";
+        document.getElementById('map-container-left-at-startup').remove()
+
         document.getElementById('map-container-left').style.display = "block";
         document.getElementById('map-container-left').style.visibility = 'visible';
         left_map.invalidateSize();

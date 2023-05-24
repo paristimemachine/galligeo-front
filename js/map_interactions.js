@@ -6,6 +6,8 @@ var left_map = L.map('map-left', {
     zoomSnap: 0.1,
     zoomDelta: 0.25,
     zoom: 6.2,
+    // laoding control
+    loadingControl: true
 });
 
 var right_map = L.map('map-right', {
@@ -13,7 +15,7 @@ var right_map = L.map('map-right', {
     zoomSnap: 0.1,
     zoomDelta: 0.25,
     zoom: 6.2,
-    // Tell the map to use a loading control
+    // laoding control
     loadingControl: true
 });
 
@@ -126,6 +128,12 @@ function add_wms_layers(map) {
     layerControl.addTo(map);
 
     L.Control.geocoder().addTo(map);
+
+    var loadingControl = L.Control.loading({
+        separate: true,
+        position: 'topright'
+    });
+    map.addControl(loadingControl);
     
     return drawnItems;
 }
