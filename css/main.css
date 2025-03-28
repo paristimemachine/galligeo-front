@@ -97,6 +97,7 @@ body {
 .image_box
 {
   /* height: 120px; */
+  position: relative;
   resize: both;
   overflow: hidden;
   /* border: 1px solid red; */

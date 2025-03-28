@@ -79,29 +79,91 @@ function add_wms_layers(map) {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Tiles style by <a href="https://opentopomap.org/" target="_blank">Map tiles by Carto, under CC BY 3.0. Data by OpenStreetMap, under ODbL.</a> hosted by <a href="https://openstreetmap.fr/" target="_blank">OpenStreetMap France</a>'
     });
 
-    var IGN_Plan_actuel = L.tileLayer.wms('https://wxs.ign.fr/cartes/geoportail/r/wms?', {
-        layers: 'GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2',
-        maxZoom: 21,
-        attribution : 'IGN'
-    });
+    var IGN_Plan_actuel = L.tileLayer(
+        "https://data.geopf.fr/wmts?" +
+        "&REQUEST=GetTile&SERVICE=WMTS&VERSION=1.0.0" +
+        "&STYLE=normal" +
+        "&TILEMATRIXSET=PM" +
+        "&FORMAT=image/png" +
+        "&LAYER=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2" +
+        "&TILEMATRIX={z}" +
+        "&TILEROW={y}" +
+        "&TILECOL={x}",
+        {
+            attribution: "IGN-F/Geoportail",
+            minNativeZoom: 0,
+            maxNativeZoom: 19,
+            minZoom: 0,
+            maxZoom: 21,
+            tileSize: 256
+        }
+    );
 
-    var IGN_Scan1950_Histo = L.tileLayer.wms('https://wxs.ign.fr/cartes/geoportail/r/wms?', {
-        layers: 'GEOGRAPHICALGRIDSYSTEMS.MAPS.SCAN50.1950',
-        maxZoom: 21,
-        attribution : 'IGN'
-    });
+    var IGN_Scan1950_Histo = L.tileLayer(
+        "https://data.geopf.fr/wmts?" +
+        "&REQUEST=GetTile&SERVICE=WMTS&VERSION=1.0.0" +
+        "&STYLE=normal" +
+        "&TILEMATRIXSET=PM" +
+        "&FORMAT=image/jpeg" +
+        "&LAYER=GEOGRAPHICALGRIDSYSTEMS.MAPS.SCAN50.1950" +
+        "&TILEMATRIX={z}" +
+        "&TILEROW={y}" +
+        "&TILECOL={x}",
+        {
+            attribution: "IGN-F/Geoportail",
+            minNativeZoom: 3,
+            maxNativeZoom: 15,
+            minZoom: 0,
+            maxZoom: 21,
+            tileSize: 256
+        }
+    );
 
-    var IGN_EtatMajor40 = L.tileLayer.wms('https://wxs.ign.fr/cartes/geoportail/r/wms?', {
-        layers: 'GEOGRAPHICALGRIDSYSTEMS.ETATMAJOR40',
-        maxZoom: 21,
-        attribution : 'IGN'
-    });
+    var IGN_EtatMajor40 = L.tileLayer(
+        "https://data.geopf.fr/wmts?" +
+        "&REQUEST=GetTile&SERVICE=WMTS&VERSION=1.0.0" +
+        "&STYLE=normal" +
+        "&TILEMATRIXSET=PM" +
+        "&FORMAT=image/jpeg" +
+        "&LAYER=GEOGRAPHICALGRIDSYSTEMS.ETATMAJOR40" +
+        "&TILEMATRIX={z}" +
+        "&TILEROW={y}" +
+        "&TILECOL={x}",
+        {
+            attribution: "IGN-F/Geoportail",
+            minNativeZoom: 6,
+            maxNativeZoom: 15,
+            minZoom: 0,
+            maxZoom: 21,
+            tileSize: 256
+        }
+    );
 
     var Ehess_IGN_Cassini = L.tileLayer.wms('https://ws.sogefi-web.com/wms?', {
         layers: 'Carte_Cassini',
         maxZoom: 21,
         attribution : 'EHESS/IGN/SOGEFI'
     });
+
+    let CassiniBNFIGN = L.tileLayer(
+        "https://data.geopf.fr/wmts?" +
+        "&REQUEST=GetTile&SERVICE=WMTS&VERSION=1.0.0" +
+        "&STYLE=normal" +
+        "&TILEMATRIXSET=PM_6_14" +
+        "&FORMAT=image/png" +
+        "&LAYER=BNF-IGNF_GEOGRAPHICALGRIDSYSTEMS.CASSINI" +
+        "&TILEMATRIX={z}" +
+        "&TILEROW={y}" +
+        "&TILECOL={x}",
+        {
+            attribution: "BnF/IGN-F/Geoportail",
+            minNativeZoom: 0,
+            maxNativeZoom: 19,
+            minZoom: 0,
+            maxZoom: 21,
+            tileSize: 256
+        }
+      )
 
     var baseLayers = {
         "Humanitarian" : OpenStreetMap_HOT,
@@ -111,6 +173,7 @@ function add_wms_layers(map) {
         "IGN Scan50 Histo" : IGN_Scan1950_Histo,
         "IGN Etat-Major 40" : IGN_EtatMajor40,
         "Carte de Cassini" : Ehess_IGN_Cassini,
+        "Carte de Cassini [BNF]" : CassiniBNFIGN,
     };
 
     var drawnItems = new L.FeatureGroup();

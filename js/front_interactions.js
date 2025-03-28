@@ -113,14 +113,33 @@ async function georef_api_post(url = urlToAPI, data = {}) {
     right_map.fire('dataload');
     console.log("Carte géoréférencée !");
 
-    let galligeoLayer = L.tileLayer(URL_TILE_SERVER + 'tiles/12148/' + input_ark + '/{z}/{x}/{y}.png', {
-      // minNativeZoom: json.minzoom,
-      // maxNativeZoom: json.maxzoom,
+    console.log(input_ark)
+
+    // let galligeoLayer = L.tileLayer(URL_TILE_SERVER + 'tiles/12148/' + input_ark + '/{z}/{x}/{y}.png', {
+    //   // minNativeZoom: json.minzoom,
+    //   // maxNativeZoom: json.maxzoom,
+    //   minZoom: 10,
+    //   maxZoom: 23,
+    //   // bounds: tile_bounds,
+    //   attribution: '&copy; Gallica / PTM - Galligeo'
+    // }).addTo(right_map);
+
+//     const URL_TILE_SERVER = "https://tile.ptm.huma-num.fr/tiles/ark/";
+// const URL_TILE_SERVER_SUB = "https://{s}.tile.ptm.huma-num.fr/tiles/ark/";
+
+    // https://tile.ptm.huma-num.fr/tiles/ark/tiles/12148/btv1b530293076/16/33012/23827.png
+
+    // https://a.tile.ptm.huma-num.fr/tiles/ark/12148/btv1b530293076/17/66031/47651.png
+
+    let galligeoLayer = L.tileLayer(URL_TILE_SERVER_SUB + '12148/' + input_ark + '/{z}/{x}/{y}.png', {
+      // minNativeZoom: parseInt(json.minzoom),
+      // maxNativeZoom: parseInt(json.maxzoom),
       minZoom: 10,
-      maxZoom: 23,
+      maxZoom: 19,
       // bounds: tile_bounds,
       attribution: '&copy; Gallica / PTM - Galligeo'
     }).addTo(right_map);
+
     galligeoLayer.bringToFront();
 
     document.getElementById('btn_deposit').disabled = false;
