@@ -29,7 +29,7 @@ var temp_row;
 var base_url = 'https://gallica.bnf.fr/ark:/12148/';
 
 // var urlToAPI = 'http://127.0.0.1:8000/georef/';
-const urlToAPI = "https://ptm01.huma-num.fr/api/galligeo/georef/";
+const urlToAPI = "https://api.ptm.huma-num.fr/galligeo/georef/";
 
 let height_image;
 let width_image;
@@ -37,4 +37,7 @@ let width_image;
 let image_width_scaled;
 let image_height_scaled;
 
-const URL_TILE_SERVER = "https://ptm01.huma-num.fr/api/galligeo/tiles/";
+// const URL_TILE_SERVER = "https://api.ptm.huma-num.fr/tiles/";
+
+const URL_TILE_SERVER = "https://tile.ptm.huma-num.fr/tiles/ark/";
+const URL_TILE_SERVER_SUB = "https://{s}.tile.ptm.huma-num.fr/tiles/ark/";

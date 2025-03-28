@@ -33,8 +33,8 @@
   
 <script>
   // const URL_TILE_SERVER = "http://127.0.0.1:8014/";
-  const URL_TILE_SERVER = "https://tile.ptm.huma-num.fr/tiles/ark/";
-  const URL_TILE_SERVER_SUB = "https://{s}.tile.ptm.huma-num.fr/tiles/ark/";
+  const URL_TILE_SERVER = "https://tile.ptm.huma-num.fr/tiles/ark/highres/webp/";
+  const URL_TILE_SERVER_SUB = "https://{s}.tile.ptm.huma-num.fr/tiles/ark/highres/";
   const params = new URLSearchParams(document.location.search);
   const ark = params.get("ark");
   console.info(ark);
@@ -58,7 +58,7 @@
       displayMessage("Cette référence ARK (" + ark + ") n'est pas encore géoréférencée.");
     });
   }
-  
+
   function displayMessage(message) {
     const div = document.getElementById("map");
     const content = document.createTextNode(message);
@@ -83,7 +83,7 @@
       attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     }).addTo(map);
 
-    let galligeoLayer = L.tileLayer(URL_TILE_SERVER_SUB + '12148/' + ark + '/{z}/{x}/{y}.png', {
+    let galligeoLayer = L.tileLayer(URL_TILE_SERVER_SUB + '12148/' + ark + '/{z}/{x}/{y}.webp', {
       minNativeZoom: parseInt(json.minzoom),
       maxNativeZoom: parseInt(json.maxzoom),
       minZoom: 4,

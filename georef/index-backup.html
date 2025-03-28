@@ -44,19 +44,14 @@
   get_info_tile();
 
   async function get_info_tile() {
-    fetch(url_info).then((response) => {
-      if (response.ok) {
-        return response.json();
-      }
-      throw new Error("Cette référence ARK (" + ark + ") n'est pas encore géoréférencée.");
-    })
-    .then((responseJson) => {
-      initMap(responseJson);
-    })
-    .catch((error) => {
-      // console.log(error);
-      displayMessage("Cette référence ARK (" + ark + ") n'est pas encore géoréférencée.");
-    });
+    const response = await fetch(url_info);
+
+    if (response.ok) {
+      const json = await response.json();
+      initMap(json);
+    } else {
+      displayMessage("Cette référence ARK (" + ark + ") n'est pas encore géoréférencée");
+    }
   }
   
   function displayMessage(message) {
@@ -86,7 +81,7 @@
     let galligeoLayer = L.tileLayer(URL_TILE_SERVER_SUB + '12148/' + ark + '/{z}/{x}/{y}.png', {
       minNativeZoom: parseInt(json.minzoom),
       maxNativeZoom: parseInt(json.maxzoom),
-      minZoom: 4,
+      minZoom: 10,
       maxZoom: 19,
       bounds: tile_bounds,
       attribution: '&copy; Gallica / PTM - Galligeo'
