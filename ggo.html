@@ -30,15 +30,12 @@
 
     <!-- js -->
     <!-- external -->
-    <!-- Make sure you put this AFTER Leaflet's CSS -->
     <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js" integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM=" crossorigin=""></script>
     <script src="https://unpkg.com/leaflet-geosearch@3.1.0/dist/bundle.min.js"></script>
     <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw-src.js"></script>
-    <!-- <script src="https://unpkg.com/leaflet-geosearch@3.0.0/dist/geosearch.umd.js"></script> -->
     <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
     <script src="https://rawgithub.com/ebrelsford/Leaflet.loading/master/src/Control.Loading.js"></script>
 
-    <!-- <script src="lib/L.Map.Sync.js"></script> -->
 
   </head>
   <body>
@@ -182,7 +179,8 @@
                     Résultat
                 </button>
 
-                <button class="fr-btn fr-btn--secondary" id="btn_deposit" data-fr-opened="false" aria-controls="fr-modal-deposit" disabled> <!-- disabled -->
+                <button class="fr-btn fr-btn--secondary" id="btn_deposit" data-fr-opened="false" aria-controls="fr-modal-deposit" disabled>
+                <!-- <button class="fr-btn fr-btn--secondary" id="btn_deposit" data-fr-opened="false" aria-controls="fr-modal-deposit">  -->
                     Déposer
                 </button>
 
@@ -222,7 +220,7 @@
                             </div>
 
                             <label class="fr-label" for="text-input-text">API Key Nakala</label>
-                            <input class="fr-input" type="text" id="text-input-text" name="text-input-text">
+                            <input class="fr-input" type="text" id="text-input-text" name="text-input-text" value="01234567-89ab-cdef-0123-456789abcdef">
 
                             <br>
 
@@ -286,7 +284,7 @@
                                             <label class="fr-label">
                                                 Institution / Université / Organisme
                                             </label>
-                                            <input class="fr-input" aria-describedby="input-position-1-messages" name="position" type="text">
+                                            <input class="fr-input" id="input-institution" aria-describedby="input-position-1-messages" name="position" type="text" value="">
                                             <div class="fr-messages-group" id="input-position-1-messages" aria-live="assertive">
                                             </div>
                                         </div>
@@ -305,11 +303,7 @@
                                     </button>
                                 </li>
                                 <li>
-                                    <button class="fr-btn fr-fi-checkbox-line fr-btn--secondary" onclick="deposerSurNakala(
-                                        document.getElementById('input-family-name-1').value,
-                                        document.getElementById('input-firstname-1').value,
-                                        document.getElementById('input-position-1').value
-                                    )">
+                                    <button class="fr-btn fr-fi-checkbox-line fr-btn--secondary" onclick="deposerSurNakala()">
                                         Déposer
                                     </button>
                                 </li>
@@ -498,7 +492,7 @@
                                                         Identifiant
                                                         <span class="fr-hint-text">Format attendu : nom@domaine.fr</span>
                                                     </label>
-                                                    <input class="fr-input" autocomplete="username" aria-required="true" aria-describedby="username-1757-messages" name="username" id="username-1757" type="text">
+                                                    <input class="fr-input" autocomplete="username" aria-required="true" aria-describedby="username-1757-messages" name="username" id="username-1757" type="text" value="user_test">
                                                     <div class="fr-messages-group" id="username-1757-messages" aria-live="assertive">
                                                     </div>
                                                 </div>
@@ -509,7 +503,7 @@
                                                         Mot de passe
                                                     </label>
                                                     <div class="fr-input-wrap">
-                                                        <input class="fr-password__input fr-input" aria-describedby="password-1758-input-messages" aria-required="true" name="password" autocomplete="current-password" id="password-1758-input" type="password">
+                                                        <input class="fr-password__input fr-input" aria-describedby="password-1758-input-messages" aria-required="true" name="password" autocomplete="current-password" id="password-1758-input" type="password" value="password">
                                                     </div>
                                                     <div class="fr-messages-group" id="password-1758-input-messages" aria-live="assertive">
                                                     </div>
@@ -544,7 +538,9 @@
                                     <div class="fr-fieldset__element">
                                         <ul class="fr-btns-group">
                                             <li>
-                                                <button class="fr-mt-2v fr-btn">
+                                                <!--  reactiver se connecter dsfr -->
+                                                <!--  <button class="fr-mt-2v fr-btn" href="login.html"> -->
+                                                <button class="fr-btn" id="login-button-redirect">
                                                     Se connecter
                                                 </button>
                                             </li>
@@ -577,7 +573,24 @@
     <script src="js/gallica_interactions.js"></script>
     <script src="js/getParamAtStartup.js"></script>
     <script src="js/nakala_test_deposit.js"></script>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const loginButton = document.getElementById('login-button-redirect');
+        if (loginButton) {
+        loginButton.addEventListener('click', (e) => {
+            e.preventDefault(); // empêche un submit par défaut
+            // Optionnel : fermer la modale proprement avant de rediriger
+            const modal = document.getElementById('fr-modal-login');
+            if (modal && typeof modal.close === 'function') {
+            modal.close();
+            }
+            // Redirection
+            window.location.href = 'login.html';
+        });
+        }
+    });
+    </script>
+
   </body>
 </html>
-
-

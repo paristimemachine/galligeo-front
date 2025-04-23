@@ -1,3 +1,5 @@
+let metadataDict = {};
+
 async function load_ark_picture() {
         console.log("load ark picture");
 
@@ -138,10 +140,17 @@ async function load_oai_metada(input_ark) {
         .then(response => response.json())
         .then(data => {
             var inner_html_metadata = '';
+
+            metadataDict = metadataDict || {};
+
             data.metadata.forEach(element => {
-                // console.log(element);
+                
+                metadataDict[element.label] = element.value;
+
                 inner_html_metadata += '<b>'+element.label+' : </b>' + element.value+'<br>';
             });
+
+            console.log(metadataDict);
 
             inner_html_metadata += '<b> Height: </b>' + data.sequences[0].canvases[0].height+'<br>';
             inner_html_metadata += '<b> Width: </b>' + data.sequences[0].canvases[0].width+'<br>';
