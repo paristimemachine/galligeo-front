@@ -12,7 +12,7 @@ body {
     left: 0;
     bottom: 0;
     width: 100%;
-    /* background-color: red; */
+    background-color: rgb(255, 255, 255);
     color: white;
     text-align: center;
     height: 80px;
@@ -103,3 +103,4 @@ body {
   /* border: 1px solid red; */
   z-index: 1;
 }
+

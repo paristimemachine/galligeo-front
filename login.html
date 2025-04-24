@@ -1,12 +1,29 @@
 <!DOCTYPE html>
 <html lang="fr">
+  
   <head>
     <meta charset="utf-8" />
     <title>Galligeo | Espace utilisateur</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="node_modules/@gouvfr/dsfr/dist/dsfr.min.css" />
     <link rel="stylesheet" href="css/main.css">
+
+    <style>
+    /* body en flex-colonne ; pousse le footer en bas */
+    body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      margin: 0;
+    }
+    /* main prend tout l’espace restant */
+    body > main {
+      flex: 1;
+    }
+    </style>
+
   </head>
+
   <body>
     <header role="banner" class="fr-header">
       <div class="fr-header__body">
@@ -21,20 +38,20 @@
     </header>
 
     <main class="fr-container fr-pt-6w fr-pb-6w">
-      <h1 class="fr-h3 fr-text--center fr-mb-4w">Mon Galligeo</h1>
+      <h1 class="fr-h3 fr-text--center fr-mb-4w">Mon Galligeo (page en démo)</h1>
 
-        <div class="fr-tabs fr-mb-6w" id="user-tabs">
-  <ul class="fr-tabs__list" role="tablist" aria-label="Navigation espace utilisateur">
-    <li role="presentation">
+    <div class="fr-tabs fr-mb-6w" id="user-tabs">
+    <ul class="fr-tabs__list" role="tablist" aria-label="Navigation espace utilisateur">
+      <li role="presentation">
       <button id="tabpanel-profil" class="fr-tabs__tab" tabindex="0" role="tab" aria-selected="true" aria-controls="tabpanel-profil-panel">Profil utilisateur</button>
-    </li>
-    <li role="presentation">
+      </li>
+      <li role="presentation">
       <button id="tabpanel-parametres" class="fr-tabs__tab" tabindex="-1" role="tab" aria-selected="false" aria-controls="tabpanel-parametres-panel">Paramètres géoréférencement</button>
-    </li>
-    <li role="presentation">
+      </li>
+      <li role="presentation">
       <button id="tabpanel-cartes" class="fr-tabs__tab" tabindex="-1" role="tab" aria-selected="false" aria-controls="tabpanel-cartes-panel">Mes cartes</button>
-    </li>
-  </ul>
+      </li>
+    </ul>
 
   <!-- Panel Profil -->
   <div id="tabpanel-profil-panel" class="fr-tabs__panel fr-tabs__panel--selected" role="tabpanel" aria-labelledby="tabpanel-profil" tabindex="0">
@@ -226,6 +243,7 @@
         <p class="fr-text--sm fr-mt-2w">Les cartes en attente ou en favoris proviennent de l'application <strong>Cartoquete</strong>.</p>
     </section>
     </div>
+    </main>
 
 
 
