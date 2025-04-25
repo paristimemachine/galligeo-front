@@ -144,10 +144,28 @@ async function load_oai_metada(input_ark) {
             metadataDict = metadataDict || {};
 
             data.metadata.forEach(element => {
-                
                 metadataDict[element.label] = element.value;
-
-                inner_html_metadata += '<b>'+element.label+' : </b>' + element.value+'<br>';
+                // formater les champs URL en lien
+                if (element.label === 'Source Images' || element.label === 'Metadata Source') {
+                    inner_html_metadata += '<b>' + element.label + ' : </b>'
+                        + '<a href="' + element.value + '" target="_blank">' + element.value + '</a><br>';
+                } else if (element.label === 'Relation') {
+                    // Check if the Relation field contains a URL
+                    const urlRegex = /(https?:\/\/[^\s]+)/g;
+                    const text = element.value;
+                    // Replace URLs with clickable links
+                    const formattedText = text.replace(urlRegex, url => 
+                        `<a href="${url}" target="_blank">${url}</a>`);
+                    inner_html_metadata += '<b>' + element.label + ' : </b>' + formattedText + '<br>';
+                } else {
+                    // Handle case where value is an array (e.g., Format field)
+                    if (Array.isArray(element.value)) {
+                        let values = element.value.map(item => item['@value'] || item).join(', ');
+                        inner_html_metadata += '<b>' + element.label + ' : </b>' + values + '<br>';
+                    } else {
+                        inner_html_metadata += '<b>' + element.label + ' : </b>' + element.value + '<br>';
+                    }
+                }
             });
 
             console.log(metadataDict);
