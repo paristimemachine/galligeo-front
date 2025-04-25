@@ -1,6 +1,9 @@
 // var cloneLayer = require('leaflet-clonelayer');
 // import { OpenStreetMapProvider } from 'leaflet-geosearch';
 
+const POLYGON_FILL_COLOR = 'rgba(255, 0, 0, 0)';
+const POLYGON_STROKE_COLOR = 'rgba(0, 55, 255)';
+
 var left_map = L.map('map-left', {
     center: [47, 2],
     zoomSnap: 0.1,
@@ -28,8 +31,9 @@ var customMarker= L.Icon.extend({
     }
 });
 
-var layer_img_pts_left = add_neutral_control_layer(left_map);
-add_draw_on_leaflet(left_map, layer_img_pts_left);
+// appel des layers neutres
+var { points: layer_img_pts_left, emprise: layer_img_emprise_left } = add_neutral_control_layer(left_map);
+add_draw_on_leaflet(left_map,  layer_img_pts_left, layer_img_emprise_left);
 var layer_img_pts_right = add_wms_layers(right_map);
 add_draw_on_leaflet(right_map, layer_img_pts_right);
 
@@ -38,8 +42,8 @@ activateDrawButton(false);
 
 function add_neutral_control_layer(map) {
 
-    var drawnItems = new L.FeatureGroup();
-    var drawnItemsEmprise = new L.FeatureGroup();
+    var drawnItems         = new L.FeatureGroup();
+    var drawnItemsEmprise  = new L.FeatureGroup();
     drawnItems.addTo(map);
     drawnItemsEmprise.addTo(map);
     var overlays = {
@@ -57,7 +61,7 @@ function add_neutral_control_layer(map) {
     });
     map.addControl(loadingControl);
 
-    return drawnItems;
+    return { points: drawnItems, emprise: drawnItemsEmprise };
 }
 
 function add_wms_layers(map) {
@@ -201,8 +205,7 @@ function add_wms_layers(map) {
     return drawnItems;
 }
 
-function add_draw_on_leaflet(map, drawnItems) {
-
+function add_draw_on_leaflet(map, drawnItems, empriseItems = drawnItems) {
     var drawToolBarPosition = 'topleft';
 
     if( map == left_map ) {
@@ -214,10 +217,20 @@ function add_draw_on_leaflet(map, drawnItems) {
 
     // console.log(drawToolBarPosition);
 
-    var drawControl = new L.Control.Draw({
-        position: drawToolBarPosition,
-        draw: {
-            polygon: map === left_map,
+    // définir l'ordre des boutons selon la carte
+    const drawOptions = map === left_map
+        ? {
+            marker: {
+                icon: new customMarker()
+            },
+            polygon: true,
+            polyline: false,
+            rectangle: false,
+            circle: false,
+            circlemarker: false
+        }
+        : {
+            polygon: false,
             marker: {
                 icon: new customMarker()
             },
@@ -225,10 +238,13 @@ function add_draw_on_leaflet(map, drawnItems) {
             rectangle: false,
             circle: false,
             circlemarker: false
-        },
-        edit: {
-            featureGroup: drawnItems,
+        };
 
+    var drawControl = new L.Control.Draw({
+        position: drawToolBarPosition,
+        draw: drawOptions,
+        edit: {
+            featureGroup: drawnItems
         }
     });
 
@@ -244,10 +260,11 @@ function add_draw_on_leaflet(map, drawnItems) {
     });
 
     //event on toolbar
+    let lastPolygon = null;
+
     map.on(L.Draw.Event.CREATED, function (event) {
-        
-        var type = event.layerType,
-        layer = event.layer;
+        var type  = event.layerType,
+            layer = event.layer;
 
         console.log(type);
         
@@ -335,12 +352,30 @@ function add_draw_on_leaflet(map, drawnItems) {
             }
         }
 
-        if (type === 'polygon') {
-            map.addLayer(layer);
+        if (type === 'polygon' && map === left_map) {
+            if (lastPolygon) empriseItems.removeLayer(lastPolygon);
+            empriseItems.addLayer(layer);
+            layer.setStyle({
+                fillColor: POLYGON_FILL_COLOR,
+                color:     POLYGON_STROKE_COLOR
+            });
+            if (layer.editing) layer.editing.enable();
+
+            // log polygon -> WKT
+            console.log('Polygon WKT:', polygonToWKT(layer));
+
+            lastPolygon = layer;
         }
         
     });
 
+}
+
+// conversion d'un layer Polygon Leaflet en WKT
+function polygonToWKT(layer) {
+    const ring = layer.getLatLngs()[0];
+    const coords = ring.map(p => `${p.lng} ${p.lat}`).join(', ');
+    return `POLYGON((${coords}))`;
 }
 
 // const provider = new window.GeoSearch.OpenStreetMapProvider();
