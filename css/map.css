@@ -1,11 +1,15 @@
 #map-left {
     display: flex;
-    height: calc(100vh - 250px) 
+    height: calc(100vh - 250px);
+    margin-left: 2px;
+    margin-right: 2px;
 }
 
 #map-right {
     display: flex;
-    height: calc(100vh - 250px) 
+    height: calc(100vh - 250px);
+    margin-left: 2px;
+    margin-right: 2px;
 }
 
 .leaflet-control-zoom-in[href], .leaflet-control-zoom-out[href] {

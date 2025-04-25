@@ -217,23 +217,24 @@ function add_draw_on_leaflet(map, drawnItems) {
     var drawControl = new L.Control.Draw({
         position: drawToolBarPosition,
         draw: {
-            polygon: true,
+            polygon: map === left_map,
             marker: {
                 icon: new customMarker()
             },
-            polyline : false,
-            rectangle : false,
-            circle : false,
-            circlemarker : false
-            },
+            polyline: false,
+            rectangle: false,
+            circle: false,
+            circlemarker: false
+        },
         edit: {
             featureGroup: drawnItems,
 
         }
     });
 
-    L.drawLocal.draw.toolbar.buttons.polygon = "Saisir une emprise";
     L.drawLocal.draw.toolbar.buttons.marker = "Saisir des points de contrôle";
+    L.drawLocal.draw.toolbar.buttons.polygon = "Saisir une emprise";
+    
     map.addControl(drawControl);
 
     map.on(L.Draw.Event.DELETED, function (event) {

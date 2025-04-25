@@ -56,10 +56,7 @@ async function deposerSurNakala() {
     const TITLE        = metadataDict['Title'];
     const CREATED_DATE = new Date().toISOString().split('T')[0];
     const LICENSE      = 'CC-BY-4.0';
-    const AUTHORS = [prenom + ',' + nom + ' (' + institution + ')'];
-    if (metadataDict['Shelfkmark']) {
-        AUTHORS.push(metadataDict['Shelfkmark']);
-    }
+    const AUTHORS = metadataDict['Shelfkmark'];
     const CONTRIBUTORS = [prenom + ' ' + nom + ' (' + institution + ')'];
 
     // to do, il pourrait y avoir d'autres mots clés entrés par l'utlisateur
@@ -69,7 +66,7 @@ async function deposerSurNakala() {
         'données géohistoriques'
     ]
 
-    const url_gallica = 'https://gallica.bnf.fr/ark:/12148/' + metadataDict['Source Images'];
+    const url_gallica = metadataDict['Source Images'];
     const url_app_ptm = 'https://app.ptm.huma-num.fr/galligeo/georef/?ark=' + input_ark;
     const url_tile_ptm_sub = 'https://{s}.tile.ptm.huma-num.fr/tiles/ark/12148/' + input_ark + '/{x}/{y}/{z}.png';
 
