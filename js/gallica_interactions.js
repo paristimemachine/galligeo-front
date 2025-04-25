@@ -140,14 +140,70 @@ async function load_oai_metada(input_ark) {
         .then(response => response.json())
         .then(data => {
             var inner_html_metadata = '';
-
             metadataDict = metadataDict || {};
 
-            data.metadata.forEach(element => {
-                metadataDict[element.label] = element.value;
+            const canvas = data.sequences[0].canvases[0];
+            data.metadata.push(
+                { label: 'Height', value: canvas.height },
+                { label: 'Width',  value: canvas.width  }
+            );
+            document.height_image = canvas.height;
+            document.width_image  = canvas.width;
+
+            const metadataOrder = [
+                'Title','Creator','Publisher','Date','Format',
+                'Language','Type','Height','Width','Source',
+                'Subject','Description','Relation','Coverage',
+                'Rights','Identifier','Shelfmark','Repository',
+                'Digitised by','Source Images','Metadata Source'
+            ];
+            const ordered = metadataOrder
+                .map(lbl => data.metadata.find(el => el.label === lbl))
+                .filter(Boolean);
+            const remaining = data.metadata.filter(el => !metadataOrder.includes(el.label));
+            const sortedMetadata = ordered.concat(remaining);
+
+            sortedMetadata.forEach(element => {
+
+                // Conversion des labels en français
+                let frenchLabel = element.label;
+                const labelMapping = {
+                    'Title': 'Titre',
+                    'Creator': 'Créateur',
+                    'Publisher': 'Éditeur',
+                    'Date': 'Date',
+                    'Format': 'Format',
+                    'Language': 'Langue',
+                    'Type': 'Type',
+                    'Height' : 'Hauteur',
+                    'Width' : 'Largeur',
+                    'Source': 'Source',
+                    'Relation': 'Relation',
+                    'Coverage': 'Couverture',
+                    'Rights': 'Droits',
+                    'Source Images': 'Images Source',
+                    'Metadata Source': 'Source des Métadonnées',
+                    'Description': 'Description',
+                    'Subject': 'Sujet',
+                    'Contributor': 'Contributeur',
+                    'Identifier': 'Identifiant',
+                    'Shelfmark' : 'Cote',
+                    'Repository' : 'Référentiel',
+                    'Digitised by' : 'Numérisé par',
+                };
+                
+                // Si le label existe utiliser la version française
+                if (labelMapping[element.label]) {
+                    frenchLabel = labelMapping[element.label];
+                } else {
+                    frenchLabel = element.label;
+                }
+                
+                // Stocker dans le dictionnaire avec le label traduit
+                metadataDict[frenchLabel] = element.value;
                 // formater les champs URL en lien
                 if (element.label === 'Source Images' || element.label === 'Metadata Source') {
-                    inner_html_metadata += '<b>' + element.label + ' : </b>'
+                    inner_html_metadata += '<b>' + frenchLabel + ' : </b>'
                         + '<a href="' + element.value + '" target="_blank">' + element.value + '</a><br>';
                 } else if (element.label === 'Relation') {
                     // Check if the Relation field contains a URL
@@ -156,24 +212,19 @@ async function load_oai_metada(input_ark) {
                     // Replace URLs with clickable links
                     const formattedText = text.replace(urlRegex, url => 
                         `<a href="${url}" target="_blank">${url}</a>`);
-                    inner_html_metadata += '<b>' + element.label + ' : </b>' + formattedText + '<br>';
+                    inner_html_metadata += '<b>' + frenchLabel + ' : </b>' + formattedText + '<br>';
                 } else {
                     // Handle case where value is an array (e.g., Format field)
                     if (Array.isArray(element.value)) {
                         let values = element.value.map(item => item['@value'] || item).join(', ');
-                        inner_html_metadata += '<b>' + element.label + ' : </b>' + values + '<br>';
+                        inner_html_metadata += '<b>' + frenchLabel + ' : </b>' + values + '<br>';
                     } else {
-                        inner_html_metadata += '<b>' + element.label + ' : </b>' + element.value + '<br>';
+                        inner_html_metadata += '<b>' + frenchLabel + ' : </b>' + element.value + '<br>';
                     }
                 }
             });
 
             console.log(metadataDict);
-
-            inner_html_metadata += '<b> Height: </b>' + data.sequences[0].canvases[0].height+'<br>';
-            inner_html_metadata += '<b> Width: </b>' + data.sequences[0].canvases[0].width+'<br>';
-            document.height_image = data.sequences[0].canvases[0].height;
-            document.width_image  = data.sequences[0].canvases[0].width;
 
             document.getElementById('text-metadata').innerHTML = inner_html_metadata;
 
