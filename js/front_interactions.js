@@ -69,9 +69,11 @@ var stringToHTML = function (str) {
     return doc.body;
 };
 
-function click_georef(image, points, input_ark) {
+function click_georef(image, points, polygon, input_ark) {
 
     console.log("click on georef")
+    console.log(points)
+    console.log(polygon)
 
     var urlToRessource = base_url + input_ark;
     // var points_serialized = JSON.stringify(points);
@@ -79,15 +81,14 @@ function click_georef(image, points, input_ark) {
     //waiting animation on map
     right_map.fire('dataloading');
 
-   georef_api_post(urlToAPI, { 
-     "gallica_ark_url": urlToRessource,
-     "image_width": document.image_width_scaled,
-     "image_height": document.image_height_scaled,
-     "gcp_pairs": points
-   }).then((data) => {
-     console.log(data);
-     
-   });
+  //  georef_api_post(urlToAPI, { 
+  //    "gallica_ark_url": urlToRessource,
+  //    "image_width": document.image_width_scaled,
+  //    "image_height": document.image_height_scaled,
+  //    "gcp_pairs": points
+  //  }).then((data) => {
+  //    console.log(data);
+  //  });
 }
 
 function display_result(input_ark) {

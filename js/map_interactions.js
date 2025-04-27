@@ -267,11 +267,13 @@ function add_draw_on_leaflet(map, drawnItems, empriseItems = drawnItems) {
             layer = event.layer;
 
         console.log(type);
-        
+
         if (type === 'marker') {
-            // Do marker specific actions for markers
-            // console.log(latlong);
             var latlong = layer.getLatLng();
+
+            // Ajout du log lors de la saisie d'un point
+            console.log('Point saisi:', latlong.lat, latlong.lng);
+
             //write in table
             tablebody = document.getElementById('table_body')
 
@@ -313,7 +315,7 @@ function add_draw_on_leaflet(map, drawnItems, empriseItems = drawnItems) {
                 cell1.appendChild(cellText1);
                 row.appendChild(cell1);
                 tablebody.appendChild(row);
-
+            
             }
 
             if( map === right_map & first_gallimap_clicked == true) {
@@ -346,7 +348,6 @@ function add_draw_on_leaflet(map, drawnItems, empriseItems = drawnItems) {
 
             }
 
-
             if(count_points>=3) {
                 document.getElementById('btn_georef').disabled = false;
             }
@@ -362,21 +363,125 @@ function add_draw_on_leaflet(map, drawnItems, empriseItems = drawnItems) {
             if (layer.editing) layer.editing.enable();
 
             // log polygon -> WKT
-            console.log('Polygon WKT:', polygonToWKT(layer));
+            // console.log('Polygon WKT:', polygonToWKT(layer));
+
+            // the polygon layer converted in an array of tuple
+            var polygon = layer.getLatLngs()[0];
+            var polygonArray = [];
+            polygon.forEach(function (point) {
+                var convertedPoint = L.latLng(-point.lat/10, (point.lng / ratio_wh_img) / 10);
+                polygonArray.push([convertedPoint.lng, convertedPoint.lat]);
+            });
+            // add the first point to the end of the array
+            polygonArray.push(polygonArray[0]);
+            console.log(polygonArray);
+            // console.log('Polygon:', polygonArray);
+            // console.log('Polygon:', polygon);
+
+            // convert polygonArray to json
+            // Convert polygonArray to JSON with index keys
+            var polygonJson = {};
+            polygonArray.forEach((point, index) => {
+                polygonJson[index] = {
+                    lat: point[1],
+                    lng: point[0],
+                };
+            });
+            list_points_polygon_crop =  polygonJson
+            console.log('Vertex ajouté, poly JSON:', list_points_polygon_crop );
+
 
             lastPolygon = layer;
         }
         
     });
+    
+    // map.on('draw.edited', function (event) {
+    //     var layers = event.layers;
+        
+    //     console.log('Event edit');
+
+    //     layers.eachLayer(function (layer) {
+    //         if (layer instanceof L.Polygon && map === left_map) {
+    //             // Update lastPolygon reference if needed
+    //             lastPolygon = layer;
+                
+    //             console.log('Polygon edited:', layer);
+
+
+    //             // the polygon layer converted in an array of tuple
+    //             var polygon = layer.getLatLngs()[0];
+    //             var polygonArray = [];
+    //             polygon.forEach(function (point) {
+    //                 var convertedPoint = L.latLng(-point.lat/10, (point.lng / ratio_wh_img) / 10);
+    //                 polygonArray.push([convertedPoint.lng, convertedPoint.lat]);
+    //             });
+    //             // add the first point to the end of the array
+    //             polygonArray.push(polygonArray[0]);
+    //             // console.log('Edited Polygon Array:', polygonArray);
+                
+    //             // Convert polygonArray to JSON with index keys
+    //             var polygonJson = {};
+    //             polygonArray.forEach((point, index) => {
+    //                 polygonJson[index] = {
+    //                     lat: point[1],
+    //                     lng: point[0]
+    //                 };
+    //             });
+    //             list_points_polygon_crop =  JSON.stringify(polygonJson)
+    //             console.log('Edited Polygon JSON:', JSON.stringify(polygonJson));
+    //         }
+    //     });
+    // });
+
+    // capture de l'ajout de sommets en cours de dessin
+    map.on(L.Draw.Event.DRAWVERTEX, function (event) {
+        if (map === left_map) {
+            // à ce stade, lastPolygon n'est pas encore défini : on récupère via event.layer
+            const layer = event.layer || lastPolygon;
+            if (!layer) return;
+            const coords = layer.getLatLngs()[0];
+            const arr = [];
+            coords.forEach(pt => {
+                const c = L.latLng(-pt.lat/10, (pt.lng/ratio_wh_img)/10);
+                arr.push([c.lng, c.lat]);
+            });
+            arr.push(arr[0]);
+            const polyJson = {};
+            arr.forEach((pt, i) => { polyJson[i] = { lat: pt[1], lng: pt[0] }; });
+            list_points_polygon_crop =  polyJson
+            console.log('Vertex ajouté, poly JSON:', list_points_polygon_crop );
+        }
+    });
+
+    // capture des modifications de sommets lors de l'édition
+    map.on(L.Draw.Event.EDITVERTEX, function (event) {
+        if (lastPolygon && map === left_map) {
+            const coords = lastPolygon.getLatLngs()[0];
+            const arr = [];
+            coords.forEach(pt => {
+                const c = L.latLng(-pt.lat/10, (pt.lng/ratio_wh_img)/10);
+                arr.push([c.lng, c.lat]);
+            });
+            arr.push(arr[0]);
+            const polyJson = {};
+            arr.forEach((pt, i) => { polyJson[i] = { lat: pt[1], lng: pt[0] }; });
+            list_points_polygon_crop =  polyJson
+            console.log('Vertex ajouté, poly JSON:', list_points_polygon_crop );
+        }
+    });
 
 }
 
 // conversion d'un layer Polygon Leaflet en WKT
-function polygonToWKT(layer) {
-    const ring = layer.getLatLngs()[0];
-    const coords = ring.map(p => `${p.lng} ${p.lat}`).join(', ');
-    return `POLYGON((${coords}))`;
-}
+// function polygonToWKT(layer) {
+//     const ring = layer.getLatLngs()[0];
+//     const coords = ring.map(p => {
+//         const convertedPoint = L.latLng(-p.lat/10, (p.lng / ratio_wh_img) / 10);
+//         return `${convertedPoint.lng} ${convertedPoint.lat}`;
+//     }).join(', ');
+//     return `POLYGON((${coords}))`;
+// }
 
 // const provider = new window.GeoSearch.OpenStreetMapProvider();
 // //     const search = new GeoSearch.GeoSearchControl({
