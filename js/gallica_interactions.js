@@ -120,9 +120,9 @@ async function load_ark_picture() {
 
         activateDrawButton(true);
 
-        document.getElementById('titre-etape-georef').textContent = "Créer des points de contrôle";
+        document.getElementById('titre-etape-georef').textContent = "Créer au moins 3 points de contrôle";
         // document.getElementById('etape-georef').textContent = "Étape 2 sur 4";
-        document.getElementById('etape-suite').textContent = "Cliquer sur Géoréférencer";
+        document.getElementById('etape-suite').textContent = "Puis cliquer sur Géoréférencer";
         document.getElementById('steps').setAttribute('data-fr-current-step', '2');
     
 }

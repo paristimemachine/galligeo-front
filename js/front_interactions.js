@@ -81,14 +81,14 @@ function click_georef(image, points, polygon, input_ark) {
     //waiting animation on map
     right_map.fire('dataloading');
 
-  //  georef_api_post(urlToAPI, { 
-  //    "gallica_ark_url": urlToRessource,
-  //    "image_width": document.image_width_scaled,
-  //    "image_height": document.image_height_scaled,
-  //    "gcp_pairs": points
-  //  }).then((data) => {
-  //    console.log(data);
-  //  });
+   georef_api_post(urlToAPI, { 
+     "gallica_ark_url": urlToRessource,
+     "image_width": document.image_width_scaled,
+     "image_height": document.image_height_scaled,
+     "gcp_pairs": points
+   }).then((data) => {
+     console.log(data);
+   });
 }
 
 function display_result(input_ark) {
@@ -144,6 +144,14 @@ async function georef_api_post(url = urlToAPI, data = {}) {
     galligeoLayer.bringToFront();
 
     document.getElementById('btn_deposit').disabled = false;
+
+    // add stepper
+    document.getElementById('titre-etape-georef').textContent = "Consulter la carte géoréférencée";
+    // document.getElementById('etape-georef').textContent = "Étape 2 sur 4";
+    document.getElementById('etape-suite').textContent = "Déposer le résultat sur Nakala";
+    document.getElementById('steps').setAttribute('data-fr-current-step', '3');
+
+  
   }
   return response.json();
 }
@@ -164,5 +172,24 @@ function clkGeoserver(){
         document.getElementById("checkbox-geoserverptm-error").style.visibility = 'visible';
         document.getElementById("checkbox-geoserverptm-error").style.display = 'block';
     }
+
+}
+
+function clkNakalaDepot(){
+  var checked = document.getElementById("checkbox-nakala").checked;
+
+    if(checked){
+      document.getElementById("group-checkbox-nakala").className = "fr-checkbox-group";
+      document.getElementById("checkbox-nakala-ok").style.visibility = 'visible';
+      document.getElementById("checkbox-nakala-ok").style.display = 'block';
+      document.getElementById("checkbox-nakala-error").style.visibility = 'hidden';
+      document.getElementById("checkbox-nakala-error").style.display = 'none';
+  }else{
+      document.getElementById("group-checkbox-nakala").className = "fr-checkbox-group fr-checkbox-group--error";
+      document.getElementById("checkbox-nakala-ok").style.visibility = 'hidden';
+      document.getElementById("checkbox-nakala-ok").style.display = 'none';
+      document.getElementById("checkbox-nakala-error").style.visibility = 'visible';
+      document.getElementById("checkbox-nakala-error").style.display = 'block';
+  }
 
 }

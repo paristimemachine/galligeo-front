@@ -52,11 +52,17 @@ async function deposerSurNakala() {
         "Image":              "http://purl.org/coar/resource_type/c_c513",
         "Carte":              "http://purl.org/coar/resource_type/c_12cd"
     };
+
+    //atention, il faut que le type soit dans le dictionnaire dans les termes en français, voir dans gallica_interactions.js
     const DATATYPE     = nakalaTypeDict['Carte'];
-    const TITLE        = metadataDict['Title'];
+    const TITLE        = metadataDict['Titre'];
     const CREATED_DATE = new Date().toISOString().split('T')[0];
     const LICENSE      = 'CC-BY-4.0';
-    const AUTHORS = metadataDict['Shelfkmark'];
+    const AUTHORS = [metadataDict['Cote']];
+    console.log('log authour ' + AUTHORS);
+    if (AUTHORS.length === 0) {
+        AUTHORS.push('BNF Gallica');
+    }
     const CONTRIBUTORS = [prenom + ' ' + nom + ' (' + institution + ')'];
 
     // to do, il pourrait y avoir d'autres mots clés entrés par l'utlisateur
@@ -85,8 +91,10 @@ async function deposerSurNakala() {
         "typeUri": "http://www.w3.org/2001/XMLSchema#anyURI",
         "propertyUri": "http://nakala.fr/terms#type"
     });
+    // Sanitize title to avoid problematic characters
+    const sanitizedTitle = TITLE.replace(/[<>:"\/\\|?*&]/g, '_');
     metas.push({
-        "value": TITLE,
+        "value": sanitizedTitle,
         "lang": "fr",
         "typeUri": "http://www.w3.org/2001/XMLSchema#string",
         "propertyUri": "http://nakala.fr/terms#title"
@@ -123,11 +131,20 @@ async function deposerSurNakala() {
     //     "typeUri": "http://www.w3.org/2001/XMLSchema#string",
     //     "propertyUri": "http://nakala.fr/terms#created"
     // });
-    metas.push({
-        "value": metadataDict['Date'],
-        "typeUri": "http://www.w3.org/2001/XMLSchema#string",
-        "propertyUri": "http://nakala.fr/terms#created"
-    });
+    // Format the date to ensure it's 4 digits
+    let formattedDate = metadataDict['Date'] || '';
+    // Handle fuzzy dates like "18.." (1800-1899)
+    if (formattedDate.match(/^\d{2}\.\.$/)) {
+        formattedDate = formattedDate.replace('..', '00');
+    }
+    // Ensure we have a valid 4-digit year
+    if (formattedDate && formattedDate.length >= 4) {
+        metas.push({
+            "value": formattedDate.substring(0, 4),  // Take only first 4 characters
+            "typeUri": "http://www.w3.org/2001/XMLSchema#string",
+            "propertyUri": "http://nakala.fr/terms#created"
+        });
+    }
     metas.push({
         "value": LICENSE,
         "typeUri": "http://www.w3.org/2001/XMLSchema#string",
@@ -194,6 +211,12 @@ async function deposerSurNakala() {
 
         // fermer la modale
         document.getElementById('fr-modal-deposit').style.display = 'none';
+
+
+        // add final stepper
+        document.getElementById('titre-etape-georef').textContent = "Fin : consulter le dépôt sur <a href='https://test.nakala.fr/collection/10.34847/nkl.c57c6ep9' target='_blank'>Nakala</a>";
+        document.getElementById('etape-suite').innerHTML = "Consulter la collection sur <a href='https://test.nakala.fr/collection/10.34847/nkl.c57c6ep9' target='_blank'>Nakala</a>";
+        document.getElementById('steps').setAttribute('data-fr-current-step', '4');
 
     } catch (error) {
         console.error('Erreur lors du dépôt sur Nakala:', error);

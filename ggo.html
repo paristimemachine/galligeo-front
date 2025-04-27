@@ -178,7 +178,7 @@
                 </button>
 
                 <button class="fr-btn fr-btn--secondary" id="btn_deposit" data-fr-opened="false" aria-controls="fr-modal-deposit" disabled>
-                <!-- <button class="fr-btn fr-btn--secondary" id="btn_deposit" data-fr-opened="false" aria-controls="fr-modal-deposit">  -->
+                <!--<button class="fr-btn fr-btn--secondary" id="btn_deposit" data-fr-opened="false" aria-controls="fr-modal-deposit"> -->
                     Déposer
                 </button>
 
@@ -207,13 +207,16 @@
                                 Dépôt de données : choix d'un entrepôt
                             </h1>
 
-                            <div class="fr-checkbox-group fr-checkbox-group--error">
-                                <input aria-describedby="checkbox-nakala" id="checkbox-nakala" type="checkbox">
+                            <div class="fr-checkbox-group fr-checkbox-group--error" id="group-checkbox-nakala">
+                                <input aria-describedby="checkbox-nakala" id="checkbox-nakala" type="checkbox" onchange="clkNakalaDepot()">
                                 <label class="fr-label" for="checkbox-nakala">
-                                    <a href="https://www.nakala.fr/about">Nakala</a> : entrepôt de données de l'<a href="https://www.huma-num.fr/">IR* Huma-Num CNRS</a>
+                                  <a href="https://www.nakala.fr/about" target="_blank" rel="noopener">Nakala</a> : entrepôt de données de l'<a href="https://www.huma-num.fr/" target="_blank" rel="noopener">IR* Huma-Num CNRS</a>
                                 </label>
                                 <div class="fr-messages-group" id="checkbox-nakala-error" aria-live="assertive">
                                     <p class="fr-message fr-message--error" id="checkbox-nakala-message-error">Cocher et entrer une clé d'API</p>
+                                </div>
+                                <div class="fr-messages-group" id="checkbox-nakala-ok" aria-live="assertive" style="visibility: hidden; display: none;">
+                                    <p class="fr-message fr-message--valid" id="checkboxes-valid-message-valid">Ok</p>
                                 </div>
                             </div>
 
@@ -225,7 +228,7 @@
                             <div class="fr-checkbox-group fr-checkbox-group--error">
                                 <input aria-describedby="checkbox-fnp" id="checkbox-fnp" type="checkbox">
                                 <label class="fr-label" for="checkbox-fnp">
-                                    <a href="https://www.fabriquenumeriquedupasse.fr/">La Fabrique Numérique du passé</a> : portail de dépôt de données géohistoriques du <a href="https://paris-timemachine.huma-num.fr/">Consortium Huma-Num PTM</a>
+                                  <a href="https://www.fabriquenumeriquedupasse.fr/" target="_blank" rel="noopener">La Fabrique Numérique du passé</a> : portail de dépôt de données géohistoriques du <a href="https://paris-timemachine.huma-num.fr/" target="_blank" rel="noopener">Consortium Huma-Num PTM</a>
                                 </label>
                                 <div class="fr-messages-group" id="checkbox-fnp-error" aria-live="assertive">
                                     <p class="fr-message fr-message--error" id="checkbox-fnp-message-error">Cocher et entrer une clé d'API</p>
@@ -296,7 +299,7 @@
                         <div class="fr-modal__footer">
                             <ul class="fr-btns-group fr-btns-group--right fr-btns-group--inline-reverse fr-btns-group--inline-lg fr-btns-group--icon-left">
                                 <li>
-                                    <button class="fr-btn fr-fi-checkbox-line" >
+                                    <button class="fr-btn fr-fi-close-line fr-btn--secondary" aria-controls="fr-modal-deposit" onclick="document.getElementById('fr-modal-deposit').close()">
                                         Annuler
                                     </button>
                                 </li>
@@ -424,22 +427,22 @@
             <div class="fr-footer__bottom">
                 <ul class="fr-footer__bottom-list">
                     <li class="fr-footer__bottom-item">
-                        <a class="fr-footer__bottom-link" href="#">Plan du site</a>
+                        <a class="fr-footer__bottom-link" href="#" target="_blank" rel="noopener">Plan du site</a>
                     </li>
                     <li class="fr-footer__bottom-item">
-                        <a class="fr-footer__bottom-link" href="#">Accessibilité : Partiellement conforme</a>
+                        <a class="fr-footer__bottom-link" href="#" target="_blank" rel="noopener">Accessibilité : Partiellement conforme</a>
                     </li>
                     <li class="fr-footer__bottom-item">
-                        <a class="fr-footer__bottom-link" href="#">Mentions légales</a>
+                        <a class="fr-footer__bottom-link" href="#" target="_blank" rel="noopener">Mentions légales</a>
                     </li>
                     <li class="fr-footer__bottom-item">
-                        <a class="fr-footer__bottom-link" href="#">Données personnelles</a>
+                        <a class="fr-footer__bottom-link" href="#" target="_blank" rel="noopener">Données personnelles</a>
                     </li>
                     <li class="fr-footer__bottom-item">
-                        <a class="fr-footer__bottom-link" href="#">Gestion des cookies</a>
+                        <a class="fr-footer__bottom-link" href="#" target="_blank" rel="noopener">Gestion des cookies</a>
                     </li>
                     <li class="fr-footer__bottom-item">
-                        <a class="fr-footer__bottom-link" href="https://github.com/etalab/licence-ouverte/blob/master/LO.md">Licences</a>
+                        <a class="fr-footer__bottom-link" href="https://github.com/etalab/licence-ouverte/blob/master/LO.md" target="_blank" rel="noopener">Licences</a>
                     </li>
                 </ul>
                 <!-- <div class="fr-footer__bottom-copy">
@@ -514,8 +517,8 @@
                                                         </div>
                                                     </div>
                                                     <p>
-                                                        <a href="#" class="fr-link">Mot de passe oublié ?</a> 
-                                                        <!-- # = [À MODIFIER - url de la page de récupération] -->
+                                                      <a href="#" class="fr-link" target="_blank" rel="noopener">Mot de passe oublié ?</a> 
+                                                      <!-- # = [À MODIFIER - url de la page de récupération] -->
                                                     </p>
                                                 </div>
                                             </div>

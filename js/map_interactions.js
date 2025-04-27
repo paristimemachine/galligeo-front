@@ -27,7 +27,7 @@ var customMarker= L.Icon.extend({
         shadowUrl: null,
         iconAnchor: new L.Point(12, 12),
         iconSize: new L.Point(24, 24),
-        iconUrl: "https://icons.getbootstrap.com/assets/icons/x.svg",
+        iconUrl: "img/x.svg",
     }
 });
 
