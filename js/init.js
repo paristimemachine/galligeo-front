@@ -1,5 +1,5 @@
 // Init all vars
-var mapsPlaceholder = [];
+let mapsPlaceholder = [];
 
 function Point(latlong) {
     this.long = latlong.lng;
@@ -11,22 +11,23 @@ function PointA_PointB(a, b){
     this.target_point = b;
 }
 
-var pointA_temp;
+let pointA_temp;
 
-var list_georef_points = [];
+let list_georef_points = [];
+let list_points_polygon_crop;
 
-var first_gallimap_clicked = false;
+let first_gallimap_clicked = false;
 
-var count_points = 0;
-var randomColor;
-var input_ark = 0;
-var imageUrl;
+let count_points = 0;
+let randomColor;
+let input_ark = 0;
+let imageUrl;
 
-var ratio_wh_img = 0
+let ratio_wh_img = 0
 
-var temp_row;
+let temp_row;
 
-var base_url = 'https://gallica.bnf.fr/ark:/12148/';
+let base_url = 'https://gallica.bnf.fr/ark:/12148/';
 
 // var urlToAPI = 'http://127.0.0.1:8000/georef/';
 const urlToAPI = "https://api.ptm.huma-num.fr/galligeo/georef/";
