@@ -73,11 +73,7 @@ var stringToHTML = function (str) {
     return doc.body;
 };
 
-function click_georef(image, points, polygon, input_ark) {
 
-    console.log("click on georef")
-    console.log(points)
-    console.log(polygon)
 function click_georef(image, points, polygon, input_ark) {
 
     console.log("click on georef")
@@ -94,7 +90,8 @@ function click_georef(image, points, polygon, input_ark) {
      "gallica_ark_url": urlToRessource,
      "image_width": document.image_width_scaled,
      "image_height": document.image_height_scaled,
-     "gcp_pairs": points
+     "gcp_pairs": points,
+     "clipping_polygon": polygon
    }).then((data) => {
      console.log(data);
    });

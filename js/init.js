@@ -11,10 +11,15 @@ function PointA_PointB(a, b){
     this.target_point = b;
 }
 
+function PointCrop(lat, long) {
+    this.lat = lat;
+    this.long = long;
+}
+
 let pointA_temp;
 
 let list_georef_points = [];
-let list_points_polygon_crop;
+let list_points_polygon_crop = [];
 
 let first_gallimap_clicked = false;
 
