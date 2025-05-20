@@ -380,14 +380,19 @@ function add_draw_on_leaflet(map, drawnItems, empriseItems = drawnItems) {
 
             // convert polygonArray to json
             // Convert polygonArray to JSON with index keys
-            var polygonJson = {};
-            polygonArray.forEach((point, index) => {
-                polygonJson[index] = {
-                    lat: point[1],
-                    lng: point[0],
-                };
-            });
-            list_points_polygon_crop =  polygonJson
+            // var polygonJson = {};
+            // polygonArray.forEach((point, index) => {
+            //    polygonJson[index] = {
+            //        long: point[0],
+            //        lat: point[1]
+            //    };
+            //});
+
+            // const polyJson = {}
+            // arr.forEach((pt, i) => { polyJson[i] = { long: pt[0], lat: pt[1] }; });
+            const polyJson = [];
+            polygonArray.forEach((pt, i) => { polyJson.push(new PointCrop(pt[1], pt[0]))});
+            list_points_polygon_crop =  polyJson
             console.log('Vertex ajouté, poly JSON:', list_points_polygon_crop );
 
 
@@ -447,8 +452,11 @@ function add_draw_on_leaflet(map, drawnItems, empriseItems = drawnItems) {
                 arr.push([c.lng, c.lat]);
             });
             arr.push(arr[0]);
-            const polyJson = {};
-            arr.forEach((pt, i) => { polyJson[i] = { lat: pt[1], lng: pt[0] }; });
+            // const polyJson = {}
+            // arr.forEach((pt, i) => { polyJson[i] = { long: pt[0], lat: pt[1] }; });
+            const polyJson = [];
+            // arr.forEach((pt, i) => { polyJson.push({ long: pt[0], lat: pt[1] }) });
+            polygonArray.forEach((pt, i) => { polyJson.push(new PointCrop(pt[1], pt[0]))});
             list_points_polygon_crop =  polyJson
             console.log('Vertex ajouté, poly JSON:', list_points_polygon_crop );
         }
@@ -464,8 +472,11 @@ function add_draw_on_leaflet(map, drawnItems, empriseItems = drawnItems) {
                 arr.push([c.lng, c.lat]);
             });
             arr.push(arr[0]);
-            const polyJson = {};
-            arr.forEach((pt, i) => { polyJson[i] = { lat: pt[1], lng: pt[0] }; });
+            // const polyJson = {}
+            // arr.forEach((pt, i) => { polyJson[i] = { long: pt[0], lat: pt[1] }; });
+            const polyJson = [];
+            // arr.forEach((pt, i) => { polyJson.push({ long: pt[0], lat: pt[1] }) });
+            polygonArray.forEach((pt, i) => { polyJson.push(new PointCrop(pt[1], pt[0]))});
             list_points_polygon_crop =  polyJson
             console.log('Vertex ajouté, poly JSON:', list_points_polygon_crop );
         }

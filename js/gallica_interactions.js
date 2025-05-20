@@ -1,7 +1,5 @@
 let metadataDict = {};
 
-let metadataDict = {};
-
 async function load_ark_picture() {
         console.log("load ark picture");
 
