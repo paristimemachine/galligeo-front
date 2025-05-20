@@ -1,5 +1,7 @@
 let metadataDict = {};
 
+let metadataDict = {};
+
 async function load_ark_picture() {
         console.log("load ark picture");
 
@@ -19,6 +21,21 @@ async function load_ark_picture() {
         }
 
         input_ark = input.substr(input.lastIndexOf("/")+1);
+
+        var splitUrl = input.split('/');
+        
+        console.log(splitUrl);
+        console.log(splitUrl[5]);
+        if( splitUrl[5].length > 13) {
+            temp_string = splitUrl[5]
+            temp_string2 = temp_string.split(".");
+            console.log(' . ' +temp_string2);
+            input_ark = temp_string2[0];
+        }else{
+            input_ark = splitUrl[5];
+        }
+
+        console.log(input_ark)
 
         var splitUrl = input.split('/');
         
