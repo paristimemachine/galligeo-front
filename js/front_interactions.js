@@ -39,6 +39,9 @@ function toggleLegend(){
             
             document.getElementById("map-container-left-at-startup").className = "fr-col-6";
 
+            
+            document.getElementById("map-container-left-at-startup").className = "fr-col-6";
+
     }
     else
     {
@@ -56,6 +59,7 @@ function toggleLegend(){
             document.getElementById("map-container-right").hidden = false;// fr-col-lg-10 fr-col-md-12 fr-col-sm-12";
 
             document.getElementById("map-container-left-at-startup").className = "fr-col-5";
+            document.getElementById("map-container-left-at-startup").className = "fr-col-5";
 
     }
     setTimeout(function(){ left_map.invalidateSize()}, 200);
@@ -69,6 +73,11 @@ var stringToHTML = function (str) {
     return doc.body;
 };
 
+function click_georef(image, points, polygon, input_ark) {
+
+    console.log("click on georef")
+    console.log(points)
+    console.log(polygon)
 function click_georef(image, points, polygon, input_ark) {
 
     console.log("click on georef")
