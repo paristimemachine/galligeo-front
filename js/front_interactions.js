@@ -104,9 +104,9 @@ function display_result(input_ark) {
 async function georef_api_post(url = urlToAPI, data = {}) {
   const response = await fetch(url, {
     method: "POST",
-    mode: "cors",
+    // mode: "cors",
     cache: "no-cache",
-    credentials: "same-origin",
+    // credentials: "same-origin",
     headers: {
       "Content-Type": "application/json",
     },
