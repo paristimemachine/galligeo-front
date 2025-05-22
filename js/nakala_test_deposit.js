@@ -6,7 +6,7 @@ async function deposerSurNakala() {
     const UPLOAD_EP = API_URL + '/datas/uploads';
     const CREATE_EP = API_URL + '/datas';
 
-    const COLLECTION_ID = '10.34847/nkl.c57c6ep9';
+    const COLLECTION_ID = '10.34847/nkl.f8eev8l7';
 
     const apiKey = '01234567-89ab-cdef-0123-456789abcdef'
 
@@ -74,7 +74,7 @@ async function deposerSurNakala() {
 
     const url_gallica = metadataDict['Source Images'];
     const url_app_ptm = 'https://app.ptm.huma-num.fr/galligeo/georef/?ark=' + input_ark;
-    const url_tile_ptm_sub = 'https://{s}.tile.ptm.huma-num.fr/tiles/ark/12148/' + input_ark + '/{x}/{y}/{z}.png';
+    const url_tile_ptm_sub = 'https://{s}.tile.ptm.huma-num.fr/tiles/ark/12148/' + input_ark + '/{z}/{x}/{y}.png';
 
     const DESCRIPTION = "L'image géoréférencée est visible sur le site de Gallica, à l'adresse suivante : " + url_gallica + '\n\n' +
         "Cette image a été géoréférencée par le projet Galligeo, qui vise à rendre accessible la cartographie historique de la BnF dans un format géoréférencée. "  + '\n\n' +
@@ -214,8 +214,8 @@ async function deposerSurNakala() {
 
 
         // add final stepper
-        document.getElementById('titre-etape-georef').textContent = "Fin : consulter le dépôt sur <a href='https://test.nakala.fr/collection/10.34847/nkl.c57c6ep9' target='_blank'>Nakala</a>";
-        document.getElementById('etape-suite').innerHTML = "Consulter la collection sur <a href='https://test.nakala.fr/collection/10.34847/nkl.c57c6ep9' target='_blank'>Nakala</a>";
+        document.getElementById('titre-etape-georef').textContent = `Fin : consulter le dépôt sur <a href='https://test.nakala.fr/collection/${COLLECTION_ID}' target='_blank'>Nakala</a>`;
+        document.getElementById('etape-suite').innerHTML = `Consulter la collection sur <a href='https://test.nakala.fr/collection/${COLLECTION_ID}' target='_blank'>Nakala</a>`;
         document.getElementById('steps').setAttribute('data-fr-current-step', '4');
 
     } catch (error) {
