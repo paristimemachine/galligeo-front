@@ -178,7 +178,7 @@
                 </button>
 
                 <button class="fr-btn fr-btn--secondary" id="btn_deposit" data-fr-opened="false" aria-controls="fr-modal-deposit" disabled>
-                <!--<button class="fr-btn fr-btn--secondary" id="btn_deposit" data-fr-opened="false" aria-controls="fr-modal-deposit"> -->
+                    <!--<button class="fr-btn fr-btn--secondary" id="btn_deposit" data-fr-opened="false" aria-controls="fr-modal-deposit"> -->
                     Déposer
                 </button>
 
@@ -221,7 +221,10 @@
                             </div>
 
                             <label class="fr-label" for="text-input-text">API Key Nakala</label>
-                            <input class="fr-input" type="text" id="text-input-text" name="text-input-text" value="01234567-89ab-cdef-0123-456789abcdef">
+                            <input class="fr-input" type="text" id="nakala_api_key" name="text-input-text" value="66c0810c-19c3-5463-5082-20f04d53b971">
+                            <label class="fr-label" for="text-input-text">Collection DOI</label>
+                            <input class="fr-input" type="text" id="nakala_collection_doi" name="text-input-text" value="10.34847/nkl.febfl1v2">
+                            
 
                             <br>
 
@@ -304,7 +307,7 @@
                                     </button>
                                 </li>
                                 <li>
-                                    <button class="fr-btn fr-fi-checkbox-line fr-btn--secondary" onclick="deposerSurNakala()">
+                                    <button class="fr-btn fr-fi-checkbox-line fr-btn--secondary" onclick="deposerSurNakala(document.getElementById('nakala_api_key').value, document.getElementById('nakala_collection_doi').value)">
                                         Déposer
                                     </button>
                                 </li>
