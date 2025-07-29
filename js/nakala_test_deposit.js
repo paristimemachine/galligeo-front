@@ -1,14 +1,16 @@
-async function deposerSurNakala() {
+async function deposerSurNakala(apiKey_in, collection_id_in, ) {
 
     // Configuration
-    const API_URL       = 'https://apitest.nakala.fr'; // ou production 'https://api.nakala.fr'
+    const API_URL_TEST      = 'https://apitest.nakala.fr'; // ou production 'https://api.nakala.fr'
+    const API_URL_PROD       = 'https://api.nakala.fr';
+
+    const API_URL = API_URL_PROD
 
     const UPLOAD_EP = API_URL + '/datas/uploads';
     const CREATE_EP = API_URL + '/datas';
 
-    const COLLECTION_ID = '10.34847/nkl.f8eev8l7';
-
-    const apiKey = '01234567-89ab-cdef-0123-456789abcdef'
+    const COLLECTION_ID = collection_id_in || '10.34847/nkl.f8eev8l7'; // par défaut, la collection de test
+    const apiKey = apiKey_in || '01234567-89ab-cdef-0123-456789abcdef' // par défaut, la clé d'API de test
 
     const nom = document.getElementById('input-family-name-1').value;
     const prenom = document.getElementById('input-firstname-1').value;
@@ -76,7 +78,7 @@ async function deposerSurNakala() {
     const url_app_ptm = 'https://app.ptm.huma-num.fr/galligeo/georef/?ark=' + input_ark;
     const url_tile_ptm_sub = 'https://{s}.tile.ptm.huma-num.fr/tiles/ark/12148/' + input_ark + '/{z}/{x}/{y}.png';
 
-    const DESCRIPTION = "L'image géoréférencée est visible sur le site de Gallica, à l'adresse suivante : " + url_gallica + '\n\n' +
+    const DESCRIPTION = "L'image source est visible sur le site de Gallica, à l'adresse suivante : " + url_gallica + '\n\n' +
         "Cette image a été géoréférencée par le projet Galligeo, qui vise à rendre accessible la cartographie historique de la BnF dans un format géoréférencée. "  + '\n\n' +
         "Les points de contrôle ont été créés par des bénévoles, et sont disponibles sous la forme d'un fichier points.txt dans le dépôt"  + '\n\n' +
         "La carte géoréférencée est visible à l'adresse suivante : " +  url_app_ptm + '\n\n' +
@@ -214,8 +216,19 @@ async function deposerSurNakala() {
 
 
         // add final stepper
-        document.getElementById('titre-etape-georef').textContent = `Fin : consulter le dépôt sur <a href='https://test.nakala.fr/collection/${COLLECTION_ID}' target='_blank'>Nakala</a>`;
-        document.getElementById('etape-suite').innerHTML = `Consulter la collection sur <a href='https://test.nakala.fr/collection/${COLLECTION_ID}' target='_blank'>Nakala</a>`;
+        // Au lieu de textContent, utilisez innerHTML :
+        document.getElementById('titre-etape-georef').innerHTML =
+        `Fin : consulter le dépôt sur
+        <a href="https://test.nakala.fr/collection/${COLLECTION_ID}" target="_blank">
+            Nakala
+        </a>`;
+
+        document.getElementById('etape-suite').innerHTML =
+        `Consulter la collection sur
+        <a href="https://test.nakala.fr/collection/${COLLECTION_ID}" target="_blank">
+            Nakala
+        </a>`;
+
         document.getElementById('steps').setAttribute('data-fr-current-step', '4');
 
     } catch (error) {
