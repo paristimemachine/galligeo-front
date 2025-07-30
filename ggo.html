@@ -417,69 +417,33 @@
                                 <div id="tabpanel-parametres-panel" class="fr-tabs__panel" role="tabpanel" aria-labelledby="tabpanel-parametres" tabindex="0">
                                     <section class="fr-container fr-card fr-card--shadow fr-p-4w fr-mb-4w">
                                         <h3 class="fr-h4">Paramètres de géoréférencement</h3>
-                                        <form>
-                                            <div class="fr-select-group">
-                                                <label class="fr-label" for="select-algo">Algorithme de géoréférencement par défaut</label>
-                                                <select class="fr-select" id="select-algo" name="select-algo">
-                                                    <option value="" selected disabled>Sélectionner un algorithme</option>
-                                                    <option value="polynomial">Polynomial</option>
-                                                    <option value="helmert">Helmert</option>
-                                                    <option value="affine">Affine</option>
-                                                    <option value="tps">Thin Plate Spline</option>
-                                                </select>
+                                        
+                                        <!-- Conteneur pour le formulaire généré dynamiquement -->
+                                        <div id="settings-form-container">
+                                            <!-- Le formulaire sera généré ici par JavaScript -->
+                                            <div class="fr-alert fr-alert--info fr-mb-3w">
+                                                <p>Chargement des paramètres...</p>
                                             </div>
-
-                                            <div class="fr-select-group">
-                                                <label class="fr-label" for="select-resample">Méthode de rééchantillonage</label>
-                                                <select class="fr-select" id="select-resample" name="select-resample">
-                                                    <option value="" selected disabled>Sélectionner un algorithme</option>
-                                                    <option value="nearest">Plus proche voisin</option>
-                                                    <option value="bilinear">Bilinéaire</option>
-                                                    <option value="cubic">Cubique</option>
-                                                    <option value="lanczos">Lanczos</option>
-                                                </select>
-                                            </div>
-
-                                            <div class="fr-select-group">
-                                                <label class="fr-label" for="select-quality">Qualité image Gallica</label>
-                                                <select class="fr-select" id="select-quality" name="select-quality">
-                                                    <option value="" selected disabled>Sélectionner une option</option>
-                                                    <option value="medium">Medium</option>
-                                                    <option value="hd">Haute définition</option>
-                                                </select>
-                                            </div>
-
-                                            <div class="fr-checkbox-group">
-                                                <input type="checkbox" id="checkbox-compression" name="checkbox-compression">
-                                                <label class="fr-label" for="checkbox-compression">
-                                                    Activer la compression des images
-                                                    <span class="fr-hint-text">Réduire la taille des fichiers générés</span>
-                                                </label>
-                                            </div>
-
-                                            <div class="fr-checkbox-group">
-                                                <input type="checkbox" id="checkbox-transparent" name="checkbox-transparent">
-                                                <label class="fr-label" for="checkbox-transparent">
-                                                    Rendre transparent le fond des cartes
-                                                    <span class="fr-hint-text">Employer 0 pour la transparence</span>
-                                                </label>
-                                            </div>
-
-                                            <div class="fr-checkbox-group">
-                                                <input type="checkbox" id="checkbox-matrice" name="checkbox-matrice">
-                                                <label class="fr-label" for="checkbox-matrice">
-                                                    Enregistrer les points de contrôle
-                                                    <span class="fr-hint-text">La matrice de points est enregistrée en base</span>
-                                                </label>
-                                            </div>
-
-                                            <div class="fr-input-group">
-                                                <label class="fr-label" for="input-scale">Échelle de démarrage</label>
-                                                <input id="input-scale" class="fr-input" type="number" placeholder="1 / 100.000">
-                                            </div>
-                                            
-                                            <button class="fr-btn fr-mt-3w" type="submit">Enregistrer</button>
-                                        </form>
+                                        </div>
+                                        
+                                        <!-- Actions supplémentaires -->
+                                        <div class="settings-actions">
+                                            <button type="button" class="fr-btn fr-btn--secondary" onclick="window.settingsManager.resetSettings()">
+                                                <span class="fr-icon-refresh-line" aria-hidden="true"></span>
+                                                Réinitialiser
+                                            </button>
+                                            <button type="button" class="fr-btn fr-btn--secondary" onclick="window.settingsManager.exportSettings()">
+                                                <span class="fr-icon-download-line" aria-hidden="true"></span>
+                                                Exporter
+                                            </button>
+                                            <label for="import-settings" class="fr-btn fr-btn--secondary" style="margin: 0; cursor: pointer;">
+                                                <span class="fr-icon-upload-line" aria-hidden="true"></span>
+                                                Importer
+                                                <input type="file" id="import-settings" accept=".json" style="display: none;" 
+                                                       onchange="handleSettingsImport(this)">
+                                            </label>
+                                        </div>
+                                        
                                     </section>
                                 </div>
 
@@ -855,24 +819,187 @@
     <script src="js/gallica_interactions.js"></script>
     <script src="js/getParamAtStartup.js"></script>
     <script src="js/nakala_test_deposit.js"></script>
+    <script src="js/form-generator.js"></script>
+    <script src="js/settings-manager.js"></script>
+    <script src="js/settings-utils.js"></script>
 
     <script>
+    // Variable globale pour suivre l'état d'initialisation
+    let settingsFormInitialized = false;
+
+    // Fonction pour gérer l'importation de paramètres
+    function handleSettingsImport(input) {
+        const file = input.files[0];
+        if (file) {
+            window.settingsManager.importSettings(file);
+            input.value = ''; // Reset l'input
+        }
+    }
+
+    // Fonction pour initialiser le formulaire de paramètres
+    async function initSettingsForm() {
+        if (settingsFormInitialized) {
+            return; // Déjà initialisé
+        }
+
+        try {
+            await window.settingsManager.init('settings-form-container');
+            settingsFormInitialized = true;
+            console.log('Formulaire de paramètres initialisé avec succès');
+        } catch (error) {
+            console.error('Erreur lors de l\'initialisation du formulaire de paramètres:', error);
+            
+            // Afficher un message d'erreur à l'utilisateur
+            const container = document.getElementById('settings-form-container');
+            if (container) {
+                container.innerHTML = `
+                    <div class="fr-alert fr-alert--error">
+                        <p><strong>Erreur de chargement</strong></p>
+                        <p>Impossible de charger la configuration des paramètres. Veuillez rafraîchir la page.</p>
+                        <button class="fr-btn fr-btn--sm fr-mt-2w" onclick="location.reload()">
+                            Rafraîchir la page
+                        </button>
+                    </div>
+                `;
+            }
+        }
+    }
+
+    // Observer pour détecter l'ouverture de la modale des paramètres
+    function setupModalObserver() {
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                const modal = document.getElementById('fr-modal-settings');
+                if (modal && modal.open && !settingsFormInitialized) {
+                    // La modale est ouverte et le formulaire n'est pas encore initialisé
+                    initSettingsForm();
+                }
+            });
+        });
+
+        // Observer les changements sur la modale
+        const modal = document.getElementById('fr-modal-settings');
+        if (modal) {
+            observer.observe(modal, { 
+                attributes: true, 
+                attributeFilter: ['open'] 
+            });
+        }
+
+        // Observer aussi les clics sur l'onglet paramètres
+        const parametresTab = document.getElementById('tabpanel-parametres');
+        if (parametresTab) {
+            parametresTab.addEventListener('click', function() {
+                // Petite temporisation pour laisser l'onglet s'afficher
+                setTimeout(initSettingsForm, 100);
+            });
+        }
+    }
+
+    // Écouter les changements de paramètres pour mettre à jour l'application
+    function setupSettingsListener() {
+        document.addEventListener('settingsUpdated', function(event) {
+            const settings = event.detail.settings;
+            console.log('Paramètres mis à jour:', settings);
+            
+            // Ici vous pouvez ajouter la logique pour appliquer les nouveaux paramètres
+            // Par exemple:
+            
+            // Mettre à jour l'algorithme de géoréférencement par défaut
+            if (settings['select-algo']) {
+                console.log('Nouvel algorithme par défaut:', settings['select-algo']);
+                // TODO: Appliquer l'algorithme dans votre logique de géoréférencement
+            }
+            
+            // Mettre à jour la méthode de rééchantillonage
+            if (settings['select-resample']) {
+                console.log('Nouvelle méthode de rééchantillonage:', settings['select-resample']);
+                // TODO: Appliquer la méthode dans votre logique
+            }
+            
+            // Mettre à jour la qualité des images Gallica
+            if (settings['select-quality']) {
+                console.log('Nouvelle qualité image:', settings['select-quality']);
+                // TODO: Appliquer la qualité dans vos appels API Gallica
+            }
+            
+            // Gérer les options de compression, transparence, etc.
+            if (settings['checkbox-compression']) {
+                console.log('Compression activée:', settings['checkbox-compression']);
+            }
+            
+            if (settings['checkbox-transparent']) {
+                console.log('Transparence activée:', settings['checkbox-transparent']);
+            }
+            
+            if (settings['checkbox-matrice']) {
+                console.log('Sauvegarde matrice activée:', settings['checkbox-matrice']);
+            }
+            
+            if (settings['input-scale']) {
+                console.log('Échelle de démarrage:', settings['input-scale']);
+            }
+            
+            // Afficher une notification de succès
+            showNotification('Paramètres mis à jour avec succès', 'success');
+        });
+    }
+
+    // Fonction utilitaire pour afficher des notifications
+    function showNotification(message, type = 'info') {
+        // Créer une notification DSFR temporaire
+        const notification = document.createElement('div');
+        notification.className = `fr-notice fr-notice--${type === 'success' ? 'info' : type}`;
+        notification.innerHTML = `
+            <div class="fr-container">
+                <div class="fr-notice__body">
+                    <p class="fr-notice__title">${message}</p>
+                </div>
+            </div>
+        `;
+        
+        // Ajouter la notification en haut de la page
+        document.body.insertBefore(notification, document.body.firstChild);
+        
+        // Supprimer après 3 secondes
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 3000);
+    }
+
+    // Fonction pour récupérer un paramètre (utilitaire pour le reste de l'application)
+    function getAppSetting(key, defaultValue = null) {
+        if (window.settingsManager) {
+            return window.settingsManager.getSetting(key, defaultValue);
+        }
+        return defaultValue;
+    }
+
+    // Rendre la fonction disponible globalement
+    window.getAppSetting = getAppSetting;
+
     document.addEventListener('DOMContentLoaded', () => {
         // Vérifier l'état d'authentification au chargement de la page
         checkAuthStatus();
         
+        // Configurer l'observateur de modale et les listeners
+        setupModalObserver();
+        setupSettingsListener();
+        
         const loginButton = document.getElementById('login-button-redirect');
         if (loginButton) {
-        loginButton.addEventListener('click', (e) => {
-            e.preventDefault(); // empêche un submit par défaut
-            // Optionnel : fermer la modale proprement avant de rediriger
-            const modal = document.getElementById('fr-modal-login');
-            if (modal && typeof modal.close === 'function') {
-            modal.close();
-            }
-            // Redirection
-            window.location.href = 'login.html';
-        });
+            loginButton.addEventListener('click', (e) => {
+                e.preventDefault(); // empêche un submit par défaut
+                // Optionnel : fermer la modale proprement avant de rediriger
+                const modal = document.getElementById('fr-modal-login');
+                if (modal && typeof modal.close === 'function') {
+                    modal.close();
+                }
+                // Redirection
+                window.location.href = 'login.html';
+            });
         }
     });
     </script>

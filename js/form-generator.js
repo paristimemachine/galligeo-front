@@ -44,9 +44,12 @@ class FormGenerator {
         if (field.placeholder) {
             const defaultOption = document.createElement('option');
             defaultOption.value = '';
-            defaultOption.selected = true;
             defaultOption.disabled = true;
             defaultOption.textContent = field.placeholder;
+            // Sélectionner cette option seulement s'il n'y a pas de valeur par défaut
+            if (!field.defaultValue) {
+                defaultOption.selected = true;
+            }
             select.appendChild(defaultOption);
         }
 
@@ -55,6 +58,17 @@ class FormGenerator {
             const optionElement = document.createElement('option');
             optionElement.value = option.value;
             optionElement.textContent = option.label;
+            
+            // Sélectionner l'option par défaut
+            if (field.defaultValue && option.value === field.defaultValue) {
+                optionElement.selected = true;
+            }
+            
+            // Ajouter la description comme attribut title pour l'accessibilité
+            if (option.description) {
+                optionElement.title = option.description;
+            }
+            
             select.appendChild(optionElement);
         });
 
@@ -75,6 +89,11 @@ class FormGenerator {
         input.type = 'checkbox';
         input.id = field.id;
         input.name = field.name;
+
+        // Valeur par défaut pour les checkboxes
+        if (field.defaultValue) {
+            input.checked = Boolean(field.defaultValue);
+        }
 
         const label = document.createElement('label');
         label.className = 'fr-label';
@@ -121,16 +140,26 @@ class FormGenerator {
             input.required = true;
         }
 
+        // Attributs spécifiques aux champs numériques
+        if (field.type === 'number') {
+            if (field.min !== undefined) input.min = field.min;
+            if (field.max !== undefined) input.max = field.max;
+            if (field.step !== undefined) input.step = field.step;
+        }
+
+        // Valeur par défaut
+        if (field.defaultValue !== undefined) {
+            input.value = field.defaultValue;
+        }
+
+        inputGroup.appendChild(label);
+        inputGroup.appendChild(input);
+
         if (field.hint) {
             const hint = document.createElement('span');
             hint.className = 'fr-hint-text';
             hint.textContent = field.hint;
-            inputGroup.appendChild(label);
-            inputGroup.appendChild(input);
             inputGroup.appendChild(hint);
-        } else {
-            inputGroup.appendChild(label);
-            inputGroup.appendChild(input);
         }
 
         return inputGroup;

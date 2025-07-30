@@ -1,4 +1,6 @@
 {
+  "title": "Paramètres de géoréférencement",
+  "description": "Configurez les paramètres par défaut pour le processus de géoréférencement",
   "fields": [
     {
       "type": "select",
@@ -7,11 +9,12 @@
       "label": "Algorithme de géoréférencement par défaut",
       "placeholder": "Sélectionner un algorithme",
       "required": false,
+      "defaultValue": "polynomial",
       "options": [
-        { "value": "polynomial", "label": "Polynomial" },
-        { "value": "helmert", "label": "Helmert" },
-        { "value": "affine", "label": "Affine" },
-        { "value": "tps", "label": "Thin Plate Spline" }
+        { "value": "polynomial", "label": "Polynomial", "description": "Transformation polynomiale (recommandé pour la plupart des cas)" },
+        { "value": "helmert", "label": "Helmert", "description": "Transformation de Helmert (rotation, translation, échelle)" },
+        { "value": "affine", "label": "Affine", "description": "Transformation affine (rotation, translation, échelle, cisaillement)" },
+        { "value": "tps", "label": "Thin Plate Spline", "description": "Spline de plaque mince (pour les déformations complexes)" }
       ]
     },
     {
@@ -19,13 +22,14 @@
       "id": "select-resample",
       "name": "select-resample",
       "label": "Méthode de rééchantillonage",
-      "placeholder": "Sélectionner un algorithme",
+      "placeholder": "Sélectionner une méthode",
       "required": false,
+      "defaultValue": "bilinear",
       "options": [
-        { "value": "nearest", "label": "Plus proche voisin" },
-        { "value": "bilinear", "label": "Bilinéaire" },
-        { "value": "cubic", "label": "Cubique" },
-        { "value": "lanczos", "label": "Lanczos" }
+        { "value": "nearest", "label": "Plus proche voisin", "description": "Rapide mais peut créer des effets de pixellisation" },
+        { "value": "bilinear", "label": "Bilinéaire", "description": "Bon équilibre qualité/performance (recommandé)" },
+        { "value": "cubic", "label": "Cubique", "description": "Meilleure qualité mais plus lent" },
+        { "value": "lanczos", "label": "Lanczos", "description": "Très haute qualité pour les images détaillées" }
       ]
     },
     {
@@ -33,11 +37,12 @@
       "id": "select-quality",
       "name": "select-quality",
       "label": "Qualité image Gallica",
-      "placeholder": "Sélectionner une option",
+      "placeholder": "Sélectionner une qualité",
       "required": false,
+      "defaultValue": "hd",
       "options": [
-        { "value": "medium", "label": "Medium" },
-        { "value": "hd", "label": "Haute définition" }
+        { "value": "medium", "label": "Medium", "description": "Qualité standard, traitement plus rapide" },
+        { "value": "hd", "label": "Haute définition", "description": "Meilleure qualité, traitement plus lent" }
       ]
     },
     {
@@ -45,36 +50,50 @@
       "id": "checkbox-compression",
       "name": "checkbox-compression",
       "label": "Activer la compression des images",
-      "hint": "Réduire la taille des fichiers générés",
-      "required": false
+      "hint": "Réduire la taille des fichiers générés (recommandé pour l'archivage)",
+      "required": false,
+      "defaultValue": true
     },
     {
       "type": "checkbox",
       "id": "checkbox-transparent",
       "name": "checkbox-transparent",
       "label": "Rendre transparent le fond des cartes",
-      "hint": "Employer 0 pour la transparence",
-      "required": false
+      "hint": "Utilise la valeur 0 pour définir la transparence (utile pour les superpositions)",
+      "required": false,
+      "defaultValue": false
     },
     {
       "type": "checkbox",
       "id": "checkbox-matrice",
       "name": "checkbox-matrice",
       "label": "Enregistrer les points de contrôle",
-      "hint": "La matrice de points est enregistrée en base",
-      "required": false
+      "hint": "La matrice de points est enregistrée en base de données pour réutilisation",
+      "required": false,
+      "defaultValue": true
     },
     {
       "type": "number",
       "id": "input-scale",
       "name": "input-scale",
       "label": "Échelle de démarrage",
-      "placeholder": "1 / 100.000",
-      "required": false
+      "placeholder": "100000",
+      "hint": "Échelle utilisée pour l'affichage initial (ex: 100000 pour 1/100.000)",
+      "required": false,
+      "min": 1000,
+      "max": 10000000,
+      "step": 1000,
+      "defaultValue": 100000
     }
   ],
   "submitButton": {
-    "text": "Enregistrer",
-    "classes": "fr-btn fr-mt-3w"
+    "text": "Enregistrer les paramètres",
+    "classes": "fr-btn fr-mt-3w",
+    "icon": "fr-icon-save-line"
+  },
+  "resetButton": {
+    "text": "Valeurs par défaut",
+    "classes": "fr-btn fr-btn--secondary",
+    "icon": "fr-icon-refresh-line"
   }
 }
