@@ -87,11 +87,20 @@
                                         Créer un espace
                                     </a>
                                 </li> -->
+                                <!--
+                                    <li>
+                                        <a class="fr-btn fr-icon-lock-line" href="#" style="color:#ff5555;" data-fr-opened="false" aria-controls="fr-modal-login" >
+                                            Se connecter
+                                        </a>
+                                    </li>
+                                -->
+
                                 <li>
-                                    <a class="fr-btn fr-icon-lock-line" href="#" style="color:#ff5555;" data-fr-opened="false" aria-controls="fr-modal-login" >
-                                        Se connecter
-                                    </a>
+                                    <button class="fr-btn fr-icon-lock-line" href="#" style="color:#ff5555;"  onclick="window.location.href='https://api.ptm.huma-num.fr/auth/login?redirect_url=https://app.ptm.huma-num.fr/galligeo/ggo.html'">
+                                        Se connecter avec ORCID
+                                    </button>
                                 </li>
+
                                 <!-- <li>
                                     <a class="fr-btn fr-icon-account-line" href="#" style="color:#ff5555;">
                                         S’enregistrer
@@ -463,6 +472,8 @@
     <!--  -->
     <!-- Modal Login-->
     <!--  -->
+
+    <!-- Change the link to the login page
     <dialog aria-labelledby="fr-modal-login" id="fr-modal-login" class="fr-modal" role="dialog" >
         <div class="fr-container fr-container--fluid fr-container-md">
             <div class="fr-grid-row fr-grid-row--center">
@@ -521,7 +532,7 @@
                                                     </div>
                                                     <p>
                                                       <a href="#" class="fr-link" target="_blank" rel="noopener">Mot de passe oublié ?</a> 
-                                                      <!-- # = [À MODIFIER - url de la page de récupération] -->
+                                                      
                                                     </p>
                                                 </div>
                                             </div>
@@ -542,8 +553,8 @@
                                     <div class="fr-fieldset__element">
                                         <ul class="fr-btns-group">
                                             <li>
-                                                <!--  reactiver se connecter dsfr -->
-                                                <!--  <button class="fr-mt-2v fr-btn" href="login.html"> -->
+                                                reactiver se connecter dsfr -->
+                                                <!--  <button class="fr-mt-2v fr-btn" href="login.html">
                                                 <button class="fr-btn" id="login-button-redirect">
                                                     Se connecter
                                                 </button>
@@ -561,8 +572,8 @@
             </div>
         </div>
     </dialog>
-    <!--  -->
-    <!-- END Modal deposit  -->
+    -->
+    <!-- END Modal login  -->
     <!--  -->
 
     <!-- Script en version es6 module et nomodule pour les navigateurs le ne supportant pas -->
@@ -580,6 +591,9 @@
 
     <script>
     document.addEventListener('DOMContentLoaded', () => {
+        // Vérifier l'état d'authentification au chargement de la page
+        checkAuthStatus();
+        
         const loginButton = document.getElementById('login-button-redirect');
         if (loginButton) {
         loginButton.addEventListener('click', (e) => {
