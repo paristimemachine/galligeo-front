@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Modale Intégration</title>
+    <link rel="stylesheet" href="node_modules/@gouvfr/dsfr/dist/dsfr.min.css">
+    <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+    <div class="fr-container fr-pt-6w">
+        <h1>Test de l'intégration de la modale</h1>
+        
+        <div class="fr-grid-row fr-grid-row--gutters">
+            <div class="fr-col-12">
+                <button data-fr-opened="false" aria-controls="fr-modal-settings" type="button" 
+                        class="fr-btn fr-btn--secondary fr-icon-settings-3-line" 
+                        onclick="openSettingsModal()">
+                    Ouvrir la modale paramètres
+                </button>
+                
+                <button class="fr-btn fr-btn--secondary" onclick="testSettingsModal()">
+                    Tester la modale
+                </button>
+                
+                <button class="fr-btn fr-btn--secondary" onclick="debugAuth()">
+                    Debug Auth
+                </button>
+            </div>
+        </div>
+        
+        <div class="fr-alert fr-alert--info fr-mt-4w">
+            <h3 class="fr-alert__title">Instructions de test</h3>
+            <ol>
+                <li>Cliquez sur "Ouvrir la modale paramètres" pour tester l'ouverture</li>
+                <li>Vérifiez que les 3 onglets sont présents et fonctionnels</li>
+                <li>Vérifiez que les informations utilisateur s'affichent correctement</li>
+                <li>Testez la fermeture avec ESC ou le bouton Fermer</li>
+                <li>Ouvrez la console pour voir les messages de debug</li>
+            </ol>
+        </div>
+    </div>
+
+    <!-- Inclusion de la modale depuis ggo.html -->
+    <dialog id="fr-modal-settings" class="fr-modal" aria-labelledby="fr-modal-settings-title" aria-modal="true">
+        <div class="fr-container fr-container--fluid fr-container-md">
+            <div class="fr-grid-row fr-grid-row--center">
+                <div class="fr-col-12 fr-col-md-8 fr-col-lg-6">
+                    <div class="fr-modal__body">
+                        <div class="fr-modal__header">
+                            <button aria-controls="fr-modal-settings" title="Fermer" type="button" class="fr-btn--close fr-btn" onclick="closeSettingsModal()">Fermer</button>
+                        </div>
+                        <div class="fr-modal__content">
+                            <h2 id="fr-modal-settings-title" class="fr-modal__title">
+                                <span class="fr-icon-account-circle-line fr-icon--lg" aria-hidden="true"></span>
+                                Test Modale - Mon Galligeo
+                            </h2>
+                            <p>La modale s'ouvre correctement !</p>
+                            <p>Les onglets et le contenu complet sont intégrés dans ggo.html</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </dialog>
+
+    <script type="module" src="node_modules/@gouvfr/dsfr/dist/dsfr.module.min.js"></script>
+    <script type="text/javascript" nomodule src="node_modules/@gouvfr/dsfr/dist/dsfr.nomodule.min.js"></script>
+    <script src="js/api_interactions.js"></script>
+</body>
+</html>

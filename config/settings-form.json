@@ -1,0 +1,80 @@
+{
+  "fields": [
+    {
+      "type": "select",
+      "id": "select-algo",
+      "name": "select-algo",
+      "label": "Algorithme de géoréférencement par défaut",
+      "placeholder": "Sélectionner un algorithme",
+      "required": false,
+      "options": [
+        { "value": "polynomial", "label": "Polynomial" },
+        { "value": "helmert", "label": "Helmert" },
+        { "value": "affine", "label": "Affine" },
+        { "value": "tps", "label": "Thin Plate Spline" }
+      ]
+    },
+    {
+      "type": "select",
+      "id": "select-resample",
+      "name": "select-resample",
+      "label": "Méthode de rééchantillonage",
+      "placeholder": "Sélectionner un algorithme",
+      "required": false,
+      "options": [
+        { "value": "nearest", "label": "Plus proche voisin" },
+        { "value": "bilinear", "label": "Bilinéaire" },
+        { "value": "cubic", "label": "Cubique" },
+        { "value": "lanczos", "label": "Lanczos" }
+      ]
+    },
+    {
+      "type": "select",
+      "id": "select-quality",
+      "name": "select-quality",
+      "label": "Qualité image Gallica",
+      "placeholder": "Sélectionner une option",
+      "required": false,
+      "options": [
+        { "value": "medium", "label": "Medium" },
+        { "value": "hd", "label": "Haute définition" }
+      ]
+    },
+    {
+      "type": "checkbox",
+      "id": "checkbox-compression",
+      "name": "checkbox-compression",
+      "label": "Activer la compression des images",
+      "hint": "Réduire la taille des fichiers générés",
+      "required": false
+    },
+    {
+      "type": "checkbox",
+      "id": "checkbox-transparent",
+      "name": "checkbox-transparent",
+      "label": "Rendre transparent le fond des cartes",
+      "hint": "Employer 0 pour la transparence",
+      "required": false
+    },
+    {
+      "type": "checkbox",
+      "id": "checkbox-matrice",
+      "name": "checkbox-matrice",
+      "label": "Enregistrer les points de contrôle",
+      "hint": "La matrice de points est enregistrée en base",
+      "required": false
+    },
+    {
+      "type": "number",
+      "id": "input-scale",
+      "name": "input-scale",
+      "label": "Échelle de démarrage",
+      "placeholder": "1 / 100.000",
+      "required": false
+    }
+  ],
+  "submitButton": {
+    "text": "Enregistrer",
+    "classes": "fr-btn fr-mt-3w"
+  }
+}

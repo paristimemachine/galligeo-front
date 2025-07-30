@@ -208,9 +208,151 @@ body {
   z-index: auto !important;
 }
 
+/* Forcer spécifiquement les éléments Leaflet à rester en dessous des modales */
+.leaflet-container {
+  z-index: 1 !important;
+}
+
+.leaflet-control-container {
+  z-index: 100 !important;
+}
+
 /* Forcer le menu utilisateur au premier plan */
 .fr-header__tools-links .user-dropdown-menu {
   z-index: 99999 !important;
   position: fixed !important;
+}
+
+/* Styles pour la modale des paramètres DSFR */
+#fr-modal-settings {
+  width: 100vw;
+  max-width: 100vw;
+}
+
+#fr-modal-settings .fr-container {
+  max-width: 100%;
+}
+
+#fr-modal-settings .fr-col-lg-6 {
+  max-width: 100%;
+}
+
+@media (min-width: 62em) {
+    .fr-col-lg-6 {
+        flex: 0 0 95%;
+        max-width: 50%;
+        width: 50%;
+    }
+}
+
+#fr-modal-settings .fr-col-lg-6 {
+    max-width: 100%;
+}
+
+#fr-modal-settings .fr-modal__body {
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+#fr-modal-settings .fr-tabs__panel {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+#fr-modal-settings .fr-card {
+  margin-bottom: 0;
+}
+
+#fr-modal-settings .fr-card__img img {
+  max-height: 150px;
+  object-fit: cover;
+}
+
+#fr-modal-settings .info-item {
+  margin-bottom: 0.5rem;
+}
+
+#fr-modal-settings .info-label {
+  display: inline-block;
+  min-width: 100px;
+}
+
+#fr-modal-settings .fr-fieldset__legend h3 {
+  font-size: 1.1rem;
+  margin: 0;
+  color: #000091;
+}
+
+#fr-modal-settings .fr-input[readonly] {
+  background-color: #f6f6f6;
+  color: #666;
+}
+
+#fr-modal-settings .fr-hint-text {
+  font-style: italic;
+  color: #666;
+}
+
+/* Style pour les boutons du menu utilisateur */
+.user-menu-actions button.fr-btn {
+  width: 100%;
+  text-align: left;
+  justify-content: flex-start;
+  background-color: transparent;
+  color: #333;
+  border: 1px solid #ddd;
+}
+
+.user-menu-actions button.fr-btn:hover {
+  background-color: #f5f5fe;
+  color: #000091;
+}
+
+/* Styles pour le formulaire de paramètres généré dynamiquement */
+#settings-form-container {
+  max-width: 100%;
+  padding: 1rem;
+}
+
+#settings-form .fr-select-group,
+#settings-form .fr-checkbox-group,
+#settings-form .fr-input-group {
+  margin-bottom: 1.5rem;
+}
+
+#settings-form .fr-hint-text {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+  font-style: italic;
+  color: #666;
+}
+
+#settings-form .fr-checkbox-group .fr-hint-text {
+  margin-left: 0;
+  padding-left: 0;
+}
+
+/* Style pour les actions de paramètres */
+.settings-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+  flex-wrap: wrap;
+}
+
+.settings-actions .fr-btn {
+  flex: 1;
+  min-width: 120px;
+}
+
+@media (max-width: 768px) {
+  .settings-actions {
+    flex-direction: column;
+  }
+  
+  .settings-actions .fr-btn {
+    width: 100%;
+  }
 }
 
