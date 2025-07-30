@@ -331,6 +331,273 @@
     <!-- END Modal deposit  -->
     <!--  -->
 
+    <!--  -->
+    <!-- Modal Settings DSFR -->
+    <dialog class="fr-modal" id="fr-modal-settings" aria-labelledby="fr-modal-settings-title">
+        <div class="fr-container fr-container--fluid fr-container-md">
+            <div class="fr-grid-row fr-grid-row--center">
+                <div class="fr-col-12 fr-col-md-8 fr-col-lg-6">
+                    <div class="fr-modal__body">
+                        <div class="fr-modal__header">
+                            <button class="fr-link--close fr-link" aria-controls="fr-modal-settings">Fermer</button>
+                        </div>
+                        <div class="fr-modal__content">
+                            <h2 id="fr-modal-settings-title" class="fr-modal__title">
+                                <span class="fr-icon-account-circle-line fr-icon--lg" aria-hidden="true"></span>
+                                Mon Galligeo
+                            </h2>
+
+                            <div class="fr-tabs" id="user-tabs">
+                                <ul class="fr-tabs__list" role="tablist" aria-label="Navigation espace utilisateur">
+                                    <li role="presentation">
+                                        <button id="tabpanel-profil" class="fr-tabs__tab" tabindex="0" role="tab" aria-selected="true" aria-controls="tabpanel-profil-panel">Profil utilisateur</button>
+                                    </li>
+                                    <li role="presentation">
+                                        <button id="tabpanel-parametres" class="fr-tabs__tab" tabindex="-1" role="tab" aria-selected="false" aria-controls="tabpanel-parametres-panel">Paramètres géoréférencement</button>
+                                    </li>
+                                    <li role="presentation">
+                                        <button id="tabpanel-cartes" class="fr-tabs__tab" tabindex="-1" role="tab" aria-selected="false" aria-controls="tabpanel-cartes-panel">Mes cartes</button>
+                                    </li>
+                                </ul>
+
+                                <!-- Panel Profil -->
+                                <div id="tabpanel-profil-panel" class="fr-tabs__panel fr-tabs__panel--selected" role="tabpanel" aria-labelledby="tabpanel-profil" tabindex="0">
+                                    <section class="fr-container fr-card fr-card--shadow fr-p-4w fr-mb-4w">
+                                        <h3 class="fr-h4">Informations utilisateur</h3>
+                                        <div class="fr-grid-row fr-grid-row--gutters fr-mt-2w">
+                                            <div class="fr-col-3">
+                                                <img src="img/users/avatar_neutre.jpg" alt="Photo de profil" class="fr-responsive-img fr-mb-2w" style="border-radius: 50%; max-width: 80%;">
+                                            </div>
+                                            <div class="fr-col-9">
+                                                <div class="user-profile-info">
+                                                    <div class="fr-grid-row fr-grid-row--gutters">
+                                                        <div class="fr-col-12 fr-col-md-6">
+                                                            <div class="info-item">
+                                                                <span class="info-label"><strong>Prénom :</strong></span>
+                                                                <span class="info-value" id="user-first-name">Chargement...</span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="fr-col-12 fr-col-md-6">
+                                                            <div class="info-item">
+                                                                <span class="info-label"><strong>Nom :</strong></span>
+                                                                <span class="info-value" id="user-last-name">Chargement...</span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="fr-col-12">
+                                                            <div class="info-item">
+                                                                <span class="info-label"><strong>Email :</strong></span>
+                                                                <span class="info-value" id="user-email">Chargement...</span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="fr-col-12">
+                                                            <div class="info-item">
+                                                                <span class="info-label"><strong>ORCID :</strong></span>
+                                                                <span class="info-value" id="user-orcid">Chargement...</span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="fr-col-12">
+                                                            <div class="info-item">
+                                                                <span class="info-label"><strong>Institution :</strong></span>
+                                                                <span class="info-value" id="user-institution">Chargement...</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <p class="fr-mt-2w">Vous pouvez modifier ces informations dans votre 
+                                                    <a href="https://api.ptm.huma-num.fr/auth/profile" target="_blank" rel="noopener">
+                                                        profil centralisé
+                                                    </a>.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </section>
+                                </div>
+
+                                <!-- Panel Paramètres -->
+                                <div id="tabpanel-parametres-panel" class="fr-tabs__panel" role="tabpanel" aria-labelledby="tabpanel-parametres" tabindex="0">
+                                    <section class="fr-container fr-card fr-card--shadow fr-p-4w fr-mb-4w">
+                                        <h3 class="fr-h4">Paramètres de géoréférencement</h3>
+                                        <form>
+                                            <div class="fr-select-group">
+                                                <label class="fr-label" for="select-algo">Algorithme de géoréférencement par défaut</label>
+                                                <select class="fr-select" id="select-algo" name="select-algo">
+                                                    <option value="" selected disabled>Sélectionner un algorithme</option>
+                                                    <option value="polynomial">Polynomial</option>
+                                                    <option value="helmert">Helmert</option>
+                                                    <option value="affine">Affine</option>
+                                                    <option value="tps">Thin Plate Spline</option>
+                                                </select>
+                                            </div>
+
+                                            <div class="fr-select-group">
+                                                <label class="fr-label" for="select-resample">Méthode de rééchantillonage</label>
+                                                <select class="fr-select" id="select-resample" name="select-resample">
+                                                    <option value="" selected disabled>Sélectionner un algorithme</option>
+                                                    <option value="nearest">Plus proche voisin</option>
+                                                    <option value="bilinear">Bilinéaire</option>
+                                                    <option value="cubic">Cubique</option>
+                                                    <option value="lanczos">Lanczos</option>
+                                                </select>
+                                            </div>
+
+                                            <div class="fr-select-group">
+                                                <label class="fr-label" for="select-quality">Qualité image Gallica</label>
+                                                <select class="fr-select" id="select-quality" name="select-quality">
+                                                    <option value="" selected disabled>Sélectionner une option</option>
+                                                    <option value="medium">Medium</option>
+                                                    <option value="hd">Haute définition</option>
+                                                </select>
+                                            </div>
+
+                                            <div class="fr-checkbox-group">
+                                                <input type="checkbox" id="checkbox-compression" name="checkbox-compression">
+                                                <label class="fr-label" for="checkbox-compression">
+                                                    Activer la compression des images
+                                                    <span class="fr-hint-text">Réduire la taille des fichiers générés</span>
+                                                </label>
+                                            </div>
+
+                                            <div class="fr-checkbox-group">
+                                                <input type="checkbox" id="checkbox-transparent" name="checkbox-transparent">
+                                                <label class="fr-label" for="checkbox-transparent">
+                                                    Rendre transparent le fond des cartes
+                                                    <span class="fr-hint-text">Employer 0 pour la transparence</span>
+                                                </label>
+                                            </div>
+
+                                            <div class="fr-checkbox-group">
+                                                <input type="checkbox" id="checkbox-matrice" name="checkbox-matrice">
+                                                <label class="fr-label" for="checkbox-matrice">
+                                                    Enregistrer les points de contrôle
+                                                    <span class="fr-hint-text">La matrice de points est enregistrée en base</span>
+                                                </label>
+                                            </div>
+
+                                            <div class="fr-input-group">
+                                                <label class="fr-label" for="input-scale">Échelle de démarrage</label>
+                                                <input id="input-scale" class="fr-input" type="number" placeholder="1 / 100.000">
+                                            </div>
+                                            
+                                            <button class="fr-btn fr-mt-3w" type="submit">Enregistrer</button>
+                                        </form>
+                                    </section>
+                                </div>
+
+                                <!-- Panel Cartes -->
+                                <div id="tabpanel-cartes-panel" class="fr-tabs__panel" role="tabpanel" aria-labelledby="tabpanel-cartes" tabindex="0">
+                                    <section class="fr-container fr-py-4w">
+                                        <h3 class="fr-h4 fr-mb-3w">Vos cartes</h3>
+
+                                        <div class="fr-grid-row fr-grid-row--gutters fr-mb-4w">
+                                            <!-- Carte 1 -->
+                                            <div class="fr-col-md-6 fr-col">
+                                                <div class="fr-card">
+                                                    <div class="fr-card__body">
+                                                        <div class="fr-card__content">
+                                                            <h4 class="fr-card__title">
+                                                                <a href="#">Paris 1944</a>
+                                                            </h4>
+                                                            <p class="fr-card__desc">Paris en 1944 - Girard et Barrère - Géographe Editeurs</p>
+                                                            <p class="fr-card__desc"><a href="https://gallica.bnf.fr/ark:/12148/btv1b53121232b" target="_blank">Voir la notice Gallica</a></p>
+                                                            <p class="fr-card__desc"><a href="https://app.ptm.huma-num.fr/galligeo/georef/?ark=btv1b53121232b" target="_blank">Voir la carte géoréférencée</a></p>
+                                                            <div class="fr-card__start">
+                                                                <ul class="fr-tags-group">
+                                                                    <li><p class="fr-tag">Paris</p></li>
+                                                                    <li><p class="fr-tag fr-tag--green-emeraude">XXème s.</p></li>
+                                                                </ul>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="fr-card__header">
+                                                        <div class="fr-card__img">
+                                                            <img class="fr-responsive-img" src="img/georefs/georef_paris1944.jpg" alt="Carte de Paris en 1944" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Carte 2 -->
+                                            <div class="fr-col-md-6 fr-col">
+                                                <div class="fr-card fr-enlarge-link">
+                                                    <div class="fr-card__body">
+                                                        <div class="fr-card__content">
+                                                            <h4 class="fr-card__title">
+                                                                <a href="#">Carte des fils télégraphiques</a>
+                                                            </h4>
+                                                            <p class="fr-card__desc">Carte des fils télégraphiques</p>
+                                                            <p class="fr-card__desc"><a href="https://gallica.bnf.fr/ark:/12148/btv1b532480876" target="_blank">Voir la notice Gallica</a></p>
+                                                            <p class="fr-card__desc"><a href="https://app.ptm.huma-num.fr/galligeo/georef/?ark=btv1b532480876" target="_blank">Voir la carte géoréférencée</a></p>
+                                                            <div class="fr-card__start">
+                                                                <ul class="fr-tags-group">
+                                                                    <li><p class="fr-tag">Cartoquete</p></li>
+                                                                    <li><p class="fr-tag fr-tag--yellow-tournesol">Favoris</p></li>
+                                                                </ul>
+                                                                <p class="fr-card__detail fr-icon-star-fill">Ajoutée le 05/04/2025</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="fr-card__header">
+                                                        <div class="fr-card__img">
+                                                            <img class="fr-responsive-img" src="img/georefs/georef_france_fils_telegraphiques.jpg" alt="Carte des fils télégraphiques" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Carte 3 -->
+                                            <div class="fr-col-md-6 fr-col">
+                                                <div class="fr-card fr-enlarge-link">
+                                                    <div class="fr-card__body">
+                                                        <div class="fr-card__content">
+                                                            <h4 class="fr-card__title">
+                                                                <a href="#">Amiens. - Plan de la ville d'Amiens</a>
+                                                            </h4>
+                                                            <p class="fr-card__desc">Amiens. - Plan de la ville d'Amiens en 1848</p>
+                                                            <p class="fr-card__desc"><a href="https://gallica.bnf.fr/ark:/12148/btv1b8441346h" target="_blank">Voir la notice Gallica</a></p>
+                                                            <div class="fr-card__start">
+                                                                <ul class="fr-tags-group">
+                                                                    <li><p class="fr-tag">Cartoquete</p></li>
+                                                                    <li><p class="fr-tag fr-tag--pink-tuile">A géoéréférencer</p></li>
+                                                                </ul>
+                                                                <p class="fr-card__detail fr-icon-time-line">Soumise le 02/04/2025</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="fr-card__header">
+                                                        <div class="fr-card__img">
+                                                            <img class="fr-responsive-img" src="img/georefs/georef_amiens1848.jpg" alt="Amiens. - Plan de la ville d'Amiens en 1848" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <p class="fr-text--sm fr-mt-2w">Les cartes à géoéréférencer ou en favoris sont en lien avec votre profil <strong>Cartoquete</strong>.</p>
+                                    </section>
+                                </div>
+                            </div>
+
+                            <!-- Footer Modal
+                            <div class="fr-modal__footer">
+                                <ul class="fr-btns-group fr-btns-group--right fr-btns-group--inline-reverse fr-btns-group--inline-lg fr-btns-group--icon-left">
+                                    <li>
+                                        <button class="fr-btn fr-icon-close-line fr-btn--secondary" onclick="closeSettingsModal()">
+                                            Fermer
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
+                            -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </dialog>
+    <!--  -->
+    <!-- END Modal Settings  -->
+    <!--  -->
+
 
     <!--  -->
     <!-- PANEL-->

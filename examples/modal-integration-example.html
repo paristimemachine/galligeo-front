@@ -1,0 +1,87 @@
+<!-- Exemple d'intégration dans votre modale de paramètres -->
+
+<!-- Dans votre modale DSFR existante, remplacez le form par ce conteneur -->
+<div class="fr-modal__body">
+    <div class="fr-tabs">
+        <!-- Vos onglets existants -->
+        
+        <div class="fr-tabs__panel" id="tabpanel-settings">
+            <div class="fr-container">
+                <div class="fr-grid-row fr-grid-row--gutters">
+                    <div class="fr-col-lg-12">
+                        
+                        <!-- Conteneur pour le formulaire généré dynamiquement -->
+                        <div id="settings-form-container">
+                            <!-- Le formulaire sera généré ici par JavaScript -->
+                        </div>
+                        
+                        <!-- Actions supplémentaires (optionnel) -->
+                        <div class="settings-actions">
+                            <button type="button" class="fr-btn fr-btn--secondary" onclick="window.settingsManager.resetSettings()">
+                                Réinitialiser
+                            </button>
+                            <button type="button" class="fr-btn fr-btn--secondary" onclick="window.settingsManager.exportSettings()">
+                                Exporter
+                            </button>
+                            <label for="import-settings" class="fr-btn fr-btn--secondary" style="margin: 0; cursor: pointer;">
+                                Importer
+                                <input type="file" id="import-settings" accept=".json" style="display: none;" 
+                                       onchange="handleSettingsImport(this)">
+                            </label>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Fonction pour gérer l'importation de paramètres
+function handleSettingsImport(input) {
+    const file = input.files[0];
+    if (file) {
+        window.settingsManager.importSettings(file);
+        input.value = ''; // Reset l'input
+    }
+}
+
+// Initialiser le formulaire quand la modale s'ouvre
+document.addEventListener('DOMContentLoaded', function() {
+    // Si vous avez un événement spécifique pour l'ouverture de la modale
+    // remplacez ceci par le bon événement
+    
+    // Exemple avec un observer pour détecter quand la modale devient visible
+    const modalObserver = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            const modal = document.getElementById('fr-modal-settings');
+            if (modal && modal.classList.contains('fr-modal--opened')) {
+                // La modale est ouverte, initialiser le formulaire
+                initSettingsForm();
+                modalObserver.disconnect(); // Arrêter l'observation une fois initialisé
+            }
+        });
+    });
+    
+    // Observer les changements sur le body ou sur la modale directement
+    const targetNode = document.body;
+    modalObserver.observe(targetNode, { 
+        attributes: true, 
+        childList: true, 
+        subtree: true 
+    });
+});
+
+// Écouter les changements de paramètres pour mettre à jour l'application
+document.addEventListener('settingsUpdated', function(event) {
+    const settings = event.detail.settings;
+    console.log('Paramètres mis à jour:', settings);
+    
+    // Ici vous pouvez ajouter la logique pour appliquer les nouveaux paramètres
+    // Par exemple:
+    // - Changer l'algorithme de géoréférencement par défaut
+    // - Modifier la qualité des images Gallica
+    // - etc.
+});
+</script>
