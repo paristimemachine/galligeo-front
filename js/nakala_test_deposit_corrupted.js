@@ -1,8 +1,9 @@
-async function deposerSurNakala(apiKey_in, collection_id_in) {
+async function deposerSurNakala(apiKey_in
+    // 1. Récupérer votre "fichier local" via fetch) {
 
     // Configuration
-    const API_URL_TEST = 'https://apitest.nakala.fr'; // ou production 'https://api.nakala.fr'
-    const API_URL_PROD = 'https://api.nakala.fr';
+    const API_URL_TEST      = 'https://apitest.nakala.fr'; // ou production 'https://api.nakala.fr'
+    const API_URL_PROD       = 'https://api.nakala.fr';
 
     const API_URL = API_URL_PROD
 
@@ -38,7 +39,27 @@ async function deposerSurNakala(apiKey_in, collection_id_in) {
         institution = document.getElementById('input-institution').value;
     }
 
-    // 1. Récupérer votre "fichier local" via fetch
+
+    // 1. Récupérer votre "fichier local" via fetcherSurNakala(apiKey_in, collection_id_in, ) {
+
+    // Configuration
+    const API_URL_TEST      = 'https://apitest.nakala.fr'; // ou production 'https://api.nakala.fr'
+    const API_URL_PROD       = 'https://api.nakala.fr';
+
+    const API_URL = API_URL_PROD
+
+    const UPLOAD_EP = API_URL + '/datas/uploads';
+    const CREATE_EP = API_URL + '/datas';
+
+    const COLLECTION_ID = collection_id_in || '10.34847/nkl.f8eev8l7'; // par défaut, la collection de test
+    const apiKey = apiKey_in || '01234567-89ab-cdef-0123-456789abcdef' // par défaut, la clé d'API de test
+
+    const nom = document.getElementById('input-family-name-1').value;
+    const prenom = document.getElementById('input-firstname-1').value;
+    const institution = document.getElementById('input-institution').value;
+
+
+    // 1. Récupérer votre “fichier local” via fetch
     //    (ATTN: le chemin doit être servi par votre serveur web)
     const fileResp = await fetch('js/coords.txt');
     if (!fileResp.ok) {
@@ -60,7 +81,7 @@ async function deposerSurNakala(apiKey_in, collection_id_in) {
     if (!uploadResp.ok) {
         const errText = await uploadResp.text();
         console.error('Échec upload:', uploadResp.status, errText);
-        return alert("Erreur lors de l'upload de coords.txt");
+        return alert('Erreur lors de l’upload de coords.txt');
     }
     const { name: uploadedName, sha1: uploadedSha1 } = await uploadResp.json();
     console.log('Upload OK:', uploadedName, uploadedSha1);

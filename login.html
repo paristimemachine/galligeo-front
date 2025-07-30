@@ -38,7 +38,7 @@
     </header>
 
     <main class="fr-container fr-pt-6w fr-pb-6w">
-      <h1 class="fr-h3 fr-text--center fr-mb-4w">Mon Galligeo (page en démo)</h1>
+      <h1 class="fr-h3 fr-text--center fr-mb-4w">Mon Galligeo</h1>
 
     <div class="fr-tabs fr-mb-6w" id="user-tabs">
     <ul class="fr-tabs__list" role="tablist" aria-label="Navigation espace utilisateur">
@@ -63,12 +63,45 @@
           <img src="img/users/avatar_neutre.jpg" alt="Photo de profil" class="fr-responsive-img fr-mb-2w" style="border-radius: 50%; max-width: 80%;">
         </div>
         <div class="fr-col-9">
-          <ul class="fr-list">
-            <li><strong>Nom :</strong> Arsène</li>
-            <li><strong>Prénom :</strong> Lupin</li>
-            <li><strong>Email :</strong> arsene.lupin@ptm.huma-num.fr</li>
-          </ul>
-          <p class="fr-mt-2w">Vous pouvez modifier ces informations dans votre profil centralisé (bientôt disponible).</p>
+          <div class="user-profile-info">
+            <div class="fr-grid-row fr-grid-row--gutters">
+              <div class="fr-col-12 fr-col-md-6">
+                <div class="info-item">
+                  <span class="info-label"><strong>Prénom :</strong></span>
+                  <span class="info-value" id="user-first-name">Chargement...</span>
+                </div>
+              </div>
+              <div class="fr-col-12 fr-col-md-6">
+                <div class="info-item">
+                  <span class="info-label"><strong>Nom :</strong></span>
+                  <span class="info-value" id="user-last-name">Chargement...</span>
+                </div>
+              </div>
+              <div class="fr-col-12">
+                <div class="info-item">
+                  <span class="info-label"><strong>Email :</strong></span>
+                  <span class="info-value" id="user-email">Chargement...</span>
+                </div>
+              </div>
+              <div class="fr-col-12">
+                <div class="info-item">
+                  <span class="info-label"><strong>ORCID :</strong></span>
+                  <span class="info-value" id="user-orcid">Chargement...</span>
+                </div>
+              </div>
+              <div class="fr-col-12">
+                <div class="info-item">
+                  <span class="info-label"><strong>Institution :</strong></span>
+                  <span class="info-value" id="user-institution">Chargement...</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="fr-mt-2w">Vous pouvez modifier ces informations dans votre 
+            <a href="https://api.ptm.huma-num.fr/auth/profile#" target="_blank" rel="noopener">
+              profil centralisé
+            </a>.
+          </p>
         </div>
       </div>
     </section>
@@ -301,6 +334,8 @@
 
     <script type="module" src="node_modules/@gouvfr/dsfr/dist/dsfr.module.min.js"></script>
     <script nomodule src="node_modules/@gouvfr/dsfr/dist/dsfr.nomodule.min.js"></script>
+    <script src="js/api_interactions.js"></script>
+    <script src="js/login_interactions.js"></script>
 
 
   </body>

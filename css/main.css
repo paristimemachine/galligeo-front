@@ -104,3 +104,113 @@ body {
   z-index: 1;
 }
 
+/* Styles pour le menu utilisateur connecté */
+.fr-nav__item {
+  position: relative;
+  z-index: 10000;
+}
+
+.fr-header {
+  position: relative;
+  z-index: 9998;
+}
+
+.fr-header__tools-links {
+  position: relative;
+  z-index: 9999;
+}
+
+.user-menu-toggle {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  z-index: 10001 !important;
+}
+
+.user-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  min-width: 280px;
+  padding: 16px;
+  z-index: 9999 !important;
+  margin-top: 8px;
+}
+
+.user-info {
+  margin-bottom: 12px;
+}
+
+.user-info p {
+  margin: 4px 0;
+  font-size: 14px;
+  color: #333;
+}
+
+.user-info strong {
+  color: #000091;
+}
+
+.user-dropdown-menu hr {
+  border: none;
+  border-top: 1px solid #eee;
+  margin: 12px 0;
+}
+
+.user-menu-actions {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.user-menu-actions li {
+  margin: 8px 0;
+}
+
+.user-menu-actions .fr-btn {
+  width: 100%;
+  text-align: left;
+  justify-content: flex-start;
+  background-color: transparent;
+  color: #333;
+  border: 1px solid #ddd;
+}
+
+.user-menu-actions .fr-btn:hover {
+  background-color: #f5f5fe;
+  color: #000091;
+}
+
+/* Style pour le bouton utilisateur connecté */
+.user-menu-toggle[data-fr-opened="true"] {
+  background-color: #f5f5fe;
+}
+
+@media (max-width: 768px) {
+  .user-dropdown-menu {
+    right: -16px;
+    min-width: 250px;
+  }
+}
+
+/* Assurer que le menu utilisateur reste au-dessus de Leaflet */
+.leaflet-container,
+.leaflet-map-pane,
+.leaflet-overlay-pane,
+.leaflet-marker-pane,
+.leaflet-popup-pane,
+.leaflet-control-container {
+  z-index: auto !important;
+}
+
+/* Forcer le menu utilisateur au premier plan */
+.fr-header__tools-links .user-dropdown-menu {
+  z-index: 99999 !important;
+  position: fixed !important;
+}
+
