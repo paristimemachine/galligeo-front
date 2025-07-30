@@ -61,9 +61,35 @@ class SettingsManager {
                 this.settings = JSON.parse(savedSettings);
                 this.formGenerator.populateForm(this.settings);
                 console.log('Paramètres chargés:', this.settings);
+            } else {
+                // Premier chargement - appliquer les valeurs par défaut
+                this.applyDefaultSettings();
             }
         } catch (error) {
             console.error('Erreur lors du chargement des paramètres:', error);
+            // En cas d'erreur, appliquer les valeurs par défaut
+            this.applyDefaultSettings();
+        }
+    }
+
+    /**
+     * Applique les valeurs par défaut définies dans la configuration
+     */
+    applyDefaultSettings() {
+        const defaultSettings = {};
+        
+        if (this.formGenerator.config && this.formGenerator.config.fields) {
+            this.formGenerator.config.fields.forEach(field => {
+                if (field.defaultValue !== undefined) {
+                    defaultSettings[field.name] = field.defaultValue;
+                }
+            });
+        }
+        
+        if (Object.keys(defaultSettings).length > 0) {
+            this.settings = defaultSettings;
+            this.saveSettings(this.settings);
+            console.log('Valeurs par défaut appliquées:', this.settings);
         }
     }
 
@@ -112,16 +138,17 @@ class SettingsManager {
      */
     resetSettings() {
         if (confirm('Êtes-vous sûr de vouloir remettre tous les paramètres à leurs valeurs par défaut ?')) {
+            // Vider les paramètres actuels
             this.settings = {};
             localStorage.removeItem('galligeo-settings');
             
-            // Réinitialiser le formulaire
-            const form = document.getElementById('settings-form');
-            if (form) {
-                form.reset();
-            }
+            // Appliquer les valeurs par défaut
+            this.applyDefaultSettings();
             
-            this.showNotification('Paramètres remis à zéro', 'info');
+            // Repeupler le formulaire avec les valeurs par défaut
+            this.formGenerator.populateForm(this.settings);
+            
+            this.showNotification('Paramètres remis aux valeurs par défaut', 'info');
         }
     }
 
