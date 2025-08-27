@@ -140,7 +140,7 @@
         <div class="fr-grid-row">
 
             <!-- side bar -->
-            <div class="fr-col-2" id="nav-tools-sidebar-control">
+            <div class="fr-col-1" id="nav-tools-sidebar-control">
 
                 <!-- button close hidden at startup -->
                 <!-- button filter complet -->
@@ -158,7 +158,7 @@
             </div>
 
             <!-- search bar -->
-            <div class="fr-col-6" id="nav-search-bar">
+            <div class="fr-col-5" id="nav-search-bar">
                     <div class="fr-search-bar autocomplete" id="header-search" role="search">
                         <table border=0>
                             <tr>
@@ -176,8 +176,12 @@
 
             </div>
 
-            <div class="fr-col-4" id="nav-tools4">
+            <div class="fr-col-6" id="nav-tools4">
                 
+                <button class="fr-btn fr-btn--secondary" id="btn_points" disabled onclick="click_georef('', list_georef_points, list_points_polygon_crop, input_ark)" disabled> 
+                    Saisir des points
+                </button>
+
                 <button class="fr-btn fr-btn--secondary" id="btn_georef" disabled onclick="click_georef('', list_georef_points, list_points_polygon_crop, input_ark)"> 
                     Géoréférencer
                 </button>
@@ -452,6 +456,27 @@
                                     <section class="fr-container fr-py-4w">
                                         <h3 class="fr-h4 fr-mb-3w">Vos cartes</h3>
 
+                                        <!-- Section Favoris Cartoquete -->
+                                        <div id="cartoquete-favorites-section" style="display:none;">
+                                            <h4 class="fr-h5 fr-mb-2w">
+                                                <span class="fr-icon-star-fill fr-mr-1w" aria-hidden="true"></span>
+                                                Favoris Cartoquete
+                                            </h4>
+                                            <div class="fr-grid-row fr-grid-row--gutters fr-mb-4w" id="cartoquete-favorites-container">
+                                                <!-- Les favoris Cartoquete seront chargés ici dynamiquement -->
+                                                <div class="fr-col-12">
+                                                    <div class="fr-alert fr-alert--info">
+                                                        <p>Chargement des favoris Cartoquete...</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Section Exemples -->
+                                        <h4 class="fr-h5 fr-mb-2w">
+                                            <span class="fr-icon-map-2-fill fr-mr-1w" aria-hidden="true"></span>
+                                            Exemples de cartes géoréférencées
+                                        </h4>
                                         <div class="fr-grid-row fr-grid-row--gutters fr-mb-4w">
                                             <!-- Carte 1 -->
                                             <div class="fr-col-md-6 fr-col">
@@ -482,7 +507,7 @@
 
                                             <!-- Carte 2 -->
                                             <div class="fr-col-md-6 fr-col">
-                                                <div class="fr-card fr-enlarge-link">
+                                                <div class="fr-card">
                                                     <div class="fr-card__body">
                                                         <div class="fr-card__content">
                                                             <h4 class="fr-card__title">
@@ -493,10 +518,10 @@
                                                             <p class="fr-card__desc"><a href="https://app.ptm.huma-num.fr/galligeo/georef/?ark=btv1b532480876" target="_blank">Voir la carte géoréférencée</a></p>
                                                             <div class="fr-card__start">
                                                                 <ul class="fr-tags-group">
-                                                                    <li><p class="fr-tag">Cartoquete</p></li>
-                                                                    <li><p class="fr-tag fr-tag--yellow-tournesol">Favoris</p></li>
+                                                                    <li><p class="fr-tag fr-tag--blue-france">Exemple</p></li>
+                                                                    <li><p class="fr-tag fr-tag--green-emeraude">Géoréférencée</p></li>
                                                                 </ul>
-                                                                <p class="fr-card__detail fr-icon-star-fill">Ajoutée le 05/04/2025</p>
+                                                                <p class="fr-card__detail fr-icon-star-fill">Exemple Galligeo</p>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -510,7 +535,7 @@
 
                                             <!-- Carte 3 -->
                                             <div class="fr-col-md-6 fr-col">
-                                                <div class="fr-card fr-enlarge-link">
+                                                <div class="fr-card">
                                                     <div class="fr-card__body">
                                                         <div class="fr-card__content">
                                                             <h4 class="fr-card__title">
@@ -520,10 +545,10 @@
                                                             <p class="fr-card__desc"><a href="https://gallica.bnf.fr/ark:/12148/btv1b8441346h" target="_blank">Voir la notice Gallica</a></p>
                                                             <div class="fr-card__start">
                                                                 <ul class="fr-tags-group">
-                                                                    <li><p class="fr-tag">Cartoquete</p></li>
-                                                                    <li><p class="fr-tag fr-tag--pink-tuile">A géoéréférencer</p></li>
+                                                                    <li><p class="fr-tag fr-tag--blue-france">Exemple</p></li>
+                                                                    <li><p class="fr-tag fr-tag--pink-tuile">A géoréférencer</p></li>
                                                                 </ul>
-                                                                <p class="fr-card__detail fr-icon-time-line">Soumise le 02/04/2025</p>
+                                                                <p class="fr-card__detail fr-icon-time-line">Exemple Galligeo</p>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -536,7 +561,9 @@
                                             </div>
                                         </div>
 
-                                        <p class="fr-text--sm fr-mt-2w">Les cartes à géoéréférencer ou en favoris sont en lien avec votre profil <strong>Cartoquete</strong>.</p>
+                                        <p class="fr-text--sm fr-mt-2w">
+                                            <span id="cartoquete-status-message">Connectez-vous pour voir vos favoris Cartoquete.</span>
+                                        </p>
                                     </section>
                                 </div>
                             </div>
@@ -631,7 +658,7 @@
                         autoplay
                         muted
                         loop
-                        preload = "auto"
+                        preload="metadata"
                         >
                         Your browser does not support HTML5 video.
                     </video>
@@ -819,9 +846,11 @@
     <script src="js/gallica_interactions.js"></script>
     <script src="js/getParamAtStartup.js"></script>
     <script src="js/nakala_test_deposit.js"></script>
+    <script src="js/ptm-auth.js"></script>
     <script src="js/form-generator.js"></script>
     <script src="js/settings-manager.js"></script>
     <script src="js/settings-utils.js"></script>
+    <script src="js/cartoquete-manager.js"></script>
 
     <script>
     // Variable globale pour suivre l'état d'initialisation
@@ -894,6 +923,17 @@
                 setTimeout(initSettingsForm, 100);
             });
         }
+
+        // Observer les clics sur l'onglet "Mes cartes" pour charger les favoris
+        const cartesTab = document.getElementById('tabpanel-cartes');
+        if (cartesTab) {
+            cartesTab.addEventListener('click', function() {
+                // Charger les favoris Cartoquete si l'utilisateur est connecté
+                if (window.ptmAuth && window.ptmAuth.isAuthenticated()) {
+                    setTimeout(loadCartoqueteFavorites, 100);
+                }
+            });
+        }
     }
 
     // Écouter les changements de paramètres pour mettre à jour l'application
@@ -943,6 +983,34 @@
             // Afficher une notification de succès
             showNotification('Paramètres mis à jour avec succès', 'success');
         });
+
+        // Écouter les événements de chargement de paramètres
+        document.addEventListener('settingsLoaded', function(event) {
+            const { settings, source } = event.detail;
+            console.log(`Paramètres chargés depuis ${source}:`, settings);
+            
+            let message = '';
+            switch(source) {
+                case 'cloud':
+                    message = 'Paramètres chargés depuis le serveur';
+                    break;
+                case 'cloud-reconnect':
+                    message = 'Paramètres synchronisés après connexion';
+                    break;
+                case 'local':
+                    message = 'Paramètres locaux chargés';
+                    break;
+                case 'default':
+                    message = 'Paramètres par défaut appliqués';
+                    break;
+                default:
+                    message = 'Paramètres chargés';
+            }
+            
+            if (source === 'cloud' || source === 'cloud-reconnect') {
+                showNotification(message, 'success');
+            }
+        });
     }
 
     // Fonction utilitaire pour afficher des notifications
@@ -980,9 +1048,44 @@
     // Rendre la fonction disponible globalement
     window.getAppSetting = getAppSetting;
 
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
+        // Vérifier si l'utilisateur revient d'une authentification (token dans l'URL)
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token') || urlParams.get('access_token');
+        
+        if (token) {
+            console.log('Token détecté dans l\'URL, configuration de l\'authentification...');
+            window.ptmAuth.setToken(token);
+            
+            // Nettoyer l'URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+            
+            // Charger les paramètres utilisateur automatiquement
+            if (window.settingsManager) {
+                await window.settingsManager.reloadSettingsAfterLogin();
+            }
+        }
+        
         // Vérifier l'état d'authentification au chargement de la page
-        checkAuthStatus();
+        const isAuthenticated = await window.ptmAuth.checkAuthStatus();
+        
+        if (isAuthenticated) {
+            console.log('Utilisateur authentifié');
+            // Mettre à jour l'interface utilisateur pour afficher les informations de connexion
+            await updateUIForAuthenticatedUser();
+            
+            // Charger automatiquement les paramètres depuis le serveur (si pas déjà fait)
+            if (window.settingsManager && !token) {
+                await window.settingsManager.reloadSettingsAfterLogin();
+            }
+        } else {
+            console.log('Utilisateur non authentifié');
+        }
+        
+        // Vérifier l'état d'authentification avec l'ancienne fonction si elle existe
+        if (typeof checkAuthStatus === 'function') {
+            checkAuthStatus();
+        }
         
         // Configurer l'observateur de modale et les listeners
         setupModalObserver();
@@ -1002,6 +1105,102 @@
             });
         }
     });
+
+    // Fonction pour mettre à jour l'UI quand l'utilisateur est connecté
+    async function updateUIForAuthenticatedUser() {
+        try {
+            const userProfile = await window.ptmAuth.getUserProfile();
+            
+            // Mettre à jour le menu utilisateur si il existe
+            updateUserMenu(userProfile);
+            
+            // Mettre à jour les informations de profil dans la modale
+            updateProfileInfo(userProfile);
+            
+            // Charger les favoris Cartoquete
+            await loadCartoqueteFavorites();
+            
+        } catch (error) {
+            console.error('Erreur lors de la mise à jour de l\'interface utilisateur:', error);
+        }
+    }
+
+    // Fonction pour charger les favoris Cartoquete
+    async function loadCartoqueteFavorites() {
+        try {
+            console.log('Chargement des favoris Cartoquete...');
+            
+            // Afficher la section des favoris
+            const favoritesSection = document.getElementById('cartoquete-favorites-section');
+            const statusMessage = document.getElementById('cartoquete-status-message');
+            
+            if (favoritesSection) {
+                favoritesSection.style.display = 'block';
+            }
+            
+            if (statusMessage) {
+                statusMessage.textContent = 'Chargement des favoris Cartoquete...';
+            }
+            
+            // Charger et afficher les favoris
+            await window.cartoqueteManager.displayFavorites();
+            
+            // Mettre à jour le message de statut
+            const favorites = window.cartoqueteManager.favorites;
+            if (statusMessage) {
+                if (favorites && favorites.length > 0) {
+                    statusMessage.innerHTML = `Vous avez <strong>${favorites.length} favori(s) Cartoquete</strong>. Les exemples de cartes ci-dessous sont fournis à titre illustratif.`;
+                } else {
+                    statusMessage.innerHTML = 'Aucun favori Cartoquete trouvé. Ajoutez des cartes à vos favoris sur <strong>Cartoquete</strong> pour les voir apparaître ici.';
+                }
+            }
+            
+        } catch (error) {
+            console.error('Erreur lors du chargement des favoris Cartoquete:', error);
+            
+            const statusMessage = document.getElementById('cartoquete-status-message');
+            if (statusMessage) {
+                statusMessage.innerHTML = 'Erreur lors du chargement des favoris Cartoquete.';
+            }
+        }
+    }
+
+    // Fonction pour mettre à jour le menu utilisateur
+    function updateUserMenu(userProfile) {
+        // Remplacer le bouton de connexion par un menu utilisateur
+        const loginButton = document.querySelector('button[onclick*="auth/login"]');
+        if (loginButton) {
+            const userMenuHtml = `
+                <div class="user-menu-container">
+                    <button class="fr-btn fr-icon-account-circle-line user-menu-toggle" 
+                            data-fr-opened="false" 
+                            aria-controls="fr-modal-settings"
+                            onclick="document.getElementById('fr-modal-settings').showModal()">
+                        ${userProfile.first_name} ${userProfile.last_name}
+                    </button>
+                </div>
+            `;
+            loginButton.parentElement.innerHTML = userMenuHtml;
+        }
+    }
+
+    // Fonction pour mettre à jour les informations de profil
+    function updateProfileInfo(userProfile) {
+        const fields = {
+            'user-first-name': userProfile.first_name,
+            'user-last-name': userProfile.last_name,
+            'user-email': userProfile.email,
+            'user-orcid': userProfile.orcid_id,
+            'user-institution': userProfile.institution || 'Non renseigné'
+        };
+
+        Object.entries(fields).forEach(([id, value]) => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.textContent = value || 'Non renseigné';
+            }
+        });
+    }
     </script>
 
   </body>

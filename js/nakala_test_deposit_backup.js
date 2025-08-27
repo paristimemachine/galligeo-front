@@ -240,13 +240,13 @@ async function deposerSurNakala(apiKey_in, collection_id_in) {
         // Au lieu de textContent, utilisez innerHTML :
         document.getElementById('titre-etape-georef').innerHTML =
         `Fin : consulter le dépôt sur
-        <a href="https://test.nakala.fr/collection/${COLLECTION_ID}" target="_blank">
+        <a href="https://www.nakala.fr/collection/${COLLECTION_ID}" target="_blank">
             Nakala
         </a>`;
 
         document.getElementById('etape-suite').innerHTML =
         `Consulter la collection sur
-        <a href="https://test.nakala.fr/collection/${COLLECTION_ID}" target="_blank">
+        <a href="https://www.nakala.fr/collection/${COLLECTION_ID}" target="_blank">
             Nakala
         </a>`;
 

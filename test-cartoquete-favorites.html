@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test - Favoris Cartoquete</title>
+    <link href="node_modules/@gouvfr/dsfr/dist/dsfr.min.css" rel="stylesheet">
+    <style>
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        .test-section {
+            margin: 2rem 0;
+            padding: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .test-log {
+            background: #f5f5f5;
+            padding: 1rem;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .status-indicator {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        .status-success { background: #28a745; color: white; }
+        .status-warning { background: #ffc107; color: black; }
+        .status-error { background: #dc3545; color: white; }
+        .status-info { background: #17a2b8; color: white; }
+        .json-display {
+            background: #f8f9fa;
+            padding: 1rem;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <header class="fr-header">
+            <h1 class="fr-h1">Test - Favoris Cartoquete</h1>
+            <p class="fr-text--lead">Cette page teste le chargement et l'affichage des favoris Cartoquete depuis l'API PTM Auth.</p>
+        </header>
+
+        <main>
+            <!-- Section Auth Status -->
+            <section class="test-section">
+                <h2 class="fr-h3">1. État d'authentification</h2>
+                <div id="auth-status">
+                    <span class="status-indicator status-info">Vérification...</span>
+                    <span id="auth-message">Vérification de l'état d'authentification...</span>
+                </div>
+                <div class="fr-mt-2w">
+                    <button class="fr-btn fr-btn--secondary" onclick="login()">Se connecter</button>
+                    <button class="fr-btn fr-btn--secondary fr-ml-2w" onclick="checkAuth()">Vérifier auth</button>
+                </div>
+            </section>
+
+            <!-- Section Cartoquete Data -->
+            <section class="test-section">
+                <h2 class="fr-h3">2. Données Cartoquete</h2>
+                <div id="cartoquete-status">
+                    <span class="status-indicator status-info">Non testé</span>
+                    <span id="cartoquete-message">En attente...</span>
+                </div>
+                <div class="fr-mt-2w">
+                    <button class="fr-btn fr-btn--secondary" onclick="loadCartoqueteData()">Charger données Cartoquete</button>
+                    <button class="fr-btn fr-btn--secondary fr-ml-2w" onclick="loadFavorites()">Charger favoris uniquement</button>
+                    <button class="fr-btn fr-btn--secondary fr-ml-2w" onclick="testSampleArk()">Tester un ARK</button>
+                </div>
+                <div id="cartoquete-data" class="fr-mt-2w" style="display:none;">
+                    <h4 class="fr-h5">Données Cartoquete brutes :</h4>
+                    <pre id="cartoquete-display" class="json-display"></pre>
+                </div>
+            </section>
+
+            <!-- Section Gallica Metadata -->
+            <section class="test-section">
+                <h2 class="fr-h3">3. Test métadonnées Gallica</h2>
+                <div id="gallica-status">
+                    <span class="status-indicator status-info">Non testé</span>
+                    <span id="gallica-message">En attente...</span>
+                </div>
+                <div class="fr-mt-2w">
+                    <label class="fr-label" for="ark-input">ARK à tester :</label>
+                    <input class="fr-input fr-mr-2w" type="text" id="ark-input" value="btv1b53136010w" placeholder="btv1b53136010w">
+                    <button class="fr-btn fr-btn--secondary" onclick="testGallicaMetadata()">Tester métadonnées</button>
+                </div>
+                <div id="gallica-data" class="fr-mt-2w" style="display:none;">
+                    <h4 class="fr-h5">Métadonnées Gallica :</h4>
+                    <pre id="gallica-display" class="json-display"></pre>
+                </div>
+            </section>
+
+            <!-- Section Favorites Display -->
+            <section class="test-section">
+                <h2 class="fr-h3">4. Affichage des favoris</h2>
+                <div id="display-status">
+                    <span class="status-indicator status-info">Non testé</span>
+                    <span id="display-message">En attente...</span>
+                </div>
+                <div class="fr-mt-2w">
+                    <button class="fr-btn fr-btn--secondary" onclick="displayFavorites()">Afficher favoris</button>
+                    <button class="fr-btn fr-btn--secondary fr-ml-2w" onclick="clearDisplay()">Effacer affichage</button>
+                </div>
+                <div id="favorites-container" class="fr-mt-2w">
+                    <!-- Les cartes seront affichées ici -->
+                </div>
+            </section>
+
+            <!-- Section Logs -->
+            <section class="test-section">
+                <h2 class="fr-h3">5. Logs système</h2>
+                <div class="fr-mt-2w">
+                    <button class="fr-btn fr-btn--secondary" onclick="clearLog()">Effacer logs</button>
+                </div>
+                <div id="test-log" class="test-log fr-mt-2w">
+                    Logs d'activité...
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script type="module" src="node_modules/@gouvfr/dsfr/dist/dsfr.module.min.js"></script>
+    <script type="text/javascript" nomodule src="node_modules/@gouvfr/dsfr/dist/dsfr.nomodule.min.js"></script>
+    <script src="js/ptm-auth.js"></script>
+    <script src="js/cartoquete-manager.js"></script>
+
+    <script>
+        // Variables globales pour le test
+        let logContainer = null;
+
+        // Fonction de log
+        function log(message, type = 'info') {
+            if (!logContainer) {
+                logContainer = document.getElementById('test-log');
+            }
+            
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] [${type.toUpperCase()}] ${message}\n`;
+            
+            logContainer.textContent += logEntry;
+            logContainer.scrollTop = logContainer.scrollHeight;
+            
+            console.log(`[TEST] ${message}`);
+        }
+
+        function clearLog() {
+            if (logContainer) {
+                logContainer.textContent = 'Logs effacés...\n';
+            }
+        }
+
+        function updateStatus(element, status, message) {
+            const statusElement = element.querySelector('.status-indicator');
+            const messageElement = element.querySelector('span:last-child');
+            
+            statusElement.className = `status-indicator status-${status}`;
+            messageElement.textContent = message;
+        }
+
+        // Fonctions d'authentification
+        async function checkAuth() {
+            log('Vérification de l\'état d\'authentification...');
+            try {
+                const isAuth = await window.ptmAuth.checkAuthStatus();
+                const authStatus = document.getElementById('auth-status');
+                
+                if (isAuth) {
+                    updateStatus(authStatus, 'success', 'Utilisateur authentifié');
+                    const profile = await window.ptmAuth.getUserProfile();
+                    log('Utilisateur authentifié : ' + profile.email);
+                } else {
+                    updateStatus(authStatus, 'warning', 'Utilisateur non authentifié');
+                    log('Utilisateur non authentifié');
+                }
+                return isAuth;
+            } catch (error) {
+                updateStatus(document.getElementById('auth-status'), 'error', 'Erreur d\'authentification');
+                log('Erreur lors de la vérification : ' + error.message, 'error');
+                return false;
+            }
+        }
+
+        function login() {
+            log('Redirection vers la page de connexion...');
+            window.location.href = 'https://api.ptm.huma-num.fr/auth/login?redirect_url=' + encodeURIComponent(window.location.href);
+        }
+
+        // Fonctions Cartoquete
+        async function loadCartoqueteData() {
+            log('Chargement des données Cartoquete...');
+            try {
+                const isAuth = await checkAuth();
+                if (!isAuth) {
+                    updateStatus(document.getElementById('cartoquete-status'), 'warning', 'Authentification requise');
+                    return;
+                }
+
+                const data = await window.ptmAuth.getCartoqueteData();
+                const cartoqueteStatus = document.getElementById('cartoquete-status');
+                const dataDisplay = document.getElementById('cartoquete-data');
+                const displayElement = document.getElementById('cartoquete-display');
+                
+                if (data) {
+                    updateStatus(cartoqueteStatus, 'success', 'Données Cartoquete trouvées');
+                    dataDisplay.style.display = 'block';
+                    displayElement.textContent = JSON.stringify(data, null, 2);
+                    log('Données Cartoquete récupérées : ' + JSON.stringify(data));
+                } else {
+                    updateStatus(cartoqueteStatus, 'warning', 'Aucune donnée Cartoquete trouvée');
+                    log('Aucune donnée Cartoquete trouvée');
+                }
+            } catch (error) {
+                updateStatus(document.getElementById('cartoquete-status'), 'error', 'Erreur lors du chargement');
+                log('Erreur Cartoquete : ' + error.message, 'error');
+            }
+        }
+
+        async function loadFavorites() {
+            log('Chargement des favoris Cartoquete...');
+            try {
+                const isAuth = await checkAuth();
+                if (!isAuth) {
+                    updateStatus(document.getElementById('cartoquete-status'), 'warning', 'Authentification requise');
+                    return;
+                }
+
+                const favorites = await window.ptmAuth.getCartoqueteFavorites();
+                const cartoqueteStatus = document.getElementById('cartoquete-status');
+                
+                if (favorites && favorites.length > 0) {
+                    updateStatus(cartoqueteStatus, 'success', `${favorites.length} favori(s) trouvé(s)`);
+                    log(`${favorites.length} favoris trouvés : ${JSON.stringify(favorites)}`);
+                } else {
+                    updateStatus(cartoqueteStatus, 'warning', 'Aucun favori trouvé');
+                    log('Aucun favori Cartoquete trouvé');
+                }
+            } catch (error) {
+                updateStatus(document.getElementById('cartoquete-status'), 'error', 'Erreur lors du chargement');
+                log('Erreur favoris : ' + error.message, 'error');
+            }
+        }
+
+        async function testSampleArk() {
+            log('Test avec un ARK d\'exemple...');
+            await testGallicaMetadataForArk('btv1b53136010w');
+        }
+
+        // Fonctions Gallica
+        async function testGallicaMetadata() {
+            const arkInput = document.getElementById('ark-input');
+            const ark = arkInput.value.trim();
+            
+            if (!ark) {
+                log('Veuillez entrer un ARK', 'error');
+                return;
+            }
+            
+            await testGallicaMetadataForArk(ark);
+        }
+
+        async function testGallicaMetadataForArk(ark) {
+            log(`Test des métadonnées Gallica pour ${ark}...`);
+            try {
+                const metadata = await window.cartoqueteManager.getGallicaMetadata(ark);
+                const gallicaStatus = document.getElementById('gallica-status');
+                const dataDisplay = document.getElementById('gallica-data');
+                const displayElement = document.getElementById('gallica-display');
+                
+                if (metadata.error) {
+                    updateStatus(gallicaStatus, 'error', 'Erreur métadonnées Gallica');
+                    log('Erreur métadonnées pour ' + ark, 'error');
+                } else {
+                    updateStatus(gallicaStatus, 'success', 'Métadonnées récupérées');
+                    dataDisplay.style.display = 'block';
+                    displayElement.textContent = JSON.stringify(metadata, null, 2);
+                    log('Métadonnées récupérées pour ' + ark);
+                }
+            } catch (error) {
+                updateStatus(document.getElementById('gallica-status'), 'error', 'Erreur test Gallica');
+                log('Erreur test Gallica : ' + error.message, 'error');
+            }
+        }
+
+        // Fonctions d'affichage
+        async function displayFavorites() {
+            log('Affichage des favoris...');
+            try {
+                const isAuth = await checkAuth();
+                if (!isAuth) {
+                    updateStatus(document.getElementById('display-status'), 'warning', 'Authentification requise');
+                    return;
+                }
+
+                const container = document.getElementById('favorites-container');
+                container.innerHTML = '<div class="fr-grid-row fr-grid-row--gutters" id="cartoquete-favorites-container"></div>';
+                
+                // Utiliser le cartoquete manager pour afficher
+                await window.cartoqueteManager.displayFavorites();
+                
+                const displayStatus = document.getElementById('display-status');
+                const favoritesCount = window.cartoqueteManager.favorites.length;
+                
+                if (favoritesCount > 0) {
+                    updateStatus(displayStatus, 'success', `${favoritesCount} favori(s) affiché(s)`);
+                    log(`${favoritesCount} favoris affichés`);
+                } else {
+                    updateStatus(displayStatus, 'warning', 'Aucun favori à afficher');
+                    log('Aucun favori à afficher');
+                }
+            } catch (error) {
+                updateStatus(document.getElementById('display-status'), 'error', 'Erreur d\'affichage');
+                log('Erreur affichage : ' + error.message, 'error');
+            }
+        }
+
+        function clearDisplay() {
+            const container = document.getElementById('favorites-container');
+            container.innerHTML = '';
+            updateStatus(document.getElementById('display-status'), 'info', 'Affichage effacé');
+            log('Affichage effacé');
+        }
+
+        // Initialisation au chargement
+        document.addEventListener('DOMContentLoaded', async () => {
+            log('Page de test favoris Cartoquete chargée');
+            
+            // Vérifier le token dans l'URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token') || urlParams.get('access_token');
+            
+            if (token) {
+                log('Token détecté dans l\'URL');
+                window.ptmAuth.setToken(token);
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+            
+            // Vérifier l'authentification
+            await checkAuth();
+        });
+    </script>
+</body>
+</html>
