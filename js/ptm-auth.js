@@ -103,7 +103,7 @@ class PTMAuth {
      * Sauvegarde les données d'une application spécifique
      */
     async saveAppData(appName, data) {
-        return this.apiCall(`/data/${appName}`, {
+        return this.apiCall(`/auth/app/${appName}/data`, {
             method: 'POST',
             body: JSON.stringify(data)
         });
@@ -113,7 +113,7 @@ class PTMAuth {
      * Récupère les données d'une application spécifique
      */
     async getAppData(appName) {
-        return this.apiCall(`/data/${appName}`, {
+        return this.apiCall(`/auth/app/${appName}/data`, {
             method: 'GET'
         });
     }
@@ -122,7 +122,7 @@ class PTMAuth {
      * Supprime les données d'une application spécifique
      */
     async deleteAppData(appName) {
-        return this.apiCall(`/data/${appName}`, {
+        return this.apiCall(`/auth/app/${appName}/data`, {
             method: 'DELETE'
         });
     }
@@ -135,7 +135,7 @@ class PTMAuth {
             return this.userInfo;
         }
 
-        this.userInfo = await this.apiCall('/api/profile', {
+        this.userInfo = await this.apiCall('/auth/profile', {
             method: 'GET'
         });
 
@@ -146,7 +146,7 @@ class PTMAuth {
      * Sauvegarde le profil utilisateur
      */
     async saveUserProfile(profileData) {
-        const result = await this.apiCall('/api/profile', {
+        const result = await this.apiCall('/auth/profile', {
             method: 'POST',
             body: JSON.stringify(profileData)
         });
@@ -161,7 +161,7 @@ class PTMAuth {
      * Liste les applications utilisées par l'utilisateur
      */
     async getUserApps() {
-        return this.apiCall('/user/apps', {
+        return this.apiCall('/auth/user/apps', {
             method: 'GET'
         });
     }
@@ -192,6 +192,61 @@ class PTMAuth {
         } catch (error) {
             console.error('Erreur lors de la vérification de l\'authentification:', error);
             return false;
+        }
+    }
+
+    /**
+     * Récupère spécifiquement les paramètres Galligeo de l'utilisateur
+     */
+    async getGalligeoSettings() {
+        try {
+            const data = await this.getAppData('galligeo');
+            return data?.settings || null;
+        } catch (error) {
+            console.error('Erreur lors de la récupération des paramètres Galligeo:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Sauvegarde spécifiquement les paramètres Galligeo
+     */
+    async saveGalligeoSettings(settings) {
+        try {
+            const data = {
+                settings: settings,
+                lastUpdated: new Date().toISOString()
+            };
+            return await this.saveAppData('galligeo', data);
+        } catch (error) {
+            console.error('Erreur lors de la sauvegarde des paramètres Galligeo:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Récupère spécifiquement les données Cartoquete de l'utilisateur
+     */
+    async getCartoqueteData() {
+        try {
+            const data = await this.getAppData('cartoquete');
+            return data || null;
+        } catch (error) {
+            console.error('Erreur lors de la récupération des données Cartoquete:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Récupère spécifiquement les favoris Cartoquete de l'utilisateur
+     */
+    async getCartoqueteFavorites() {
+        try {
+            const data = await this.getCartoqueteData();
+            return data?.favoris || [];
+        } catch (error) {
+            console.error('Erreur lors de la récupération des favoris Cartoquete:', error);
+            return [];
         }
     }
 }

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Test - Intégration API PTM</title>
+    <link rel="stylesheet" href="node_modules/@gouvfr/dsfr/dist/dsfr.min.css">
+    <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+    <div class="fr-container fr-py-4w">
+        <h1>Test d'intégration API PTM</h1>
+        
+        <div class="fr-grid-row fr-grid-row--gutters">
+            <div class="fr-col-md-6">
+                <div class="fr-card fr-card--shadow fr-p-4w">
+                    <h2 class="fr-h4">Authentification</h2>
+                    <div id="auth-status">Vérification...</div>
+                    <div class="fr-mt-2w">
+                        <button id="test-auth" class="fr-btn fr-btn--secondary">
+                            Tester l'authentification
+                        </button>
+                        <button id="logout-btn" class="fr-btn fr-btn--secondary fr-ml-2w" style="display: none;">
+                            Déconnexion
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="fr-col-md-6">
+                <div class="fr-card fr-card--shadow fr-p-4w">
+                    <h2 class="fr-h4">Paramètres</h2>
+                    <div id="settings-test">
+                        <button id="test-save" class="fr-btn fr-btn--secondary">
+                            Tester sauvegarde
+                        </button>
+                        <button id="test-load" class="fr-btn fr-btn--secondary fr-ml-1w">
+                            Tester chargement
+                        </button>
+                        <button id="test-delete" class="fr-btn fr-btn--secondary fr-ml-1w">
+                            Tester suppression
+                        </button>
+                    </div>
+                    <div id="settings-result" class="fr-mt-2w"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="fr-grid-row fr-grid-row--gutters fr-mt-4w">
+            <div class="fr-col-12">
+                <div class="fr-card fr-card--shadow fr-p-4w">
+                    <h2 class="fr-h4">Formulaire de paramètres</h2>
+                    <div id="settings-form-container">
+                        <!-- Le formulaire sera généré ici -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="fr-grid-row fr-grid-row--gutters fr-mt-4w">
+            <div class="fr-col-12">
+                <div class="fr-card fr-card--shadow fr-p-4w">
+                    <h2 class="fr-h4">Logs</h2>
+                    <div id="logs" class="fr-p-2w" style="background: #f6f6f6; border-radius: 4px; max-height: 300px; overflow-y: auto;">
+                        <!-- Les logs apparaîtront ici -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script type="module" src="node_modules/@gouvfr/dsfr/dist/dsfr.module.min.js"></script>
+    <script src="js/ptm-auth.js"></script>
+    <script src="js/form-generator.js"></script>
+    <script src="js/settings-manager.js"></script>
+    <script src="js/settings-utils.js"></script>
+
+    <script>
+        // Fonction pour ajouter des logs
+        function addLog(message, type = 'info') {
+            const logs = document.getElementById('logs');
+            const timestamp = new Date().toLocaleTimeString();
+            const logClass = type === 'error' ? 'color: red;' : 
+                           type === 'success' ? 'color: green;' : 
+                           type === 'warning' ? 'color: orange;' : '';
+            
+            logs.innerHTML += `<div style="${logClass}">[${timestamp}] ${message}</div>`;
+            logs.scrollTop = logs.scrollHeight;
+        }
+
+        // Override console.log pour capturer les logs
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+        
+        console.log = function(...args) {
+            addLog(args.join(' '), 'info');
+            originalLog.apply(console, args);
+        };
+        
+        console.error = function(...args) {
+            addLog(args.join(' '), 'error');
+            originalError.apply(console, args);
+        };
+        
+        console.warn = function(...args) {
+            addLog(args.join(' '), 'warning');
+            originalWarn.apply(console, args);
+        };
+
+        // Tests
+        document.addEventListener('DOMContentLoaded', async function() {
+            addLog('Initialisation des tests...', 'info');
+            
+            // Test d'authentification
+            const authStatus = document.getElementById('auth-status');
+            const isAuth = await window.ptmAuth.checkAuthStatus();
+            
+            if (isAuth) {
+                authStatus.innerHTML = '<span style="color: green;">✓ Authentifié</span>';
+                document.getElementById('logout-btn').style.display = 'inline-block';
+                
+                const profile = await window.ptmAuth.getUserProfile();
+                authStatus.innerHTML += `<br><small>${profile.first_name} ${profile.last_name} (${profile.email})</small>`;
+            } else {
+                authStatus.innerHTML = '<span style="color: red;">✗ Non authentifié</span>';
+            }
+            
+            // Initialiser le formulaire de paramètres
+            try {
+                await window.settingsManager.init('settings-form-container');
+                addLog('Formulaire de paramètres initialisé', 'success');
+            } catch (error) {
+                addLog('Erreur initialisation formulaire: ' + error.message, 'error');
+            }
+            
+            // Gestionnaires d'événements
+            document.getElementById('test-auth').addEventListener('click', async () => {
+                addLog('Test authentification...', 'info');
+                try {
+                    const isAuthenticated = await window.ptmAuth.checkAuthStatus();
+                    addLog('Résultat authentification: ' + isAuthenticated, 'success');
+                } catch (error) {
+                    addLog('Erreur authentification: ' + error.message, 'error');
+                }
+            });
+            
+            document.getElementById('logout-btn').addEventListener('click', () => {
+                window.ptmAuth.logout();
+            });
+            
+            document.getElementById('test-save').addEventListener('click', async () => {
+                addLog('Test sauvegarde...', 'info');
+                try {
+                    const testSettings = {
+                        'select-algo': 'polynomial',
+                        'select-resample': 'bilinear',
+                        'checkbox-compression': true
+                    };
+                    
+                    await window.galligeoSettingsAPI.saveSettings(testSettings);
+                    addLog('Sauvegarde réussie', 'success');
+                } catch (error) {
+                    addLog('Erreur sauvegarde: ' + error.message, 'error');
+                }
+            });
+            
+            document.getElementById('test-load').addEventListener('click', async () => {
+                addLog('Test chargement...', 'info');
+                try {
+                    const settings = await window.galligeoSettingsAPI.loadSettings();
+                    addLog('Chargement réussi: ' + JSON.stringify(settings), 'success');
+                } catch (error) {
+                    addLog('Erreur chargement: ' + error.message, 'error');
+                }
+            });
+            
+            document.getElementById('test-delete').addEventListener('click', async () => {
+                addLog('Test suppression...', 'info');
+                try {
+                    await window.galligeoSettingsAPI.deleteSettings();
+                    addLog('Suppression réussie', 'success');
+                } catch (error) {
+                    addLog('Erreur suppression: ' + error.message, 'error');
+                }
+            });
+            
+            // Écouter les changements de paramètres
+            document.addEventListener('settingsUpdated', function(event) {
+                addLog('Paramètres mis à jour: ' + JSON.stringify(event.detail.settings), 'success');
+            });
+        });
+    </script>
+</body>
+</html>

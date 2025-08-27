@@ -3,6 +3,10 @@ body {
     flex-flow: column wrap;
   }
 
+.fr-header__body-row {
+        padding: 0.8rem 0;
+    }
+
 .fr-footer {
     padding-top: 0;
 }
