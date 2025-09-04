@@ -34,6 +34,8 @@
     <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw-src.js"></script>
     <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
     <script src="https://rawgithub.com/ebrelsford/Leaflet.loading/master/src/Control.Loading.js"></script>
+    <!-- Leaflet Rotate Plugin -->
+    <script src="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate-src.js"></script>
 
   </head>
   <body>
@@ -178,9 +180,34 @@
 
             <div class="fr-col-6" id="nav-tools4">
                 
-                <button class="fr-btn fr-btn--secondary" id="btn_points" disabled onclick="click_georef('', list_georef_points, list_points_polygon_crop, input_ark)" disabled> 
-                    Saisir des points
-                </button>
+                <div class="fr-toggle">
+                    <input type="checkbox" class="fr-toggle__input" id="toggle" aria-describedby="toggle-messages toggle-hint">
+                    <label class="fr-toggle__label" for="toggle" data-fr-checked-label="Verrouillé" data-fr-unchecked-label="Saisie"></label>
+                    <!-- <p class="fr-hint-text" id="toggle-hint">Texte de description additionnel</p> -->
+                    <div class="fr-messages-group" id="toggle-messages" aria-live="polite">
+                    </div>
+                </div>
+                <fieldset class="fr-segmented fr-segmented--no-legend">
+                    <legend class="fr-segmented__legend fr-segmented__legend--inline">
+                        Saisir
+                        <!-- <span class="fr-hint-text">Description additionnelle</span> -->
+                    </legend>
+                    <div class="fr-segmented__elements">
+                        <div class="fr-segmented__element">
+                            <input value="1" checked type="radio" id="segmented-1" name="segmented">
+                            <label class="fr-label" for="segmented-1">
+                                Points
+                            </label>
+                        </div>
+                        <div class="fr-segmented__element">
+                            <input value="2" type="radio" id="segmented-2" name="segmented">
+                            <label class="fr-label" for="segmented-2">
+                                Emprise
+                            </label>
+                        </div>
+                    </div>
+                </fieldset>
+
 
                 <button class="fr-btn fr-btn--secondary" id="btn_georef" disabled onclick="click_georef('', list_georef_points, list_points_polygon_crop, input_ark)"> 
                     Géoréférencer
@@ -693,32 +720,24 @@
     <!--  -->
     <footer class="fr-footer" role="contentinfo" id="footer">
         <div class="fr-container">
-            
             <div class="fr-footer__bottom">
                 <ul class="fr-footer__bottom-list">
                     <li class="fr-footer__bottom-item">
-                        <a class="fr-footer__bottom-link" href="#" target="_blank" rel="noopener">Plan du site</a>
+                        <a class="fr-footer__bottom-link fr-text--xs" href="#" target="_blank" rel="noopener">Plan du site</a>
                     </li>
                     <li class="fr-footer__bottom-item">
-                        <a class="fr-footer__bottom-link" href="#" target="_blank" rel="noopener">Accessibilité : Partiellement conforme</a>
+                        <a class="fr-footer__bottom-link fr-text--xs" href="#" target="_blank" rel="noopener">Accessibilité</a>
                     </li>
                     <li class="fr-footer__bottom-item">
-                        <a class="fr-footer__bottom-link" href="#" target="_blank" rel="noopener">Mentions légales</a>
+                        <a class="fr-footer__bottom-link fr-text--xs" href="#" target="_blank" rel="noopener">Mentions légales</a>
                     </li>
                     <li class="fr-footer__bottom-item">
-                        <a class="fr-footer__bottom-link" href="#" target="_blank" rel="noopener">Données personnelles</a>
+                        <a class="fr-footer__bottom-link fr-text--xs" href="#" target="_blank" rel="noopener">Données personnelles</a>
                     </li>
                     <li class="fr-footer__bottom-item">
-                        <a class="fr-footer__bottom-link" href="#" target="_blank" rel="noopener">Gestion des cookies</a>
-                    </li>
-                    <li class="fr-footer__bottom-item">
-                        <a class="fr-footer__bottom-link" href="https://github.com/etalab/licence-ouverte/blob/master/LO.md" target="_blank" rel="noopener">Licences</a>
+                        <a class="fr-footer__bottom-link fr-text--xs" href="https://github.com/etalab/licence-ouverte/blob/master/LO.md" target="_blank" rel="noopener">Licences</a>
                     </li>
                 </ul>
-                <!-- <div class="fr-footer__bottom-copy">
-                    <p>Sauf mention contraire, tous les contenus de ce site sont sous <a href="https://github.com/etalab/licence-ouverte/blob/master/LO.md" target="_blank">licence etalab-2.0</a>
-                    </p>
-                </div> -->
             </div>
         </div>
     </footer>
@@ -1067,19 +1086,39 @@
         }
         
         // Vérifier l'état d'authentification au chargement de la page
-        const isAuthenticated = await window.ptmAuth.checkAuthStatus();
-        
-        if (isAuthenticated) {
-            console.log('Utilisateur authentifié');
-            // Mettre à jour l'interface utilisateur pour afficher les informations de connexion
-            await updateUIForAuthenticatedUser();
+        try {
+            const isAuthenticated = await window.ptmAuth.checkAuthStatus();
             
-            // Charger automatiquement les paramètres depuis le serveur (si pas déjà fait)
-            if (window.settingsManager && !token) {
-                await window.settingsManager.reloadSettingsAfterLogin();
+            if (isAuthenticated) {
+                console.log('Utilisateur authentifié');
+                // Mettre à jour l'interface utilisateur pour afficher les informations de connexion
+                await updateUIForAuthenticatedUser();
+                
+                // Charger automatiquement les paramètres depuis le serveur (si pas déjà fait)
+                if (window.settingsManager && !token) {
+                    await window.settingsManager.reloadSettingsAfterLogin();
+                }
+                
+                // Mettre à jour l'état des boutons pour un utilisateur connecté
+                if (typeof updateButtonsForAuth === 'function') {
+                    updateButtonsForAuth();
+                }
+            } else {
+                console.log('Utilisateur non authentifié');
+                
+                // Mettre à jour l'état des boutons pour un utilisateur non connecté
+                if (typeof updateButtonsForAuth === 'function') {
+                    updateButtonsForAuth();
+                }
             }
-        } else {
-            console.log('Utilisateur non authentifié');
+        } catch (error) {
+            console.error('Erreur lors de la vérification de l\'authentification:', error);
+            console.log('Utilisateur considéré comme non authentifié');
+            
+            // Mettre à jour l'état des boutons pour un utilisateur non connecté
+            if (typeof updateButtonsForAuth === 'function') {
+                updateButtonsForAuth();
+            }
         }
         
         // Vérifier l'état d'authentification avec l'ancienne fonction si elle existe
@@ -1201,6 +1240,55 @@
             }
         });
     }
+
+    // Fonction pour gérer l'état des boutons segmentés selon le toggle
+    function toggleSegmentedButtons() {
+        const toggleInput = document.getElementById('toggle');
+        const segmentedElements = document.querySelectorAll('.fr-segmented__element input, .fr-segmented__element label');
+        const fieldset = document.querySelector('.fr-segmented');
+        
+        if (toggleInput.checked) {
+            // Toggle activé (Verrouillé) - désactiver les boutons segmentés
+            segmentedElements.forEach(element => {
+                if (element.tagName === 'INPUT') {
+                    element.disabled = true;
+                } else if (element.tagName === 'LABEL') {
+                    element.style.opacity = '0.5';
+                    element.style.cursor = 'not-allowed';
+                }
+            });
+            fieldset.style.opacity = '0.5';
+        } else {
+            // Toggle désactivé (Saisie) - activer les boutons segmentés
+            segmentedElements.forEach(element => {
+                if (element.tagName === 'INPUT') {
+                    element.disabled = false;
+                } else if (element.tagName === 'LABEL') {
+                    element.style.opacity = '1';
+                    element.style.cursor = 'pointer';
+                }
+            });
+            fieldset.style.opacity = '1';
+        }
+    }
+
+    // Initialiser l'état des boutons segmentés au chargement de la page
+    function initializeSegmentedButtonsState() {
+        const toggleInput = document.getElementById('toggle');
+        
+        // Écouter les changements du toggle
+        toggleInput.addEventListener('change', toggleSegmentedButtons);
+        
+        // Définir l'état initial (toggle désactivé par défaut = boutons activés)
+        toggleSegmentedButtons();
+    }
+    </script>
+
+    <script>
+        // Initialiser l'état des boutons segmentés dès que le DOM est chargé
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeSegmentedButtonsState();
+        });
     </script>
 
   </body>

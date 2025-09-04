@@ -7,8 +7,30 @@ body {
         padding: 0.8rem 0;
     }
 
+
+
 .fr-footer {
     padding-top: 0;
+    padding-bottom: 0;
+}
+
+.fr-footer .fr-container {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+}
+
+.fr-footer__bottom {
+    padding: 0;
+    margin: 0;
+}
+
+.fr-footer__bottom-list {
+    margin: -8px;
+    gap: 0.5rem;
+}
+
+.fr-footer__bottom-item {
+    margin: 0;
 }
 
 #footer {
@@ -19,7 +41,8 @@ body {
     background-color: rgb(255, 255, 255);
     color: white;
     text-align: center;
-    height: 80px;
+    height: 40px;
+    padding: 0.25rem 0;
   }
 
 
@@ -40,7 +63,7 @@ body {
 }
 
 #search-784-input {
-  width: 39vw;
+  width: 36vw;
 }
 
 #nav-tools-sidebar-control {
@@ -72,7 +95,7 @@ body {
 
 #sidebar{
   margin-left: 0;
-  height: calc(100vh - 250px);
+  height: calc(100vh - 200px);
   overflow-y: auto;
   overflow-x: hidden;
 }
@@ -358,5 +381,68 @@ body {
   .settings-actions .fr-btn {
     width: 100%;
   }
+}
+
+/* Styles pour le bouton de géoréférencement en état de chargement */
+.fr-btn--loading {
+  position: relative;
+  pointer-events: none;
+  animation: pulse-loading 2s infinite;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.fr-btn--loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  width: 14px;
+  height: 14px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  from {
+    transform: translateY(-50%) rotate(0deg);
+  }
+  to {
+    transform: translateY(-50%) rotate(360deg);
+  }
+}
+
+@keyframes pulse-loading {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+/* Amélioration des boutons d'état */
+#btn_georef {
+  transition: all 0.2s ease-in-out;
+  min-width: 140px; /* Largeur minimale pour éviter les variations */
+}
+
+#btn_georef:disabled {
+  cursor: not-allowed !important;
+  opacity: 0.6;
+}
+
+#btn_georef.fr-btn--loading {
+  background-color: #e74c3c !important;
+  border-color: #e74c3c !important;
+  color: #ffffff !important;
+  box-sizing: border-box;
 }
 

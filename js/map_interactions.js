@@ -10,7 +10,10 @@ var left_map = L.map('map-left', {
     zoomDelta: 0.25,
     zoom: 6.2,
     // laoding control
-    loadingControl: true
+    loadingControl: true,
+    // Activer la rotation avec le plugin leaflet-rotate
+    rotate: true,
+    bearing: 0
 });
 
 var right_map = L.map('map-right', {
@@ -31,11 +34,128 @@ var customMarker= L.Icon.extend({
     }
 });
 
+// Contrôle rose des vents personnalisé utilisant leaflet-rotate
+L.Control.CompassRotation = L.Control.extend({
+    options: {
+        position: 'bottomright'
+    },
+
+    initialize: function(options) {
+        L.setOptions(this, options);
+        this._isDragging = false;
+    },
+
+    onAdd: function(map) {
+        this._map = map;
+        
+        var container = L.DomUtil.create('div', 'leaflet-control-compass-rotation leaflet-bar leaflet-control');
+        
+        var compassDiv = L.DomUtil.create('div', 'compass-rose', container);
+        var northLabel = L.DomUtil.create('div', 'north-label', compassDiv);
+        northLabel.innerHTML = '0°';
+        
+        var resetBtn = L.DomUtil.create('div', 'compass-reset-btn', container);
+        resetBtn.innerHTML = 'Reset';
+        resetBtn.title = 'Remettre à zéro la rotation';
+        
+        this._compassDiv = compassDiv;
+        this._resetBtn = resetBtn;
+        this._northLabel = northLabel;
+        
+        // Événements pour la rotation
+        L.DomEvent.on(compassDiv, 'mousedown', this._onMouseDown, this);
+        L.DomEvent.on(resetBtn, 'click', this._resetRotation, this);
+        
+        // Empêcher la propagation des événements de la carte
+        L.DomEvent.disableClickPropagation(container);
+        L.DomEvent.disableScrollPropagation(container);
+        
+        // Mettre à jour l'affichage selon la rotation actuelle
+        this._updateCompassDisplay();
+        
+        return container;
+    },
+
+    _onMouseDown: function(e) {
+        if (e.target === this._resetBtn) return;
+        
+        e.preventDefault();
+        e.stopPropagation();
+        
+        this._startAngle = this._getAngleFromEvent(e);
+        this._startBearing = this._map.getBearing() || 0;
+        this._isDragging = true;
+        
+        L.DomEvent.on(document, 'mousemove', this._onMouseMove, this);
+        L.DomEvent.on(document, 'mouseup', this._onMouseUp, this);
+        
+        L.DomUtil.addClass(document.body, 'leaflet-dragging');
+    },
+
+    _onMouseMove: function(e) {
+        if (!this._isDragging) return;
+        
+        var currentAngle = this._getAngleFromEvent(e);
+        var deltaAngle = currentAngle - this._startAngle;
+        var newBearing = this._startBearing + deltaAngle;
+        
+        // Utiliser la méthode setBearing du plugin leaflet-rotate
+        this._map.setBearing(newBearing);
+        this._updateCompassDisplay();
+    },
+
+    _onMouseUp: function(e) {
+        this._isDragging = false;
+        
+        L.DomEvent.off(document, 'mousemove', this._onMouseMove, this);
+        L.DomEvent.off(document, 'mouseup', this._onMouseUp, this);
+        
+        L.DomUtil.removeClass(document.body, 'leaflet-dragging');
+    },
+
+    _getAngleFromEvent: function(e) {
+        var rect = this._compassDiv.getBoundingClientRect();
+        var centerX = rect.left + rect.width / 2;
+        var centerY = rect.top + rect.height / 2;
+        
+        var deltaX = e.clientX - centerX;
+        var deltaY = e.clientY - centerY;
+        
+        return Math.atan2(deltaY, deltaX) * 180 / Math.PI;
+    },
+
+    _updateCompassDisplay: function() {
+        var bearing = this._map.getBearing() || 0;
+        this._compassDiv.style.transform = 'rotate(' + bearing + 'deg)';
+    },
+
+    _resetRotation: function(e) {
+        e.stopPropagation();
+        this._map.setBearing(0);
+        this._updateCompassDisplay();
+    },
+
+    onRemove: function() {
+        // Nettoyage si nécessaire
+    }
+});
+
+// Factory function
+L.control.compassRotation = function(options) {
+    return new L.Control.CompassRotation(options);
+};
+
 // appel des layers neutres
 var { points: layer_img_pts_left, emprise: layer_img_emprise_left } = add_neutral_control_layer(left_map);
 add_draw_on_leaflet(left_map,  layer_img_pts_left, layer_img_emprise_left);
 var layer_img_pts_right = add_wms_layers(right_map);
 add_draw_on_leaflet(right_map, layer_img_pts_right);
+
+// Ajouter le contrôle rose des vents uniquement à la carte gauche
+var compassControl = L.control.compassRotation({
+    position: 'bottomright'
+});
+left_map.addControl(compassControl);
 
 //disabled draw button
 activateDrawButton(false);
@@ -349,7 +469,28 @@ function add_draw_on_leaflet(map, drawnItems, empriseItems = drawnItems) {
             }
 
             if(count_points>=3) {
-                document.getElementById('btn_georef').disabled = false;
+                // Utiliser la fonction dédiée pour gérer l'état du bouton
+                if (typeof setGeoreferencingButtonState === 'function') {
+                    if (window.ptmAuth && window.ptmAuth.isAuthenticated()) {
+                        setGeoreferencingButtonState('normal', 'Géoréférencer', 'Géoréférencer cette carte');
+                    } else {
+                        setGeoreferencingButtonState('disabled', 'Géoréférencer', 'Connectez-vous pour utiliser le géoréférencement');
+                    }
+                } else {
+                    // Fallback vers l'ancienne méthode si la fonction n'est pas disponible
+                    if (window.ptmAuth && window.ptmAuth.isAuthenticated()) {
+                        document.getElementById('btn_georef').disabled = false;
+                    } else {
+                        console.log('Géoréférencement nécessite une connexion utilisateur');
+                        document.getElementById('btn_georef').disabled = true;
+                        document.getElementById('btn_georef').title = 'Connectez-vous pour utiliser le géoréférencement';
+                    }
+                }
+            }
+            
+            // Mettre à jour l'état général des boutons
+            if (typeof updateButtonsForAuth === 'function') {
+                updateButtonsForAuth();
             }
         }
 

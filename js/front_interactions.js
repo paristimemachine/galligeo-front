@@ -73,12 +73,78 @@ var stringToHTML = function (str) {
     return doc.body;
 };
 
+/**
+ * Gère l'état du bouton de géoréférencement
+ * @param {string} state - 'loading', 'normal', 'disabled'
+ * @param {string} customText - Texte personnalisé (optionnel)
+ * @param {string} customTitle - Titre personnalisé pour le tooltip (optionnel)
+ */
+function setGeoreferencingButtonState(state, customText = null, customTitle = null) {
+    const btnGeorefs = document.getElementById('btn_georef');
+    if (!btnGeorefs) return;
+    
+    // Sauvegarder la largeur initiale si pas encore fait
+    if (!btnGeorefs.dataset.originalWidth) {
+        btnGeorefs.dataset.originalWidth = window.getComputedStyle(btnGeorefs).width;
+    }
+    
+    switch(state) {
+        case 'loading':
+            btnGeorefs.disabled = true;
+            btnGeorefs.style.backgroundColor = '#e74c3c';
+            btnGeorefs.style.borderColor = '#e74c3c';
+            btnGeorefs.style.color = '#ffffff';
+            btnGeorefs.textContent = customText || 'Géoref en cours...';
+            btnGeorefs.style.cursor = 'not-allowed';
+            btnGeorefs.style.width = btnGeorefs.dataset.originalWidth; // Maintenir la largeur
+            btnGeorefs.style.minWidth = btnGeorefs.dataset.originalWidth; // Force la largeur minimale
+            btnGeorefs.classList.add('fr-btn--loading');
+            btnGeorefs.title = customTitle || 'Traitement en cours, veuillez patienter...';
+            break;
+            
+        case 'normal':
+            btnGeorefs.disabled = false;
+            btnGeorefs.style.backgroundColor = '';
+            btnGeorefs.style.borderColor = '';
+            btnGeorefs.style.color = '';
+            btnGeorefs.textContent = customText || 'Géoréférencer';
+            btnGeorefs.style.cursor = '';
+            btnGeorefs.style.width = ''; // Retour à la largeur automatique
+            btnGeorefs.style.minWidth = ''; // Retour à la largeur minimale automatique
+            btnGeorefs.classList.remove('fr-btn--loading');
+            btnGeorefs.title = customTitle || 'Géoréférencer cette carte';
+            break;
+            
+        case 'disabled':
+            btnGeorefs.disabled = true;
+            btnGeorefs.style.backgroundColor = '';
+            btnGeorefs.style.borderColor = '';
+            btnGeorefs.style.color = '';
+            btnGeorefs.textContent = customText || 'Géoréférencer';
+            btnGeorefs.style.cursor = 'not-allowed';
+            btnGeorefs.style.width = ''; // Retour à la largeur automatique
+            btnGeorefs.style.minWidth = ''; // Retour à la largeur minimale automatique
+            btnGeorefs.classList.remove('fr-btn--loading');
+            btnGeorefs.title = customTitle || 'Action non disponible';
+            break;
+    }
+}
+
 
 function click_georef(image, points, polygon, input_ark) {
 
     console.log("click on georef")
     console.log(points)
     console.log(polygon)
+
+    // Vérifier que l'utilisateur est connecté
+    if (!window.ptmAuth || !window.ptmAuth.isAuthenticated()) {
+        alert('Vous devez être connecté pour utiliser la fonction de géoréférencement.');
+        return;
+    }
+
+    // Bloquer le bouton et le passer en état de chargement
+    setGeoreferencingButtonState('loading');
 
     var urlToRessource = base_url + input_ark;
     // var points_serialized = JSON.stringify(points);
@@ -94,6 +160,15 @@ function click_georef(image, points, polygon, input_ark) {
      "clipping_polygon": polygon
    }).then((data) => {
      console.log(data);
+     // Le bouton sera réactivé dans georef_api_post en cas de succès
+   }).catch((error) => {
+     console.error('Erreur lors du géoréférencement:', error);
+     right_map.fire('dataload'); // Arrêter l'animation de chargement
+     
+     // Réactiver le bouton en cas d'erreur
+     setGeoreferencingButtonState('normal');
+     
+     alert('Erreur lors du géoréférencement. Veuillez vérifier votre connexion et réessayer.');
    });
 }
 
@@ -102,25 +177,46 @@ function display_result(input_ark) {
 }
 
 async function georef_api_post(url = urlToAPI, data = {}) {
-  const response = await fetch(url, {
-    method: "POST",
-    // mode: "cors",
-    cache: "no-cache",
-    // credentials: "same-origin",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    redirect: "follow",
-    referrerPolicy: "no-referrer",
-    body: JSON.stringify(data),
-  });
+  // Préparer les headers avec authentification si disponible
+  const headers = {
+    "Content-Type": "application/json",
+  };
+  
+  // Ajouter le token d'authentification si l'utilisateur est connecté
+  if (window.ptmAuth && window.ptmAuth.isAuthenticated()) {
+    const token = window.ptmAuth.getToken();
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+  }
 
-  if (response.ok) {
-    document.getElementById('btn_display').disabled = false;
-    right_map.fire('dataload');
-    console.log("Carte géoréférencée !");
+  // Créer un AbortController pour gérer le timeout
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minutes
 
-    console.log(input_ark)
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      mode: "cors",
+      cache: "no-cache",
+      headers: headers,
+      redirect: "follow",
+      referrerPolicy: "no-referrer",
+      body: JSON.stringify(data),
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+
+    if (response.ok) {
+      document.getElementById('btn_display').disabled = false;
+      right_map.fire('dataload');
+      console.log("Carte géoréférencée !");
+
+      console.log(input_ark)
+
+      // Réactiver le bouton de géoréférencement après succès
+    setGeoreferencingButtonState('normal');
 
     // let galligeoLayer = L.tileLayer(URL_TILE_SERVER + 'tiles/12148/' + input_ark + '/{z}/{x}/{y}.png', {
     //   // minNativeZoom: json.minzoom,
@@ -157,9 +253,27 @@ async function georef_api_post(url = urlToAPI, data = {}) {
     document.getElementById('etape-suite').textContent = "Déposer le résultat sur Nakala";
     document.getElementById('steps').setAttribute('data-fr-current-step', '3');
 
-  
+    return response.json();
+  } else {
+    // En cas d'erreur HTTP, réactiver aussi le bouton
+    setGeoreferencingButtonState('normal');
+    
+    right_map.fire('dataload');
+    throw new Error(`Erreur serveur: ${response.status}`);
   }
-  return response.json();
+  } catch (error) {
+    clearTimeout(timeoutId);
+    
+    // En cas d'erreur (timeout, réseau, etc.), réactiver le bouton
+    setGeoreferencingButtonState('normal');
+    right_map.fire('dataload');
+    
+    if (error.name === 'AbortError') {
+      throw new Error('Timeout: Le géoréférencement prend trop de temps (>5min)');
+    }
+    
+    throw error;
+  }
 }
 
 function clkGeoserver(){

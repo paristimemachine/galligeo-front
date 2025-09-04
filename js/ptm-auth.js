@@ -96,6 +96,12 @@ class PTMAuth {
             throw new Error(errorData.message || `Erreur API: ${response.status}`);
         }
 
+        // Vérifier que la réponse est bien en JSON avant de la parser
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            throw new Error('Réponse du serveur non valide (format non-JSON)');
+        }
+
         return response.json();
     }
 
@@ -191,6 +197,13 @@ class PTMAuth {
             return true;
         } catch (error) {
             console.error('Erreur lors de la vérification de l\'authentification:', error);
+            
+            // Si c'est une erreur de format JSON, c'est probablement que l'utilisateur n'est pas connecté
+            if (error.message && error.message.includes('JSON')) {
+                // Nettoyer le token invalide
+                this.logout();
+            }
+            
             return false;
         }
     }
