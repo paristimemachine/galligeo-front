@@ -156,14 +156,63 @@ async function deposerSurNakala(apiKey_in, collection_id_in) {
     // });
     // Format the date to ensure it's 4 digits
     let formattedDate = metadataDict['Date'] || '';
-    // Handle fuzzy dates like "18.." (1800-1899)
-    if (formattedDate.match(/^\d{2}\.\.$/)) {
-        formattedDate = formattedDate.replace('..', '00');
+    
+    // Handle various fuzzy date formats
+    if (formattedDate) {
+        console.log('Date originale:', formattedDate);
+        
+        // Handle "1..." (1000-1999) - doit être testé en premier
+        if (formattedDate.match(/^\d\.\.\.$/)) {
+            formattedDate = formattedDate.replace('...', '000');
+            console.log('Après transformation 1...:', formattedDate);
+        }
+        // Handle "18.." (1800-1899)
+        else if (formattedDate.match(/^\d{2}\.\.$/)) {
+            formattedDate = formattedDate.replace('..', '00');
+            console.log('Après transformation 18..:', formattedDate);
+        }
+        // Handle "1.." (1000-1099)
+        else if (formattedDate.match(/^\d\.\.$/)) {
+            formattedDate = formattedDate.replace('..', '00');
+            console.log('Après transformation 1..:', formattedDate);
+        }
+        // Handle patterns like "185." (1850-1859)
+        else if (formattedDate.match(/^\d{3}\.$/)) {
+            formattedDate = formattedDate.replace('.', '0');
+            console.log('Après transformation 185.:', formattedDate);
+        }
+        // Handle patterns like "18." (1800-1809) 
+        else if (formattedDate.match(/^\d{2}\.$/)) {
+            formattedDate = formattedDate.replace('.', '00');
+            console.log('Après transformation 18.:', formattedDate);
+        }
+        // Handle patterns with question marks "185?" or "18??"
+        else if (formattedDate.match(/^\d+\?+$/)) {
+            formattedDate = formattedDate.replace(/\?/g, '0');
+            console.log('Après transformation ?:', formattedDate);
+        }
+        // Fallback: Extract only digits and pad if necessary
+        else {
+            const digitsOnly = formattedDate.replace(/[^\d]/g, '');
+            if (digitsOnly.length > 0) {
+                // Pad with zeros to make it 4 digits if less than 4
+                if (digitsOnly.length < 4) {
+                    formattedDate = digitsOnly.padEnd(4, '0');
+                } else {
+                    formattedDate = digitsOnly.substring(0, 4);
+                }
+                console.log('Après extraction chiffres:', formattedDate);
+            }
+        }
     }
-    // Ensure we have a valid 4-digit year
-    if (formattedDate && formattedDate.length >= 4) {
+    
+    // Ensure we have a valid 4-digit year (between 1000 and current year + 100)
+    const currentYear = new Date().getFullYear();
+    const yearNumber = parseInt(formattedDate);
+    if (formattedDate && formattedDate.length === 4 && 
+        !isNaN(yearNumber) && yearNumber >= 1000 && yearNumber <= currentYear + 100) {
         metas.push({
-            "value": formattedDate.substring(0, 4),  // Take only first 4 characters
+            "value": formattedDate,
             "typeUri": "http://www.w3.org/2001/XMLSchema#string",
             "propertyUri": "http://nakala.fr/terms#created"
         });
@@ -240,13 +289,13 @@ async function deposerSurNakala(apiKey_in, collection_id_in) {
         // Au lieu de textContent, utilisez innerHTML :
         document.getElementById('titre-etape-georef').innerHTML =
         `Fin : consulter le dépôt sur
-        <a href="https://test.nakala.fr/collection/${COLLECTION_ID}" target="_blank">
+        <a href="https://nakala.fr/collection/${COLLECTION_ID}" target="_blank">
             Nakala
         </a>`;
 
         document.getElementById('etape-suite').innerHTML =
         `Consulter la collection sur
-        <a href="https://test.nakala.fr/collection/${COLLECTION_ID}" target="_blank">
+        <a href="https://nakala.fr/collection/${COLLECTION_ID}" target="_blank">
             Nakala
         </a>`;
 
