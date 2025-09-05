@@ -90,6 +90,35 @@ body > .fr-container--fluid {
     vertical-align: middle;
 }
 
+/* Styles pour les informations de version */
+.version-info {
+    font-family: 'Courier New', monospace;
+    transition: all 0.3s ease;
+    user-select: none;
+}
+
+.version-info:hover {
+    opacity: 1 !important;
+    color: #000091 !important;
+}
+
+#version-display {
+    transition: all 0.3s ease;
+    border-radius: 3px;
+    padding: 2px 4px;
+    background-color: rgba(0, 0, 145, 0.1);
+}
+
+#version-display:hover {
+    background-color: rgba(0, 0, 145, 0.2);
+    cursor: pointer;
+}
+
+#version-details {
+    font-size: 0.8em;
+    color: #888;
+}
+
 
 #sel-layers {
   margin: 4px;

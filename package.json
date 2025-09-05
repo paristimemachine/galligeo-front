@@ -1,4 +1,19 @@
 {
+  "name": "galligeo-front",
+  "version": "1.0.0",
+  "description": "Interface de géoréférencement pour cartes historiques avec intégration Gallica",
+  "main": "ggo.html",
+  "scripts": {
+    "build-version": "node scripts/build-version.js",
+    "dev": "npm run build-version && echo 'Version générée avec succès'",
+    "start": "npm run build-version"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/paristimemachine/galligeo-front.git"
+  },
+  "author": "Paris Time Machine",
+  "license": "MIT",
   "dependencies": {
     "@gouvfr/dsfr": "^1.9.0",
     "leaflet-geosearch": "^3.8.0",
