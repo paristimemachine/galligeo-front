@@ -336,8 +336,8 @@ nav.fr-nav .fr-grid-row {
     min-height: 28px !important;
     width: 28px !important;
     color: #ce0500 !important;
-    background-color: #fff5f5 !important;
-    border: 1px solid #ffb3b3 !important;
+    /* background-color: #fff5f5 !important; */
+    /* border: 1px solid #ffb3b3 !important; */
     border-radius: 4px !important;
     opacity: 0.8;
     transition: all 0.2s ease;
@@ -1051,7 +1051,7 @@ nav.fr-nav .fr-grid-row {
 }
 
 #table-control-points td {
-  font-family: 'Courier New', monospace;
+  font-family: 'Marianne', monospace;
   padding: 8px 12px;
 }
 

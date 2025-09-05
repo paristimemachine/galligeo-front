@@ -84,6 +84,55 @@
       "max": 10000000,
       "step": 1000,
       "defaultValue": 100000
+    },
+    {
+      "type": "separator",
+      "label": "Sauvegarde automatique"
+    },
+    {
+      "type": "checkbox",
+      "id": "checkbox-autosave",
+      "name": "checkbox-autosave",
+      "label": "Activer la sauvegarde automatique des points de contrôle",
+      "hint": "Sauvegarde automatiquement vos points de contrôle toutes les 30 secondes et lors de la fermeture de la page",
+      "required": false,
+      "defaultValue": true
+    },
+    {
+      "type": "select",
+      "id": "select-backup-frequency",
+      "name": "select-backup-frequency",
+      "label": "Fréquence de sauvegarde automatique",
+      "placeholder": "Sélectionner une fréquence",
+      "required": false,
+      "defaultValue": "30",
+      "dependency": {
+        "field": "checkbox-autosave",
+        "value": true
+      },
+      "options": [
+        { "value": "15", "label": "15 secondes", "description": "Sauvegarde très fréquente" },
+        { "value": "30", "label": "30 secondes", "description": "Recommandé" },
+        { "value": "60", "label": "1 minute", "description": "Sauvegarde moins fréquente" },
+        { "value": "300", "label": "5 minutes", "description": "Sauvegarde espacée" }
+      ]
+    },
+    {
+      "type": "number",
+      "id": "input-max-backups",
+      "name": "input-max-backups",
+      "label": "Nombre maximum de sauvegardes à conserver",
+      "placeholder": "10",
+      "hint": "Les anciennes sauvegardes sont automatiquement supprimées",
+      "required": false,
+      "min": 1,
+      "max": 50,
+      "step": 1,
+      "defaultValue": 10,
+      "dependency": {
+        "field": "checkbox-autosave",
+        "value": true
+      }
     }
   ],
   "submitButton": {
