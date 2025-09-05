@@ -47,3 +47,14 @@ let image_height_scaled;
 
 const URL_TILE_SERVER = "https://tile.ptm.huma-num.fr/tiles/ark/";
 const URL_TILE_SERVER_SUB = "https://{s}.tile.ptm.huma-num.fr/tiles/ark/";
+
+// Variables globales pour le nouveau système de saisie
+// Déclarées ici pour être disponibles dans tous les fichiers
+window.inputMode = 'disabled';
+window.currentInputMode = 'points';
+window.activeMap = 'left';
+window.pointCounter = 0;
+window.isInputLocked = false;
+window.pointPairs = [];
+window.currentPolygon = null;
+window.isDragging = false;

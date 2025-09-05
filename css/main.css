@@ -23,6 +23,53 @@ body > .fr-container--fluid {
         padding: 0.8rem 0;
     }
 
+/* Optimisation de la navigation pour réduire sa hauteur */
+.fr-nav {
+    padding: 8px 0;
+}
+
+.fr-nav .fr-grid-row {
+    align-items: center;
+}
+
+/* Styles pour les contrôles de saisie dans la sidebar */
+.input-controls-section {
+    border-top: 1px solid #e5e5e5;
+    margin-top: 16px;
+}
+
+.input-controls-section .fr-notice {
+    margin: 8px 0 !important;
+    font-size: 0.875rem;
+}
+
+.input-controls-section .fr-notice__title {
+    font-size: 0.875rem;
+    margin: 0;
+}
+
+.input-controls-section .fr-btns-group {
+    flex-direction: column;
+    gap: 4px;
+}
+
+.input-controls-section .fr-btn--sm {
+    font-size: 0.75rem;
+    padding: 0.5rem 0.75rem;
+}
+
+/* Ajustements pour la sidebar */
+#sidebar {
+    overflow-y: auto;
+    max-height: calc(100vh - 200px);
+}
+
+/* Réduction de l'espacement dans la navigation */
+#nav-tools4 .fr-toggle,
+#nav-tools4 .fr-segmented {
+    margin: 4px 0;
+}
+
 
 
 .fr-footer {
@@ -565,3 +612,180 @@ nav.fr-nav {
   box-sizing: border-box;
 }
 
+/* =====================================================================
+   STYLES POUR LE NOUVEAU SYSTÈME DE SAISIE AMÉLIORÉ
+   ===================================================================== */
+
+/* Indicateur de statut de saisie */
+#input-status-container {
+  border-radius: 4px;
+  font-size: 0.875rem;
+}
+
+#input-status {
+  margin: 0;
+  font-weight: 500;
+}
+
+/* Boutons d'action de saisie */
+#input-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+#input-actions .fr-btn {
+  flex: 1;
+  min-width: 100px;
+}
+
+/* Styles pour les tooltips des points numérotés */
+.labels-points {
+  background-color: rgba(0, 55, 255, 0.9) !important;
+  color: white !important;
+  font-weight: bold !important;
+  font-size: 12px !important;
+  border-radius: 3px !important;
+  padding: 2px 6px !important;
+  border: none !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3) !important;
+}
+
+.labels-points::before {
+  border-top-color: rgba(0, 55, 255, 0.9) !important;
+}
+
+/* Styles pour les marqueurs en mode déplacement */
+.leaflet-marker-icon:hover {
+  transform: scale(1.1);
+  transition: transform 0.2s ease;
+  cursor: move !important;
+}
+
+.leaflet-marker-icon.dragging {
+  transform: scale(1.2);
+  z-index: 1000;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4));
+}
+
+/* Styles pour les cartes en mode saisie */
+.leaflet-container.input-mode-points {
+  cursor: crosshair !important;
+}
+
+.leaflet-container.input-mode-emprise {
+  cursor: crosshair !important;
+}
+
+.leaflet-container.input-disabled {
+  cursor: default !important;
+}
+
+/* Animation pour les cartes actives */
+.leaflet-container.active-map {
+  position: relative;
+}
+
+.leaflet-container.active-map::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border: 3px solid #000091;
+  pointer-events: none;
+  z-index: 1000;
+  animation: active-map-pulse 2s ease-in-out;
+}
+
+@keyframes active-map-pulse {
+  0% {
+    border-color: #000091;
+    box-shadow: 0 0 0 0 rgba(0, 0, 145, 0.7);
+  }
+  50% {
+    border-color: #000091;
+    box-shadow: 0 0 0 10px rgba(0, 0, 145, 0);
+  }
+  100% {
+    border-color: #000091;
+    box-shadow: 0 0 0 0 rgba(0, 0, 145, 0);
+  }
+}
+
+/* Styles pour les polygones d'emprise */
+.leaflet-interactive[stroke="#0037ff"] {
+  stroke-width: 3;
+  stroke-dasharray: none;
+}
+
+.leaflet-interactive[stroke="#0037ff"]:hover {
+  stroke-width: 4;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+
+/* Amélioration de l'affichage des contrôles segmentés */
+.fr-segmented {
+  margin-bottom: 8px;
+}
+
+.fr-segmented .fr-segmented__element input:disabled + label {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.fr-segmented .fr-segmented__element input:checked + label {
+  background-color: #000091;
+  color: white;
+}
+
+/* Styles pour la table des points de contrôle améliorée */
+#table-control-points table {
+  font-size: 0.875rem;
+}
+
+#table-control-points td {
+  font-family: 'Courier New', monospace;
+  padding: 8px 12px;
+}
+
+#table-control-points tr:nth-child(even) {
+  background-color: #f8f9fa;
+}
+
+#table-control-points tr:hover {
+  background-color: #e3f2fd;
+}
+
+/* Responsive design pour les petits écrans */
+@media (max-width: 768px) {
+  #input-actions {
+    flex-direction: column;
+  }
+  
+  #input-actions .fr-btn {
+    width: 100%;
+    margin-bottom: 4px;
+  }
+  
+  .labels-points {
+    font-size: 10px !important;
+    padding: 1px 4px !important;
+  }
+}
+
+/* Styles pour les messages d'aide contextuelle */
+.input-help-message {
+  font-size: 0.75rem;
+  color: #666;
+  font-style: italic;
+  margin-top: 4px;
+}
+
+.input-help-message.active {
+  color: #000091;
+  font-weight: 500;
+}
+
+/* ===================================================================== */

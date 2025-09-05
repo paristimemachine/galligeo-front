@@ -210,7 +210,6 @@
                     </div>
                 </fieldset>
 
-
                 <button class="fr-btn fr-btn--secondary" id="btn_georef" disabled onclick="click_georef('', list_georef_points, list_points_polygon_crop, input_ark)"> 
                     Géoréférencer
                 </button>
@@ -638,6 +637,30 @@
                     </p>
                 </div>
 
+                <!-- Contrôles de saisie déplacés depuis la navigation -->
+                <div class="input-controls-section" style="padding: 8px 4px;">
+                    <!-- Statut de saisie -->
+                    <div class="fr-notice fr-notice--info" id="input-status-container" style="margin: 8px 0;">
+                        <div class="fr-container">
+                            <div class="fr-notice__body">
+                                <p class="fr-notice__title" id="input-status">
+                                    Système de saisie initialisé
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Boutons d'action pour la saisie -->
+                    <div class="fr-btns-group fr-btns-group--sm" id="input-actions" style="margin: 8px 0;">
+                        <button class="fr-btn fr-btn--tertiary fr-btn--sm" id="btn_clear_points" onclick="clearAllControlPoints()">
+                            Effacer points
+                        </button>
+                        <button class="fr-btn fr-btn--tertiary fr-btn--sm" id="btn_clear_emprise" onclick="clearEmprise()">
+                            Effacer emprise
+                        </button>
+                    </div>
+                </div>
+
                 <section class="fr-accordion" id="metadata" hidden>
                     <h3 class="fr-accordion__title">
                         <button class="fr-accordion__btn" aria-expanded="true" aria-controls="text-metadata">Métadonnées Gallica</button>
@@ -858,6 +881,7 @@
     <script src="js/version.js"></script>
     <script src="js/clonelayers.js"></script>
     <script src="js/init.js"></script>
+    <script src="js/advanced-input-system.js"></script>
     <script src="js/map_interactions.js"></script>
     <script src="js/front_interactions.js"></script>
     <script src="js/api_interactions.js"></script>
@@ -1280,6 +1304,12 @@
         
         // Définir l'état initial (toggle désactivé par défaut = boutons activés)
         toggleSegmentedButtons();
+        
+        // Attendre que le système de saisie soit prêt
+        if (typeof setupAdvancedInputSystem === 'function') {
+            // Le système est déjà initialisé dans map_interactions.js
+            console.log('Système de saisie avancé disponible');
+        }
     }
     </script>
 
@@ -1290,7 +1320,22 @@
             
             // Initialiser l'affichage de version
             initializeVersionDisplay();
+            
+            // Ajouter des messages d'aide contextuelle
+            addInputHelpMessages();
         });
+        
+        // Fonction pour ajouter des messages d'aide
+        function addInputHelpMessages() {
+            const statusContainer = document.getElementById('input-status-container');
+            if (statusContainer) {
+                const helpDiv = document.createElement('div');
+                helpDiv.className = 'input-help-message';
+                helpDiv.id = 'input-help';
+                helpDiv.textContent = 'Activez la saisie et sélectionnez le mode pour commencer';
+                statusContainer.appendChild(helpDiv);
+            }
+        }
         
         // Fonction pour initialiser l'affichage de version dans le footer
         function initializeVersionDisplay() {
