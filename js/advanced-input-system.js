@@ -646,6 +646,42 @@ function updateUIForInputMode() {
             }
         }
     }
+    
+    // Gestion des boutons de suppression selon l'état de verrouillage
+    updateClearButtonsState();
+}
+
+function updateClearButtonsState() {
+    const btnClearPoints = document.getElementById('btn_clear_points');
+    const btnClearEmprise = document.getElementById('btn_clear_emprise');
+    
+    if (btnClearPoints) {
+        if (window.isInputLocked) {
+            btnClearPoints.disabled = true;
+            btnClearPoints.style.opacity = '0.5';
+            btnClearPoints.style.cursor = 'not-allowed';
+            btnClearPoints.title = 'Désactivez le verrou pour effacer les points';
+        } else {
+            btnClearPoints.disabled = false;
+            btnClearPoints.style.opacity = '1';
+            btnClearPoints.style.cursor = 'pointer';
+            btnClearPoints.title = 'Effacer tous les points de contrôle';
+        }
+    }
+    
+    if (btnClearEmprise) {
+        if (window.isInputLocked) {
+            btnClearEmprise.disabled = true;
+            btnClearEmprise.style.opacity = '0.5';
+            btnClearEmprise.style.cursor = 'not-allowed';
+            btnClearEmprise.title = 'Désactivez le verrou pour effacer l\'emprise';
+        } else {
+            btnClearEmprise.disabled = false;
+            btnClearEmprise.style.opacity = '1';
+            btnClearEmprise.style.cursor = 'pointer';
+            btnClearEmprise.title = 'Effacer l\'emprise sélectionnée';
+        }
+    }
 }
 
 function setupPointInteractions() {
@@ -777,6 +813,12 @@ function removeControlPoint(pointId) {
  * Fonction pour supprimer tous les points
  */
 function clearAllControlPoints() {
+    if (window.isInputLocked) {
+        console.log('Suppression interdite - saisie verrouillée');
+        alert('La saisie est verrouillée. Désactivez le verrou pour supprimer tous les points.');
+        return;
+    }
+    
     resetInputSystem();
 }
 
@@ -784,6 +826,12 @@ function clearAllControlPoints() {
  * Fonction pour supprimer l'emprise
  */
 function clearEmprise() {
+    if (window.isInputLocked) {
+        console.log('Suppression d\'emprise interdite - saisie verrouillée');
+        alert('La saisie est verrouillée. Désactivez le verrou pour supprimer l\'emprise.');
+        return;
+    }
+    
     if (window.currentPolygon) {
         if (window.currentPolygon.layer) {
             layer_img_emprise_left.removeLayer(window.currentPolygon.layer);
