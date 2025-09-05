@@ -972,9 +972,9 @@ nav.fr-nav .fr-grid-row {
 .leaflet-container.input-disabled::after {
   content: '🔒 Saisie verrouillée';
   position: absolute;
-  top: 50%;
+  top: 10px; /* Positionner en haut au lieu du centre */
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translateX(-50%); /* Centrer seulement horizontalement */
   background: rgba(255, 255, 255, 0.95);
   border: 2px solid #ce0500;
   border-radius: 8px;

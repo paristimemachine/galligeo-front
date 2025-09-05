@@ -38,18 +38,31 @@ async function deposerSurNakala(apiKey_in, collection_id_in) {
         institution = document.getElementById('input-institution').value;
     }
 
-    // 1. Récupérer votre "fichier local" via fetch
-    //    (ATTN: le chemin doit être servi par votre serveur web)
-    const fileResp = await fetch('js/coords.txt');
-    if (!fileResp.ok) {
-        return alert(`Impossible de charger coords.txt (${fileResp.status})`);
+    // 1. Générer le fichier de points de contrôle à partir des données actuelles
+    if (!window.pointPairs || window.pointPairs.length === 0) {
+        return alert('Aucun point de contrôle disponible pour le dépôt.');
     }
-    const fileBlob = await fileResp.blob();
+    
+    // Générer le contenu du fichier points de contrôle
+    let coordsContent = "# Points de contrôle générés par GallicaGeo\n";
+    coordsContent += "# Format: id, lat_image, lng_image, lat_geo, lng_geo\n";
+    
+    const completePairs = window.pointPairs.filter(pair => pair.isComplete());
+    if (completePairs.length === 0) {
+        return alert('Aucune paire de points complète disponible pour le dépôt.');
+    }
+    
+    completePairs.forEach(pair => {
+        coordsContent += `${pair.id},${pair.leftPoint.lat},${pair.leftPoint.lng},${pair.rightPoint.lat},${pair.rightPoint.lng}\n`;
+    });
+    
+    // Créer un Blob avec le contenu généré
+    const fileBlob = new Blob([coordsContent], { type: 'text/plain' });
 
     // 2. Préparer l'uploadForm et y ajouter le Blob
     const uploadForm = new FormData();
     // Le troisième argument donne le nom du fichier côté Nakala
-    uploadForm.append('file', fileBlob, 'coords.txt');
+    uploadForm.append('file', fileBlob, 'points_controle.csv');
 
     // 3. Envoyer sur /datas/uploads
     const uploadResp = await fetch(UPLOAD_EP, {
@@ -60,7 +73,7 @@ async function deposerSurNakala(apiKey_in, collection_id_in) {
     if (!uploadResp.ok) {
         const errText = await uploadResp.text();
         console.error('Échec upload:', uploadResp.status, errText);
-        return alert("Erreur lors de l'upload de coords.txt");
+        return alert("Erreur lors de l'upload du fichier de points de contrôle");
     }
     const { name: uploadedName, sha1: uploadedSha1 } = await uploadResp.json();
     console.log('Upload OK:', uploadedName, uploadedSha1);
@@ -100,8 +113,8 @@ async function deposerSurNakala(apiKey_in, collection_id_in) {
     const url_tile_ptm_sub = 'https://{s}.tile.ptm.huma-num.fr/tiles/ark/12148/' + input_ark + '/{z}/{x}/{y}.png';
 
     const DESCRIPTION = "L'image source est visible sur le site de Gallica, à l'adresse suivante : " + url_gallica + '\n\n' +
-        "Cette image a été géoréférencée par le projet Galligeo, qui vise à rendre accessible la cartographie historique de la BnF dans un format géoréférencée. "  + '\n\n' +
-        "Les points de contrôle ont été créés par des bénévoles, et sont disponibles sous la forme d'un fichier points.txt dans le dépôt"  + '\n\n' +
+        "Cette image a été géoréférencée par le projet Galligeo, qui vise à rendre accessible la cartographie historique de la BnF dans un format géoréférencé. "  + '\n\n' +
+        "Les points de contrôle ont été créés par des bénévoles, et sont disponibles sous la forme d'un fichier CSV dans le dépôt contenant les coordonnées des paires de points de contrôle (image/géographique)"  + '\n\n' +
         "La carte géoréférencée est visible à l'adresse suivante : " +  url_app_ptm + '\n\n' +
         "Le flux de tuile peut être utilisé dans un SIG, avec l'URL suivante : " + url_tile_ptm_sub + '\n\n' +
         "Les données sont disponibles sous la licence " + LICENSE + ", et peuvent être utilisées pour des projets de recherche ou d'enseignement."  + '\n\n' +
@@ -242,7 +255,7 @@ async function deposerSurNakala(apiKey_in, collection_id_in) {
             name:        uploadedName,
             sha1:        uploadedSha1,
             embargoed:   '2025-03-27',
-            description: 'Coordinates file'
+            description: 'Points de contrôle CSV (coordonnées image/géographique)'
           }],
         status: "published",
         metas: metas,
