@@ -728,6 +728,15 @@
             </svg>
            by <a href="https://ptm.huma-num.fr/" target="_blank">PTM</a>
            &nbsp;— <a href="https://github.com/" target="_blank">Code &amp; Documentation</a>
+           &nbsp;—
+           <span id="app-version-info" class="version-info" style="opacity: 0.7; font-size: 0.85em; color: #666;">
+               <span id="version-display">Chargement...</span>
+               <span id="version-details" style="display: none;">
+                   <span id="version-build"></span>
+                   <span id="version-commit"></span>
+                   <span id="version-date"></span>
+               </span>
+           </span>
         </p>
       </footer>
     <!--  -->
@@ -846,6 +855,7 @@
     <script type="module" src="node_modules/@gouvfr/dsfr/dist/dsfr.module.min.js"></script>
     <script type="text/javascript" nomodule src="node_modules/@gouvfr/dsfr/dist/dsfr.nomodule.min.js"></script>
     <!-- internal -->
+    <script src="js/version.js"></script>
     <script src="js/clonelayers.js"></script>
     <script src="js/init.js"></script>
     <script src="js/map_interactions.js"></script>
@@ -1277,7 +1287,74 @@
         // Initialiser l'état des boutons segmentés dès que le DOM est chargé
         document.addEventListener('DOMContentLoaded', function() {
             initializeSegmentedButtonsState();
+            
+            // Initialiser l'affichage de version
+            initializeVersionDisplay();
         });
+        
+        // Fonction pour initialiser l'affichage de version dans le footer
+        function initializeVersionDisplay() {
+            const versionDisplay = document.getElementById('version-display');
+            const versionDetails = document.getElementById('version-details');
+            const versionBuild = document.getElementById('version-build');
+            const versionCommit = document.getElementById('version-commit');
+            const versionDate = document.getElementById('version-date');
+            
+            if (!versionDisplay) return;
+            
+            // Attendre que les informations de version soient disponibles
+            function updateVersionInfo() {
+                if (window.APP_VERSION) {
+                    const version = window.APP_VERSION;
+                    
+                    // Version simple pour l'affichage normal
+                    versionDisplay.textContent = version.shortDisplayVersion;
+                    versionDisplay.style.cursor = 'pointer';
+                    versionDisplay.title = 'Cliquer pour plus d\'informations';
+                    
+                    // Détails pour l'affichage étendu
+                    if (versionBuild) {
+                        versionBuild.textContent = ` • Build ${version.buildNumber}`;
+                    }
+                    if (versionCommit) {
+                        versionCommit.textContent = ` • ${version.git.hash}`;
+                    }
+                    if (versionDate) {
+                        const buildDate = new Date(version.build.timestamp);
+                        versionDate.textContent = ` • ${buildDate.toLocaleDateString('fr-FR')}`;
+                    }
+                    
+                    // Ajouter l'interaction pour afficher/masquer les détails
+                    let detailsVisible = false;
+                    versionDisplay.addEventListener('click', function() {
+                        detailsVisible = !detailsVisible;
+                        
+                        if (detailsVisible) {
+                            versionDisplay.textContent = version.displayVersion;
+                            if (versionDetails) versionDetails.style.display = 'inline';
+                            versionDisplay.title = 'Cliquer pour réduire';
+                        } else {
+                            versionDisplay.textContent = version.shortDisplayVersion;
+                            if (versionDetails) versionDetails.style.display = 'none';
+                            versionDisplay.title = 'Cliquer pour plus d\'informations';
+                        }
+                    });
+                    
+                    // Double-clic pour afficher toutes les informations dans la console
+                    versionDisplay.addEventListener('dblclick', function() {
+                        if (window.showVersionInfo) {
+                            window.showVersionInfo();
+                        }
+                    });
+                    
+                } else {
+                    // Réessayer dans 100ms si les informations ne sont pas encore disponibles
+                    setTimeout(updateVersionInfo, 100);
+                }
+            }
+            
+            updateVersionInfo();
+        }
     </script>
 
   </body>
