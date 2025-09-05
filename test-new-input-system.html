@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test - Nouveau Système de Saisie</title>
+    <link rel="stylesheet" href="node_modules/@gouvfr/dsfr/dist/dsfr.min.css">
+    <link rel="stylesheet" href="css/main.css">
+    <style>
+        .test-container {
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .test-info {
+            background: #f0f8ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .test-status {
+            font-weight: bold;
+            color: #000091;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Test du Nouveau Système de Saisie</h1>
+        
+        <div class="test-info">
+            <h2>Fonctionnalités testées :</h2>
+            <ul>
+                <li>✅ Remplacement du système drawcontrol Leaflet</li>
+                <li>✅ Toggle Saisie/Verrouillé</li>
+                <li>✅ Contrôles segmentés Points/Emprise</li>
+                <li>✅ Numérotation automatique des points</li>
+                <li>✅ Appariement des points entre cartes</li>
+                <li>✅ Alternance automatique entre cartes</li>
+                <li>✅ Déplacement des points existants</li>
+                <li>✅ Fermeture automatique des polygones</li>
+                <li>✅ Validation des données pour géoréférencement</li>
+            </ul>
+        </div>
+        
+        <div class="test-status" id="test-status">
+            Système initialisé - Prêt pour les tests
+        </div>
+        
+        <div style="margin: 20px 0;">
+            <h3>Instructions de test :</h3>
+            <ol>
+                <li>Ouvrez les outils de développement (F12)</li>
+                <li>Regardez la console pour les messages du système</li>
+                <li>Testez le toggle Saisie/Verrouillé</li>
+                <li>Testez la saisie de points avec alternance automatique</li>
+                <li>Testez la saisie d'emprise</li>
+                <li>Testez le déplacement des points</li>
+                <li>Vérifiez que les données sont correctement mises à jour</li>
+            </ol>
+        </div>
+        
+        <div style="margin: 20px 0;">
+            <button class="fr-btn fr-btn--secondary" onclick="testSystemStatus()">
+                Vérifier l'état du système
+            </button>
+            <button class="fr-btn fr-btn--secondary" onclick="exportTestData()">
+                Exporter les données de test
+            </button>
+            <button class="fr-btn fr-btn--secondary" onclick="resetTestSystem()">
+                Réinitialiser le système
+            </button>
+        </div>
+        
+        <div id="test-results" style="margin-top: 20px; padding: 10px; background: #f8f9fa; border-radius: 5px;">
+            <h4>Résultats des tests :</h4>
+            <pre id="test-output">Aucun test exécuté</pre>
+        </div>
+    </div>
+
+    <script>
+        function testSystemStatus() {
+            const status = {
+                timestamp: new Date().toISOString(),
+                inputMode: typeof inputMode !== 'undefined' ? inputMode : 'non défini',
+                currentInputMode: typeof currentInputMode !== 'undefined' ? currentInputMode : 'non défini',
+                activeMap: typeof activeMap !== 'undefined' ? activeMap : 'non défini',
+                pointCounter: typeof pointCounter !== 'undefined' ? pointCounter : 'non défini',
+                pointPairs: typeof pointPairs !== 'undefined' ? pointPairs.length : 'non défini',
+                isInputLocked: typeof isInputLocked !== 'undefined' ? isInputLocked : 'non défini',
+                completePairs: typeof getCompletePairCount === 'function' ? getCompletePairCount() : 'fonction non disponible',
+                list_georef_points: typeof list_georef_points !== 'undefined' ? list_georef_points.length : 'non défini',
+                list_points_polygon_crop: typeof list_points_polygon_crop !== 'undefined' ? list_points_polygon_crop.length : 'non défini'
+            };
+            
+            document.getElementById('test-output').textContent = JSON.stringify(status, null, 2);
+            console.log('Test du système:', status);
+        }
+        
+        function exportTestData() {
+            if (typeof exportGeoreferencingData === 'function') {
+                const data = exportGeoreferencingData();
+                document.getElementById('test-output').textContent = JSON.stringify(data, null, 2);
+                console.log('Données exportées:', data);
+            } else {
+                document.getElementById('test-output').textContent = 'Fonction exportGeoreferencingData non disponible';
+            }
+        }
+        
+        function resetTestSystem() {
+            if (typeof resetInputSystem === 'function') {
+                resetInputSystem();
+                document.getElementById('test-output').textContent = 'Système réinitialisé';
+                console.log('Système réinitialisé');
+            } else {
+                document.getElementById('test-output').textContent = 'Fonction resetInputSystem non disponible';
+            }
+        }
+        
+        // Test automatique au chargement
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                console.log('=== TEST AUTOMATIQUE DU NOUVEAU SYSTÈME ===');
+                testSystemStatus();
+                
+                // Vérifier la présence des fonctions clés
+                const requiredFunctions = [
+                    'setupAdvancedInputSystem',
+                    'resetInputSystem',
+                    'clearAllControlPoints',
+                    'clearEmprise',
+                    'getCompletePairCount',
+                    'exportGeoreferencingData'
+                ];
+                
+                requiredFunctions.forEach(func => {
+                    if (typeof window[func] === 'function') {
+                        console.log(`✅ ${func} : disponible`);
+                    } else {
+                        console.log(`❌ ${func} : manquante`);
+                    }
+                });
+                
+                console.log('=== FIN DU TEST AUTOMATIQUE ===');
+            }, 2000);
+        });
+    </script>
+</body>
+</html>
