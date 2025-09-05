@@ -12,9 +12,22 @@ function ControlPointPair(id, leftPoint = null, rightPoint = null) {
     };
 }
 
-function setupAdvancedInputSystem() {
-    console.log('Configuration du système de saisie avancé...');
+/**
+ * Initialise l'état de la table des points de contrôle
+ */
+function initializeControlPointsTable() {
+    const tableSection = document.getElementById('table-control-points');
     
+    // Masquer la table au démarrage si pas de points
+    if (tableSection && (!window.pointPairs || window.pointPairs.length === 0)) {
+        tableSection.setAttribute('hidden', '');
+    }
+    
+    // Mettre à jour la table pour refléter l'état actuel
+    updateControlPointsTable();
+}
+
+function setupAdvancedInputSystem() {
     // Supprimer les anciens contrôles Leaflet Draw
     removeOldDrawControls();
     
@@ -30,7 +43,8 @@ function setupAdvancedInputSystem() {
     // Initialiser l'état
     updateInputState();
     
-    console.log('Système de saisie avancé configuré avec succès');
+    // Initialiser l'état de la table des points de contrôle
+    initializeControlPointsTable();
 }
 
 function removeOldDrawControls() {
@@ -89,15 +103,12 @@ function updateInputState() {
     if (window.isInputLocked) {
         window.inputMode = 'disabled';
         setMapCursors('default');
-        console.log('Saisie verrouillée');
     } else {
         window.inputMode = window.currentInputMode;
         if (window.inputMode === 'points') {
             setMapCursors('crosshair');
-            console.log('Mode saisie points activé');
         } else if (window.inputMode === 'emprise') {
             setMapCursors('crosshair');
-            console.log('Mode saisie emprise activé');
         }
     }
     
@@ -140,7 +151,6 @@ function setupMapClickEvents() {
 
 function handleMapClick(event, mapSide) {
     if (window.inputMode === 'disabled' || window.isInputLocked) {
-        console.log('Saisie verrouillée - clic ignoré');
         return;
     }
     
@@ -210,8 +220,6 @@ function handlePointClick(event, mapSide, map, layer) {
     
     // Vérifier si le géoréférencement peut être activé
     checkGeoreferencingAvailability();
-    
-    console.log(`Point ${pointPair.id} ajouté sur la carte ${mapSide}:`, processedCoords);
 }
 
 function findOrCreatePointPair(mapSide) {
@@ -255,7 +263,6 @@ function switchActiveMap() {
 function setupMarkerDragEvents(marker, pointPair, mapSide) {
     marker.on('dragstart', function() {
         if (window.isInputLocked) {
-            console.log('Déplacement interdit - saisie verrouillée');
             return false;
         }
         window.isDragging = true;
@@ -299,7 +306,12 @@ function setupMarkerDragEvents(marker, pointPair, mapSide) {
         // Mettre à jour la table
         updateControlPointsTable();
         
-        console.log(`Point ${pointPair.id} déplacé sur la carte ${mapSide}:`, processedCoords);
+        // Déclencher une sauvegarde automatique après déplacement de point
+        if (window.controlPointsBackup && typeof window.controlPointsBackup.saveCurrentState === 'function') {
+            setTimeout(() => {
+                window.controlPointsBackup.saveCurrentState('point-moved');
+            }, 100);
+        }
     });
     
     // Sauvegarder la position initiale
@@ -376,16 +388,64 @@ function handleEmpriseClick(event, map) {
         // Rendre le polygone éditable
         if (window.currentPolygon.layer.editing) {
             window.currentPolygon.layer.editing.enable();
+            
+            // Écouter les événements d'édition pour déclencher la sauvegarde
+            window.currentPolygon.layer.on('edit', function() {
+                syncPolygonDataFromLayer();
+            });
+            
+            // Écouter aussi les événements de fin d'édition
+            window.currentPolygon.layer.on('editable:vertex:dragend', function() {
+                setTimeout(() => {
+                    syncPolygonDataFromLayer();
+                }, 100); // Petit délai pour laisser la géométrie se mettre à jour
+            });
         }
         
         // Convertir pour les données
         updatePolygonData();
         
-        console.log('Polygone d\'emprise créé avec', window.currentPolygon.points.length, 'points');
+        // Déclencher une sauvegarde automatique après modification de l'emprise
+        if (window.controlPointsBackup && typeof window.controlPointsBackup.saveCurrentState === 'function') {
+            // Petit délai pour s'assurer que toutes les données sont mises à jour
+            setTimeout(() => {
+                window.controlPointsBackup.saveCurrentState('emprise-modification');
+            }, 200);
+        }
     }
     
     // Mettre à jour l'interface
     updateUIForInputMode();
+}
+
+/**
+ * Synchronise les données du polygone depuis le layer Leaflet
+ * Utilisé quand le polygone est modifié via l'interface d'édition
+ */
+function syncPolygonDataFromLayer() {
+    if (!window.currentPolygon || !window.currentPolygon.layer) {
+        return;
+    }
+    
+    try {
+        // Récupérer les coordonnées depuis le layer Leaflet
+        const layerLatLngs = window.currentPolygon.layer.getLatLngs();
+        
+        // Leaflet peut retourner un tableau de tableaux pour les polygones complexes
+        // Prendre le premier anneau (polygone principal)
+        const coords = Array.isArray(layerLatLngs[0]) ? layerLatLngs[0] : layerLatLngs;
+        
+        // Mettre à jour window.currentPolygon.points
+        window.currentPolygon.points = coords.map(latLng => L.latLng(latLng.lat, latLng.lng));
+        
+        // Mettre à jour les données converties
+        updatePolygonData();
+        
+    } catch (error) {
+        console.error('Erreur lors de la synchronisation du polygone:', error);
+        // Fallback: utiliser updatePolygonData() normal
+        updatePolygonData();
+    }
 }
 
 function updatePolygonData() {
@@ -407,106 +467,95 @@ function updatePolygonData() {
     });
     
     list_points_polygon_crop = polyJson;
-    console.log('Données polygone mises à jour:', list_points_polygon_crop);
+    
+    // Déclencher une sauvegarde automatique après mise à jour des données polygone
+    if (window.controlPointsBackup && typeof window.controlPointsBackup.saveCurrentState === 'function') {
+        // Petit délai pour s'assurer que toutes les données sont mises à jour
+        setTimeout(() => {
+            window.controlPointsBackup.saveCurrentState('emprise-data-update');
+        }, 100);
+    }
 }
 
 function updateControlPointsTable() {
     const tableBody = document.getElementById('table_body');
+    const tableSection = document.getElementById('table-control-points');
+    
     if (!tableBody) return;
-    
-    // Vider la table
+
+    // Vider le tableau
     tableBody.innerHTML = '';
-    
-    // Remplir avec toutes les paires (complètes et incomplètes)
-    if (window.pointPairs.length === 0) {
-        const row = document.createElement('tr');
-        const cell = document.createElement('td');
-        cell.colSpan = 2;
-        cell.textContent = 'Aucun point saisi';
-        cell.style.textAlign = 'center';
-        cell.style.fontStyle = 'italic';
-        row.appendChild(cell);
-        tableBody.appendChild(row);
-    } else {
+
+    // Afficher ou masquer la table selon s'il y a des points
+    if (window.pointPairs.length > 0) {
+        // Afficher la table
+        if (tableSection) {
+            tableSection.removeAttribute('hidden');
+            console.log('Table des points de contrôle affichée');
+        }
+        
+        // Ajouter les paires de points
         window.pointPairs.forEach(pair => {
             const row = document.createElement('tr');
             
-            // Cellule pour le point gauche (image)
             const leftCell = document.createElement('td');
+            const rightCell = document.createElement('td');
+            
             if (pair.leftPoint) {
-                const leftCoords = `${pair.id}. (${pair.leftPoint.lat.toFixed(3)}, ${pair.leftPoint.lng.toFixed(3)})`;
                 leftCell.innerHTML = `
                     <div class="point-info">
-                        <span class="point-coords">${leftCoords}</span>
-                        <button class="fr-btn fr-btn--tertiary-no-outline fr-btn--sm point-delete-btn" 
+                        <strong>${pair.id}</strong><br>
+                        <small>Lat: ${pair.leftPoint.lat.toFixed(6)}<br>
+                        Lng: ${pair.leftPoint.lng.toFixed(6)}</small>
+                        <button class="fr-btn fr-btn--sm fr-btn--tertiary-no-outline fr-btn--icon-left fr-icon-close-circle-fill fr-mt-1v" 
                                 onclick="removeIndividualPoint(${pair.id}, 'left')" 
                                 title="Supprimer ce point"
-                                ${window.isInputLocked ? 'disabled style="opacity: 0.3; cursor: not-allowed;"' : ''}>
-                            <span class="fr-icon-close-circle-fill" aria-hidden="true"></span>
+                                style="color: #ce0500;">
                         </button>
                     </div>
                 `;
-                leftCell.style.color = '#000091'; // Bleu DSFR pour les points existants
             } else {
-                leftCell.textContent = `${pair.id}. (non saisi)`;
-                leftCell.style.color = '#666';
-                leftCell.style.fontStyle = 'italic';
+                leftCell.innerHTML = `<em class="text-muted">Point ${pair.id} manquant</em>`;
             }
-            row.appendChild(leftCell);
             
-            // Cellule pour le point droit (géo)
-            const rightCell = document.createElement('td');
             if (pair.rightPoint) {
-                const rightCoords = `${pair.id}. (${pair.rightPoint.lat.toFixed(3)}, ${pair.rightPoint.lng.toFixed(3)})`;
                 rightCell.innerHTML = `
                     <div class="point-info">
-                        <span class="point-coords">${rightCoords}</span>
-                        <button class="fr-btn fr-btn--tertiary-no-outline fr-btn--sm point-delete-btn" 
+                        <strong>${pair.id}</strong><br>
+                        <small>Lat: ${pair.rightPoint.lat.toFixed(6)}<br>
+                        Lng: ${pair.rightPoint.lng.toFixed(6)}</small>
+                        <button class="fr-btn fr-btn--sm fr-btn--tertiary-no-outline fr-btn--icon-left fr-icon-close-circle-fill fr-mt-1v" 
                                 onclick="removeIndividualPoint(${pair.id}, 'right')" 
-                                title="Supprimer ce point">
-                            <span class="fr-icon-close-circle-fill" aria-hidden="true"></span>
+                                title="Supprimer ce point"
+                                style="color: #ce0500;">
                         </button>
                     </div>
                 `;
-                rightCell.style.color = '#000091'; // Bleu DSFR pour les points existants
             } else {
-                rightCell.textContent = `${pair.id}. (non saisi)`;
-                rightCell.style.color = '#666';
-                rightCell.style.fontStyle = 'italic';
+                rightCell.innerHTML = `<em class="text-muted">Point ${pair.id} manquant</em>`;
             }
+            
+            row.appendChild(leftCell);
             row.appendChild(rightCell);
-            
-            // Marquer visuellement les paires complètes
-            if (pair.isComplete()) {
-                row.style.backgroundColor = '#f9f8f6'; // Fond léger pour les paires complètes
-                row.style.borderLeft = '3px solid #18753c'; // Bordure verte DSFR
-            }
-            
             tableBody.appendChild(row);
         });
-    }
-    
-    // Mettre à jour les données pour l'API
-    updateGeoreferencingData();
-    
-    // Afficher la table si elle contient des données
-    const tableContainer = document.getElementById('table-control-points');
-    if (tableContainer && window.pointPairs.length > 0) {
-        tableContainer.hidden = false;
-        
-        // Mettre à jour le titre du tableau
-        const tableTitle = tableContainer.querySelector('.fr-accordion__btn');
-        if (tableTitle) {
-            const completePairs = window.pointPairs.filter(pair => pair.isComplete()).length;
-            const totalPairs = window.pointPairs.length;
-            tableTitle.textContent = `Points de contrôle (${completePairs}/${totalPairs} paires complètes)`;
+    } else {
+        // Masquer la table s'il n'y a pas de points
+        if (tableSection) {
+            tableSection.setAttribute('hidden', '');
+            console.log('Table des points de contrôle masquée');
         }
-    } else if (tableContainer) {
-        tableContainer.hidden = true;
     }
-}
 
-function updateGeoreferencingData() {
+    // Émettre un événement pour notifier les changements
+    const event = new CustomEvent('controlPointsChanged', {
+        detail: { 
+            pointPairs: window.pointPairs,
+            completePairs: window.pointPairs.filter(pair => pair.isComplete()).length
+        }
+    });
+    document.dispatchEvent(event);
+}function updateGeoreferencingData() {
     // Mettre à jour list_georef_points pour l'API
     list_georef_points = [];
     
@@ -725,6 +774,16 @@ function resetInputSystem() {
     updateControlPointsTable();
     updateUIForInputMode();
     
+    // Émettre un événement pour notifier la réinitialisation
+    const event = new CustomEvent('controlPointsChanged', {
+        detail: { 
+            pointPairs: window.pointPairs,
+            completePairs: 0,
+            action: 'reset'
+        }
+    });
+    document.dispatchEvent(event);
+    
     console.log('Système de saisie réinitialisé');
 }
 
@@ -742,7 +801,6 @@ function getCompletePairCount() {
  */
 function removeIndividualPoint(pointId, side) {
     if (window.isInputLocked) {
-        console.log('Suppression interdite - saisie verrouillée');
         alert('La saisie est verrouillée. Désactivez le verrou pour supprimer des points.');
         return;
     }
@@ -775,7 +833,12 @@ function removeIndividualPoint(pointId, side) {
     updateControlPointsTable();
     checkGeoreferencingAvailability();
     
-    console.log(`Point ${pointId} ${side} supprimé`);
+    // Déclencher une sauvegarde automatique après suppression de point
+    if (window.controlPointsBackup && typeof window.controlPointsBackup.saveCurrentState === 'function') {
+        setTimeout(() => {
+            window.controlPointsBackup.saveCurrentState('point-removed');
+        }, 100);
+    }
 }
 
 // Rendre la fonction disponible globalement
@@ -827,7 +890,6 @@ function clearAllControlPoints() {
  */
 function clearEmprise() {
     if (window.isInputLocked) {
-        console.log('Suppression d\'emprise interdite - saisie verrouillée');
         alert('La saisie est verrouillée. Désactivez le verrou pour supprimer l\'emprise.');
         return;
     }
@@ -842,9 +904,16 @@ function clearEmprise() {
         window.currentPolygon = null;
     }
     
+    // Vider aussi la structure de données de l'emprise
+    window.list_points_polygon_crop = [];
+    
     list_points_polygon_crop = [];
     updateUIForInputMode();
-    console.log('Emprise supprimée');
+    
+    // Déclencher une sauvegarde automatique après suppression de l'emprise
+    if (window.controlPointsBackup && typeof window.controlPointsBackup.saveCurrentState === 'function') {
+        window.controlPointsBackup.saveCurrentState('emprise-suppression');
+    }
 }
 
 /**
@@ -854,7 +923,6 @@ function finalizeEmprise() {
     if (window.currentPolygon && window.currentPolygon.points.length >= 3) {
         // Forcer la fermeture du polygone
         updatePolygonData();
-        console.log('Emprise finalisée avec', window.currentPolygon.points.length, 'points');
         return true;
     }
     return false;

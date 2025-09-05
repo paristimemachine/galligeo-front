@@ -623,6 +623,45 @@
     <!-- END Modal Settings  -->
     <!--  -->
 
+    <!--  -->
+    <!-- Modal Backup Restore DSFR -->
+    <dialog class="fr-modal" id="fr-modal-backup-restore" aria-labelledby="fr-modal-backup-restore-title">
+        <div class="fr-container fr-container--fluid fr-container-md">
+            <div class="fr-grid-row fr-grid-row--center">
+                <div class="fr-col-12 fr-col-md-8 fr-col-lg-6">
+                    <div class="fr-modal__body">
+                        <div class="fr-modal__header">
+                            <button class="fr-link--close fr-link" aria-controls="fr-modal-backup-restore">Fermer</button>
+                        </div>
+                        <div class="fr-modal__content">
+                            <h1 id="fr-modal-backup-restore-title" class="fr-modal__title">
+                                <span class="fr-fi-save-line fr-fi--lg"></span>
+                                Restaurer une sauvegarde
+                            </h1>
+                            <p>Choisissez une sauvegarde à restaurer :</p>
+                            <div id="backup-list-container">
+                                <!-- Le contenu sera généré dynamiquement -->
+                            </div>
+                            <div class="fr-modal__footer">
+                                <ul class="fr-btns-group fr-btns-group--right fr-btns-group--inline-reverse fr-btns-group--inline-lg">
+                                    <li>
+                                        <button class="fr-btn fr-btn--secondary" aria-controls="fr-modal-backup-restore">Annuler</button>
+                                    </li>
+                                    <li>
+                                        <button class="fr-btn fr-btn--secondary fr-btn--icon-left fr-icon-delete-line" onclick="window.controlPointsBackup?.clearAllBackupsSafely()">Vider toutes les sauvegardes</button>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </dialog>
+    <!--  -->
+    <!-- END Modal Backup Restore  -->
+    <!--  -->
+
 
     <!--  -->
     <!-- PANEL-->
@@ -664,10 +703,27 @@
                         <button class="fr-btn fr-btn--tertiary fr-btn--sm" id="btn_clear_emprise" onclick="clearEmprise()">
                             Effacer emp.
                         </button>
+                        <button class="fr-btn fr-btn--tertiary fr-btn--sm" id="btn_save_backup" onclick="window.controlPointsBackup.saveCurrentState('manual')" title="Sauvegarder manuellement les points de contrôle">
+                            💾 Sauver
+                        </button>
+                        <button class="fr-btn fr-btn--tertiary fr-btn--sm" id="btn_restore_backup" onclick="window.controlPointsBackup.showRestoreInterface()" title="Restaurer des points de contrôle sauvegardés">
+                            📁 Restaurer
+                        </button>
+                    </div>
+
+                    <!-- Indicateur de sauvegarde automatique -->
+                    <div class="fr-notice fr-notice--new" id="backup-status-container" style="margin: 8px 0; display: none;">
+                        <div class="fr-container">
+                            <div class="fr-notice__body">
+                                <p class="fr-notice__title" id="backup-status">
+                                    💾 Sauvegarde automatique active
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <section class="fr-accordion" id="table-control-points" hidden>
+                <section class="fr-accordion" id="table-control-points">
                     <h3 class="fr-accordion__title">
                         <button class="fr-accordion__btn" aria-expanded="true" aria-controls="div-table-control-points">Points de contrôle</button>
                     </h3>
@@ -683,11 +739,7 @@
                                     </tr>
                                 </thead>
                                 <tbody id='table_body'>
-                                    <tr>
-                                        <td>Donnée</td>
-                                        <td>Donnée</td>
-                                    </tr>
-                                    <tr>
+                                    <!-- Le contenu sera généré dynamiquement par JavaScript -->
                                 </tbody>
                             </table>
                         </div>
@@ -750,7 +802,7 @@
                 </path>
             </svg>
            by <a href="https://ptm.huma-num.fr/" target="_blank">PTM</a>
-           &nbsp;— <a href="https://github.com/" target="_blank">Code &amp; Documentation</a>
+           &nbsp;— <a href="https://github.com/paristimemachine/galligeo-front" target="_blank">Code &amp; Documentation</a>
            &nbsp;—
            <span id="app-version-info" class="version-info" style="opacity: 0.7; font-size: 0.85em; color: #666;">
                <span id="version-display">Chargement...</span>
@@ -894,6 +946,7 @@
     <script src="js/settings-manager.js"></script>
     <script src="js/settings-utils.js"></script>
     <script src="js/cartoquete-manager.js"></script>
+    <script src="js/control-points-backup.js"></script>
 
     <script>
     // Variable globale pour suivre l'état d'initialisation
@@ -1088,8 +1141,101 @@
         return defaultValue;
     }
 
-    // Rendre la fonction disponible globalement
-    window.getAppSetting = getAppSetting;
+    // Fonction pour configurer les listeners de sauvegarde
+    function setupBackupListeners() {
+        // Écouter les événements de sauvegarde
+        document.addEventListener('controlPointsBackupSaved', function(event) {
+            const backup = event.detail.backup;
+            updateBackupStatus(`💾 Sauvegardé ${new Date(backup.timestamp).toLocaleTimeString('fr-FR')}`);
+            
+            // Afficher brièvement l'indicateur
+            showBackupIndicator();
+        });
+
+        // Écouter les événements de restauration
+        document.addEventListener('controlPointsBackupRestored', function(event) {
+            const backup = event.detail.backup;
+            updateBackupStatus(`📁 Restauré ${new Date(backup.timestamp).toLocaleTimeString('fr-FR')}`);
+            
+            // Afficher brièvement l'indicateur
+            showBackupIndicator();
+        });
+
+        // Écouter les changements de points de contrôle pour mettre à jour l'état
+        document.addEventListener('controlPointsChanged', function(event) {
+            const details = event.detail;
+            
+            if (details.action === 'reset') {
+                updateBackupStatus('💾 Sauvegarde automatique active');
+            } else if (details.completePairs > 0) {
+                updateBackupStatus(`💾 Auto-sauvegarde (${details.completePairs} paires)`);
+            } else {
+                updateBackupStatus('💾 Sauvegarde automatique active');
+            }
+        });
+
+        // Vérifier périodiquement l'état de sauvegarde
+        setInterval(updateBackupButtonsState, 5000);
+        
+        // Initialiser l'état
+        updateBackupButtonsState();
+    }
+
+    // Fonction pour mettre à jour l'état des boutons de sauvegarde
+    function updateBackupButtonsState() {
+        const saveBtn = document.getElementById('btn_save_backup');
+        const restoreBtn = document.getElementById('btn_restore_backup');
+        
+        if (saveBtn) {
+            // Le bouton est activé s'il y a des points OU une emprise
+            const hasPoints = window.pointPairs && window.pointPairs.length > 0;
+            const hasEmprise = (window.currentPolygon && window.currentPolygon.points && window.currentPolygon.points.length > 0) || 
+                              (window.list_points_polygon_crop && window.list_points_polygon_crop.length > 0);
+            const hasData = hasPoints || hasEmprise;
+            
+            saveBtn.disabled = !hasData;
+            saveBtn.style.opacity = hasData ? '1' : '0.5';
+            
+            // Mettre à jour le titre du bouton
+            if (hasPoints && hasEmprise) {
+                saveBtn.title = 'Sauvegarder les points de contrôle et l\'emprise';
+            } else if (hasPoints) {
+                saveBtn.title = 'Sauvegarder les points de contrôle';
+            } else if (hasEmprise) {
+                saveBtn.title = 'Sauvegarder l\'emprise';
+            } else {
+                saveBtn.title = 'Aucune donnée à sauvegarder';
+            }
+        }
+        
+        if (restoreBtn && window.controlPointsBackup) {
+            const hasBackups = window.controlPointsBackup.hasBackupsAvailable();
+            restoreBtn.disabled = !hasBackups;
+            restoreBtn.style.opacity = hasBackups ? '1' : '0.5';
+            restoreBtn.title = hasBackups ? 'Restaurer des points de contrôle sauvegardés' : 'Aucune sauvegarde disponible';
+        }
+    }
+
+    // Fonction pour mettre à jour le statut de sauvegarde
+    function updateBackupStatus(message) {
+        const statusElement = document.getElementById('backup-status');
+        if (statusElement) {
+            statusElement.textContent = message;
+        }
+    }
+
+    // Fonction pour afficher temporairement l'indicateur de sauvegarde
+    function showBackupIndicator() {
+        const container = document.getElementById('backup-status-container');
+        if (container) {
+            container.style.display = 'block';
+            
+            // Masquer après 3 secondes
+            setTimeout(() => {
+                container.style.display = 'none';
+            }, 3000);
+        }
+    }
 
     document.addEventListener('DOMContentLoaded', async () => {
         // Vérifier si l'utilisateur revient d'une authentification (token dans l'URL)
@@ -1153,6 +1299,7 @@
         // Configurer l'observateur de modale et les listeners
         setupModalObserver();
         setupSettingsListener();
+        setupBackupListeners();
         
         const loginButton = document.getElementById('login-button-redirect');
         if (loginButton) {
@@ -1402,6 +1549,30 @@
             updateVersionInfo();
         }
     </script>
+
+    <!-- Modale de restauration des sauvegardes -->
+    <dialog class="fr-modal" id="fr-modal-backup-restore" aria-labelledby="fr-modal-backup-restore-title">
+        <div class="fr-container fr-container--fluid fr-container-md">
+            <div class="fr-grid-row fr-grid-row--center">
+                <div class="fr-col-12 fr-col-md-8 fr-col-lg-6">
+                    <div class="fr-modal__body">
+                        <div class="fr-modal__header">
+                            <button class="fr-link--close fr-link" aria-controls="fr-modal-backup-restore">Fermer</button>
+                        </div>
+                        <div class="fr-modal__content">
+                            <h1 id="fr-modal-backup-restore-title" class="fr-modal__title">
+                                <span class="fr-icon-save-line fr-icon--lg" aria-hidden="true"></span>
+                                Restaurer une sauvegarde
+                            </h1>
+                            <div id="backup-restore-content">
+                                <!-- Contenu généré dynamiquement -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </dialog>
 
   </body>
 </html>
