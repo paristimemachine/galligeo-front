@@ -320,12 +320,97 @@ function add_wms_layers(map) {
     return drawnItems;
 }
 
+// Contrôle de métadonnées pour la carte gauche
+L.Control.MetadataInfo = L.Control.extend({
+    options: {
+        position: 'bottomleft'
+    },
+
+    onAdd: function(map) {
+        var container = L.DomUtil.create('div', 'leaflet-control-metadata-info leaflet-bar leaflet-control');
+        
+        var button = L.DomUtil.create('a', 'leaflet-control-metadata-button', container);
+        button.href = '#';
+        button.title = 'Afficher les métadonnées Gallica';
+        button.innerHTML = '<span class="fr-icon-file-text-line" aria-hidden="true"></span>';
+        
+        L.DomEvent.on(button, 'click', this._onClick, this);
+        L.DomEvent.disableClickPropagation(button);
+        
+        this._button = button;
+        this._container = container;
+        
+        return container;
+    },
+
+    _onClick: function(e) {
+        L.DomEvent.preventDefault(e);
+        this._toggleMetadataPanel();
+    },
+
+    _toggleMetadataPanel: function() {
+        // Créer ou afficher/masquer le panneau de métadonnées
+        var existingPanel = document.getElementById('metadata-info-panel');
+        
+        if (existingPanel) {
+            if (existingPanel.style.display === 'none') {
+                existingPanel.style.display = 'block';
+                this._button.classList.add('active');
+            } else {
+                existingPanel.style.display = 'none';
+                this._button.classList.remove('active');
+            }
+        } else {
+            this._createMetadataPanel();
+        }
+    },
+
+    _createMetadataPanel: function() {
+        // Créer le panneau de métadonnées
+        var panel = L.DomUtil.create('div', 'metadata-info-panel', document.body);
+        panel.id = 'metadata-info-panel';
+        
+        var header = L.DomUtil.create('div', 'metadata-panel-header', panel);
+        header.innerHTML = `
+            <h3 class="fr-h6">Métadonnées Gallica</h3>
+            <button class="fr-btn fr-btn--close fr-btn--tertiary-no-outline" onclick="document.getElementById('metadata-info-panel').style.display='none'; document.querySelector('.leaflet-control-metadata-button').classList.remove('active')">
+                <span class="fr-icon-close-line" aria-hidden="true"></span>
+            </button>
+        `;
+        
+        var content = L.DomUtil.create('div', 'metadata-panel-content', panel);
+        content.id = 'metadata-panel-content';
+        content.innerHTML = '<p class="fr-text--sm">Chargez une image Gallica pour voir les métadonnées.</p>';
+        
+        this._button.classList.add('active');
+        
+        // Empêcher la propagation des événements de clic sur le panneau
+        L.DomEvent.disableClickPropagation(panel);
+    },
+
+    updateContent: function(metadataHtml) {
+        var content = document.getElementById('metadata-panel-content');
+        if (content) {
+            content.innerHTML = metadataHtml;
+        }
+    }
+});
+
 // Initialiser le nouveau système de saisie lorsque le fichier est chargé
 document.addEventListener('DOMContentLoaded', function() {
     // Attendre un peu pour s'assurer que tous les éléments sont prêts
     setTimeout(function() {
         if (typeof setupAdvancedInputSystem === 'function') {
             setupAdvancedInputSystem();
+            
+            // Ajouter le contrôle de métadonnées à la carte gauche
+            if (typeof left_map !== 'undefined') {
+                var metadataControl = new L.Control.MetadataInfo();
+                left_map.addControl(metadataControl);
+                
+                // Rendre le contrôle disponible globalement
+                window.metadataControl = metadataControl;
+            }
         } else {
             console.warn('Système de saisie avancé non disponible. Vérifiez que advanced-input-system.js est chargé.');
         }

@@ -131,9 +131,11 @@ async function load_ark_picture() {
         document.getElementById('map-container-left').style.visibility = 'visible';
         left_map.invalidateSize();
 
-        document.getElementById('metadata').hidden = false;
+        // L'élément metadata a été déplacé vers le contrôle sur la carte
+        // Plus besoin de le rendre visible ici
 
-        activateDrawButton(true);
+        // L'ancienne fonction activateDrawButton n'existe plus avec le nouveau système
+        // Le système de saisie avancé est maintenant géré par les contrôles toggle et segmentés
 
         document.getElementById('titre-etape-georef').textContent = "Créer au moins 3 points de contrôle";
         // document.getElementById('etape-georef').textContent = "Étape 2 sur 4";
@@ -241,7 +243,14 @@ async function load_oai_metada(input_ark) {
 
             console.log(metadataDict);
 
-            document.getElementById('text-metadata').innerHTML = inner_html_metadata;
+            // Mise à jour de l'ancienne interface (pour compatibilité)
+            const oldMetadataElement = document.getElementById('text-metadata');
+            if (oldMetadataElement) {
+                oldMetadataElement.innerHTML = inner_html_metadata;
+            }
+            
+            // Mise à jour du nouveau panneau de métadonnées
+            updateMetadataPanel(sortedMetadata);
 
         });
 
@@ -264,4 +273,69 @@ async function load_oai_metada(input_ark) {
         //  httpRequest.send();
         //  console.log('?');
 
+}
+
+/**
+ * Met à jour le panneau de métadonnées avec un style amélioré
+ * @param {Array} metadata - Tableau des métadonnées
+ */
+function updateMetadataPanel(metadata) {
+    if (!window.metadataControl) return;
+    
+    let formattedHtml = '';
+    
+    const labelMapping = {
+        'Title': 'Titre',
+        'Creator': 'Créateur',
+        'Publisher': 'Éditeur',
+        'Date': 'Date',
+        'Format': 'Format',
+        'Language': 'Langue',
+        'Type': 'Type',
+        'Height' : 'Hauteur',
+        'Width' : 'Largeur',
+        'Source': 'Source',
+        'Relation': 'Relation',
+        'Coverage': 'Couverture',
+        'Rights': 'Droits',
+        'Source Images': 'Images Source',
+        'Metadata Source': 'Source des Métadonnées',
+        'Subject': 'Sujet',
+        'Description': 'Description',
+        'Identifier': 'Identifiant',
+        'Shelfmark': 'Cote',
+        'Repository': 'Dépôt',
+        'Digitised by': 'Numérisé par'
+    };
+    
+    metadata.forEach(element => {
+        if (!element) return;
+        
+        const frenchLabel = labelMapping[element.label] || element.label;
+        let value = element.value;
+        
+        // Traitement spécial pour les URLs
+        if (element.label === 'Source Images' || element.label === 'Metadata Source') {
+            value = `<a href="${value}" target="_blank" class="metadata-url">${value}</a>`;
+        } else if (Array.isArray(value)) {
+            value = value.map(item => item['@value'] || item).join(', ');
+        } else if (typeof value === 'string' && value.length > 100) {
+            // Formater les textes longs
+            value = value.replace(/(.{80})/g, '$1<br>');
+        }
+        
+        formattedHtml += `
+            <div class="metadata-item">
+                <span class="metadata-label">${frenchLabel}</span>
+                <div class="metadata-value">${value}</div>
+            </div>
+        `;
+    });
+    
+    if (formattedHtml === '') {
+        formattedHtml = '<p class="fr-text--sm">Aucune métadonnée disponible.</p>';
+    }
+    
+    // Mettre à jour le contenu du panneau
+    window.metadataControl.updateContent(formattedHtml);
 }

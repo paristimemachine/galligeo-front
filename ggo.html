@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="node_modules/@gouvfr/dsfr/dist/component/form/form.min.css">
     <link rel="stylesheet" href="node_modules/@gouvfr/dsfr/dist/component/segmented/segmented.min.css">
 
+    <link rel="stylesheet" href="node_modules/@gouvfr/dsfr/dist/utility/icons/icons.min.css">
+
     <meta name="theme-color" content="#000091">
 
     <!-- <link rel="manifest" href="favicon/manifest.webmanifest" crossorigin="use-credentials"> -->
@@ -135,13 +137,15 @@
         </div>
     </header>
 
+    <!-- Container principal pour le contenu -->
+    <div class="fr-container--fluid main-content-container">
 
     <!--  -->
     <!-- NAV -->
     <!--  -->
     <nav class="fr-nav" id="header-navigation" role="navigation" aria-label="Menu principal">
 
-        <div class="fr-grid-row">
+        <div class="fr-grid-row main-content-row">
 
             <!-- side bar -->
             <div class="fr-col-1" id="nav-tools-sidebar-control">
@@ -653,22 +657,13 @@
                     <!-- Boutons d'action pour la saisie -->
                     <div class="fr-btns-group fr-btns-group--sm" id="input-actions" style="margin: 8px 0;">
                         <button class="fr-btn fr-btn--tertiary fr-btn--sm" id="btn_clear_points" onclick="clearAllControlPoints()">
-                            Effacer points
+                            Effacer pts
                         </button>
                         <button class="fr-btn fr-btn--tertiary fr-btn--sm" id="btn_clear_emprise" onclick="clearEmprise()">
-                            Effacer emprise
+                            Effacer emp.
                         </button>
                     </div>
                 </div>
-
-                <section class="fr-accordion" id="metadata" hidden>
-                    <h3 class="fr-accordion__title">
-                        <button class="fr-accordion__btn" aria-expanded="true" aria-controls="text-metadata">Métadonnées Gallica</button>
-                    </h3>
-                    <div class="fr-collapse" id="text-metadata" style="padding-right: 4px;">
-                        <!-- value -->
-                    </div>
-                </section>
 
                 <section class="fr-accordion" id="table-control-points" hidden>
                     <h3 class="fr-accordion__title">
@@ -739,6 +734,9 @@
     <!--  -->
     <!-- END MAP -->
     <!--  -->
+
+    </div>
+    <!-- END Container principal -->
 
     <!--  -->
     <!-- FOOTER -->
@@ -881,6 +879,7 @@
     <script src="js/version.js"></script>
     <script src="js/clonelayers.js"></script>
     <script src="js/init.js"></script>
+    <!-- <script src="js/simple-layout.js"></script> -->
     <script src="js/advanced-input-system.js"></script>
     <script src="js/map_interactions.js"></script>
     <script src="js/front_interactions.js"></script>
