@@ -555,34 +555,30 @@ class ControlPointsBackup {
             </div>
         `).join('');
 
-        // Ouvrir la modale comme les autres modales de l'application
+        // Ouvrir la modale en utilisant le système DSFR
         try {
-            if (typeof modal.showModal === 'function') {
-                modal.showModal();
-                
-                // Vérifier l'état après ouverture et corriger si nécessaire
-                setTimeout(() => {
-                    if (window.getComputedStyle(modal).display === 'none') {
-                        modal.style.display = 'block';
-                    }
-                    if (window.getComputedStyle(modal).visibility === 'hidden') {
-                        modal.style.visibility = 'visible';
-                    }
-                }, 50);
-                
-                // Focus sur le premier élément focusable
-                setTimeout(() => {
-                    const firstFocusableElement = modal.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
-                    if (firstFocusableElement) {
-                        firstFocusableElement.focus();
-                    }
-                }, 100);
-            } else {
-                modal.style.display = 'block';
-                modal.style.visibility = 'visible';
-            }
+            // Utiliser showModal() pour les navigateurs modernes
+            modal.showModal();
+            
+            // Ajouter la classe DSFR pour l'ouverture
+            modal.classList.add('fr-modal--opened');
+            
+            // S'assurer que la modale est visible (correction pour DSFR)
+            modal.setAttribute('open', '');
+            
+            // Focus sur le premier élément focusable
+            setTimeout(() => {
+                const firstFocusableElement = modal.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+                if (firstFocusableElement) {
+                    firstFocusableElement.focus();
+                }
+            }, 100);
+            
         } catch (error) {
             console.error('Erreur lors de l\'ouverture de la modale:', error);
+            // Fallback pour les navigateurs plus anciens
+            modal.classList.add('fr-modal--opened');
+            modal.setAttribute('open', '');
         }
     }
 
@@ -593,14 +589,20 @@ class ControlPointsBackup {
         const modal = document.getElementById('fr-modal-backup-restore');
         if (modal) {
             try {
-                if (typeof modal.close === 'function') {
-                    modal.close();
-                } else {
-                    modal.style.display = 'none';
-                    modal.style.visibility = 'hidden';
-                }
+                // Utiliser close() pour les navigateurs modernes
+                modal.close();
+                
+                // Retirer la classe DSFR d'ouverture
+                modal.classList.remove('fr-modal--opened');
+                
+                // S'assurer que la modale est cachée (correction pour DSFR)
+                modal.removeAttribute('open');
+                
             } catch (error) {
                 console.error('Erreur lors de la fermeture de la modale:', error);
+                // Fallback pour les navigateurs plus anciens
+                modal.classList.remove('fr-modal--opened');
+                modal.removeAttribute('open');
             }
         }
     }
@@ -887,3 +889,41 @@ window.testSaveButton = function() {
         console.error('❌ Bouton sauver non trouvé');
     }
 };
+
+// Configuration des event listeners pour la modale de restauration
+document.addEventListener('DOMContentLoaded', function() {
+    // Gestion du bouton de fermeture
+    const closeButton = document.querySelector('#fr-modal-backup-restore .fr-link--close');
+    if (closeButton) {
+        closeButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.controlPointsBackup.closeBackupModal();
+        });
+    }
+    
+    // Gestion du bouton "Annuler" dans le footer
+    const cancelButton = document.querySelector('#fr-modal-backup-restore button[aria-controls="fr-modal-backup-restore"]');
+    if (cancelButton) {
+        cancelButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.controlPointsBackup.closeBackupModal();
+        });
+    }
+    
+    // Gestion de la fermeture par Échap
+    const modal = document.getElementById('fr-modal-backup-restore');
+    if (modal) {
+        modal.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                window.controlPointsBackup.closeBackupModal();
+            }
+        });
+        
+        // Gestion du clic sur le backdrop
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                window.controlPointsBackup.closeBackupModal();
+            }
+        });
+    }
+});
