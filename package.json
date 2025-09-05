@@ -5,6 +5,7 @@
   "main": "ggo.html",
   "scripts": {
     "build-version": "node scripts/build-version.js",
+    "version-info": "node scripts/version-info.js",
     "dev": "npm run build-version && echo 'Version générée avec succès'",
     "start": "npm run build-version"
   },
