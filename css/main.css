@@ -1,7 +1,23 @@
 body {
     display: flex;
-    flex-flow: column wrap;
-  }
+    flex-flow: column nowrap;
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+/* Assurer que les styles DSFR sont préservés */
+body > * {
+    flex-shrink: 0;
+}
+
+/* Le conteneur principal prend l'espace restant */
+body > .fr-container--fluid {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
 
 .fr-header__body-row {
         padding: 0.8rem 0;
@@ -33,17 +49,46 @@ body {
     margin: 0;
 }
 
-#footer {
-    position: fixed;
-    left: 0;
+
+.footer {
+    position: sticky;
     bottom: 0;
     width: 100%;
-    background-color: rgb(255, 255, 255);
-    color: white;
+    background-color: #f6f6f6;
+    border-top: 1px solid #ddd;
+    color: #666;
     text-align: center;
-    height: 40px;
-    padding: 0.25rem 0;
-  }
+    height: 50px;
+    padding: 0.75rem 0;
+    font-size: 0.875rem;
+    z-index: 1000;
+    margin-top: auto;
+    flex-shrink: 0;
+}
+
+.footer p {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.footer a {
+    color: #000091;
+    text-decoration: none;
+}
+
+.footer a:hover {
+    text-decoration: underline;
+}
+
+.heart-icon {
+    width: 16px;
+    height: 16px;
+    color: #e74c3c;
+    vertical-align: middle;
+}
 
 
 #sel-layers {
@@ -100,6 +145,50 @@ body {
   overflow-x: hidden;
 }
 
+/* Layout principal pour éviter le débordement */
+.fr-container--fluid {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* Navigation et header gardent leurs styles par défaut */
+.fr-header,
+.fr-nav,
+nav.fr-nav {
+  flex-shrink: 0;
+}
+
+.fr-grid-row {
+  flex: 1;
+  min-height: 0;
+}
+
+/* Conteneurs de cartes */
+#map-container-left,
+#map-container-right,
+#map-container-left-at-startup {
+  height: calc(100vh - 250px); /* Ajusté pour tenir compte du header et footer */
+  min-height: 0;
+}
+
+#map-left,
+#map-right {
+  height: 100%;
+  width: 100%;
+}
+
+/* S'assurer que la vidéo s'ajuste aussi */
+.image_box {
+  height: 100%;
+  width: 100%;
+  position: relative;
+  resize: none;
+  overflow: hidden;
+  z-index: 1;
+}
+
 .no-sidebar #sidebar{
   transition: all 0.25s;
   
@@ -119,6 +208,7 @@ body {
 .image_box-video {
   width: 100%;
   height: 100%;
+  object-fit: cover;
 }
 
 .image_box
