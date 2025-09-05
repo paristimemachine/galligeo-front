@@ -139,7 +139,10 @@ function setupMapClickEvents() {
 }
 
 function handleMapClick(event, mapSide) {
-    if (window.inputMode === 'disabled') return;
+    if (window.inputMode === 'disabled' || window.isInputLocked) {
+        console.log('Saisie verrouillée - clic ignoré');
+        return;
+    }
     
     const map = mapSide === 'left' ? left_map : right_map;
     const layer = mapSide === 'left' ? layer_img_pts_left : layer_img_pts_right;
@@ -161,7 +164,7 @@ function handlePointClick(event, mapSide, map, layer) {
     });
     
     // Trouver ou créer la paire de points appropriée
-    let pointPair = findOrCreatePointPair();
+    let pointPair = findOrCreatePointPair(mapSide);
     
     // Convertir les coordonnées si nécessaire (pour la carte gauche)
     let processedCoords = latLng;
@@ -202,8 +205,8 @@ function handlePointClick(event, mapSide, map, layer) {
     // Mettre à jour la table des points de contrôle
     updateControlPointsTable();
     
-    // Alterner automatiquement la carte active
-    switchActiveMap();
+    // Ne plus forcer l'alternance automatique - laisser l'utilisateur choisir
+    // L'utilisateur peut maintenant saisir plusieurs points consécutifs sur la même carte
     
     // Vérifier si le géoréférencement peut être activé
     checkGeoreferencingAvailability();
@@ -211,18 +214,31 @@ function handlePointClick(event, mapSide, map, layer) {
     console.log(`Point ${pointPair.id} ajouté sur la carte ${mapSide}:`, processedCoords);
 }
 
-function findOrCreatePointPair() {
-    // Chercher une paire incomplète
-    let incompletePair = window.pointPairs.find(pair => !pair.isComplete());
+function findOrCreatePointPair(mapSide) {
+    // Permettre la saisie de plusieurs points consécutifs sur la même carte
+    // sans forcer l'alternance
     
-    if (!incompletePair) {
-        // Créer une nouvelle paire
-        window.pointCounter++;
-        incompletePair = new ControlPointPair(window.pointCounter);
-        window.pointPairs.push(incompletePair);
+    // Chercher une paire incomplète qui peut accueillir un point sur cette carte
+    let targetPair = null;
+    
+    for (let pair of window.pointPairs) {
+        if (mapSide === 'left' && !pair.leftPoint) {
+            targetPair = pair;
+            break;
+        } else if (mapSide === 'right' && !pair.rightPoint) {
+            targetPair = pair;
+            break;
+        }
     }
     
-    return incompletePair;
+    // Si aucune paire existante ne peut accueillir le point, créer une nouvelle paire
+    if (!targetPair) {
+        window.pointCounter++;
+        targetPair = new ControlPointPair(window.pointCounter);
+        window.pointPairs.push(targetPair);
+    }
+    
+    return targetPair;
 }
 
 function switchActiveMap() {
@@ -238,10 +254,29 @@ function switchActiveMap() {
 
 function setupMarkerDragEvents(marker, pointPair, mapSide) {
     marker.on('dragstart', function() {
+        if (window.isInputLocked) {
+            console.log('Déplacement interdit - saisie verrouillée');
+            return false;
+        }
         window.isDragging = true;
     });
     
+    marker.on('drag', function(e) {
+        if (window.isInputLocked) {
+            // Remettre le marqueur à sa position initiale
+            e.target.setLatLng(e.target._originalLatLng || e.target.getLatLng());
+            return false;
+        }
+    });
+    
     marker.on('dragend', function(e) {
+        if (window.isInputLocked) {
+            // Remettre le marqueur à sa position initiale
+            e.target.setLatLng(e.target._originalLatLng || e.target.getLatLng());
+            window.isDragging = false;
+            return false;
+        }
+        
         window.isDragging = false;
         const newLatLng = e.target.getLatLng();
         
@@ -267,9 +302,12 @@ function setupMarkerDragEvents(marker, pointPair, mapSide) {
         console.log(`Point ${pointPair.id} déplacé sur la carte ${mapSide}:`, processedCoords);
     });
     
+    // Sauvegarder la position initiale
+    marker._originalLatLng = marker.getLatLng();
+    
     // Événement de survol pour indiquer que le point peut être déplacé
     marker.on('mouseover', function() {
-        if (!window.isDragging) {
+        if (!window.isDragging && !window.isInputLocked) {
             marker.getElement().style.cursor = 'move';
         }
     });
@@ -379,34 +417,92 @@ function updateControlPointsTable() {
     // Vider la table
     tableBody.innerHTML = '';
     
-    // Remplir avec les paires complètes
-    window.pointPairs.forEach(pair => {
-        if (pair.isComplete()) {
+    // Remplir avec toutes les paires (complètes et incomplètes)
+    if (window.pointPairs.length === 0) {
+        const row = document.createElement('tr');
+        const cell = document.createElement('td');
+        cell.colSpan = 2;
+        cell.textContent = 'Aucun point saisi';
+        cell.style.textAlign = 'center';
+        cell.style.fontStyle = 'italic';
+        row.appendChild(cell);
+        tableBody.appendChild(row);
+    } else {
+        window.pointPairs.forEach(pair => {
             const row = document.createElement('tr');
             
             // Cellule pour le point gauche (image)
             const leftCell = document.createElement('td');
-            const leftCoords = `(${pair.leftPoint.lat.toFixed(6)}, ${pair.leftPoint.lng.toFixed(6)})`;
-            leftCell.textContent = leftCoords;
+            if (pair.leftPoint) {
+                const leftCoords = `${pair.id}. (${pair.leftPoint.lat.toFixed(3)}, ${pair.leftPoint.lng.toFixed(3)})`;
+                leftCell.innerHTML = `
+                    <div class="point-info">
+                        <span class="point-coords">${leftCoords}</span>
+                        <button class="fr-btn fr-btn--tertiary-no-outline fr-btn--sm point-delete-btn" 
+                                onclick="removeIndividualPoint(${pair.id}, 'left')" 
+                                title="Supprimer ce point"
+                                ${window.isInputLocked ? 'disabled style="opacity: 0.3; cursor: not-allowed;"' : ''}>
+                            <span class="fr-icon-close-circle-fill" aria-hidden="true"></span>
+                        </button>
+                    </div>
+                `;
+                leftCell.style.color = '#000091'; // Bleu DSFR pour les points existants
+            } else {
+                leftCell.textContent = `${pair.id}. (non saisi)`;
+                leftCell.style.color = '#666';
+                leftCell.style.fontStyle = 'italic';
+            }
             row.appendChild(leftCell);
             
             // Cellule pour le point droit (géo)
             const rightCell = document.createElement('td');
-            const rightCoords = `(${pair.rightPoint.lat.toFixed(6)}, ${pair.rightPoint.lng.toFixed(6)})`;
-            rightCell.textContent = rightCoords;
+            if (pair.rightPoint) {
+                const rightCoords = `${pair.id}. (${pair.rightPoint.lat.toFixed(3)}, ${pair.rightPoint.lng.toFixed(3)})`;
+                rightCell.innerHTML = `
+                    <div class="point-info">
+                        <span class="point-coords">${rightCoords}</span>
+                        <button class="fr-btn fr-btn--tertiary-no-outline fr-btn--sm point-delete-btn" 
+                                onclick="removeIndividualPoint(${pair.id}, 'right')" 
+                                title="Supprimer ce point">
+                            <span class="fr-icon-close-circle-fill" aria-hidden="true"></span>
+                        </button>
+                    </div>
+                `;
+                rightCell.style.color = '#000091'; // Bleu DSFR pour les points existants
+            } else {
+                rightCell.textContent = `${pair.id}. (non saisi)`;
+                rightCell.style.color = '#666';
+                rightCell.style.fontStyle = 'italic';
+            }
             row.appendChild(rightCell);
             
+            // Marquer visuellement les paires complètes
+            if (pair.isComplete()) {
+                row.style.backgroundColor = '#f9f8f6'; // Fond léger pour les paires complètes
+                row.style.borderLeft = '3px solid #18753c'; // Bordure verte DSFR
+            }
+            
             tableBody.appendChild(row);
-        }
-    });
+        });
+    }
     
     // Mettre à jour les données pour l'API
     updateGeoreferencingData();
     
     // Afficher la table si elle contient des données
     const tableContainer = document.getElementById('table-control-points');
-    if (tableContainer && window.pointPairs.some(pair => pair.isComplete())) {
+    if (tableContainer && window.pointPairs.length > 0) {
         tableContainer.hidden = false;
+        
+        // Mettre à jour le titre du tableau
+        const tableTitle = tableContainer.querySelector('.fr-accordion__btn');
+        if (tableTitle) {
+            const completePairs = window.pointPairs.filter(pair => pair.isComplete()).length;
+            const totalPairs = window.pointPairs.length;
+            tableTitle.textContent = `Points de contrôle (${completePairs}/${totalPairs} paires complètes)`;
+        }
+    } else if (tableContainer) {
+        tableContainer.hidden = true;
     }
 }
 
@@ -432,6 +528,22 @@ function updateGeoreferencingData() {
 
 function checkGeoreferencingAvailability() {
     const completePairs = window.pointPairs.filter(pair => pair.isComplete()).length;
+    const totalPoints = window.pointPairs.length;
+    const leftPoints = window.pointPairs.filter(pair => pair.leftPoint).length;
+    const rightPoints = window.pointPairs.filter(pair => pair.rightPoint).length;
+    
+    // Mettre à jour le message de statut avec les informations détaillées
+    const statusElement = document.getElementById('input-status');
+    if (statusElement) {
+        if (completePairs === 0) {
+            statusElement.textContent = `Points saisis : ${leftPoints} gauche, ${rightPoints} droite - Aucune paire complète`;
+        } else {
+            statusElement.textContent = `${completePairs} paire(s) complète(s) sur ${totalPoints} points`;
+        }
+    }
+    
+    // Mettre à jour le compteur global pour compatibilité
+    count_points = completePairs;
     
     if (completePairs >= 3) {
         // Utiliser la fonction dédiée pour gérer l'état du bouton
@@ -453,6 +565,17 @@ function checkGeoreferencingAvailability() {
                     btnGeorefs.disabled = true;
                     btnGeorefs.title = 'Connectez-vous pour utiliser le géoréférencement';
                 }
+            }
+        }
+    } else {
+        // Pas assez de paires complètes
+        if (typeof setGeoreferencingButtonState === 'function') {
+            setGeoreferencingButtonState('disabled', 'Géoréférencer', `Minimum 3 paires de points requis (${completePairs}/3)`);
+        } else {
+            const btnGeorefs = document.getElementById('btn_georef');
+            if (btnGeorefs) {
+                btnGeorefs.disabled = true;
+                btnGeorefs.title = `Minimum 3 paires de points requis (${completePairs}/3)`;
             }
         }
     }
@@ -575,6 +698,52 @@ function getCompletePairCount() {
 }
 
 // Fonctions utilitaires pour le nouveau système de saisie
+
+/**
+ * Fonction pour supprimer un point individuel d'une paire
+ * @param {number} pointId - ID de la paire
+ * @param {string} side - 'left' ou 'right'
+ */
+function removeIndividualPoint(pointId, side) {
+    if (window.isInputLocked) {
+        console.log('Suppression interdite - saisie verrouillée');
+        alert('La saisie est verrouillée. Désactivez le verrou pour supprimer des points.');
+        return;
+    }
+    
+    const pairIndex = window.pointPairs.findIndex(pair => pair.id === pointId);
+    if (pairIndex === -1) return;
+    
+    const pair = window.pointPairs[pairIndex];
+    
+    if (side === 'left' && pair.leftPoint) {
+        // Supprimer le marqueur de la carte
+        if (pair.leftPoint.marker) {
+            layer_img_pts_left.removeLayer(pair.leftPoint.marker);
+        }
+        pair.leftPoint = null;
+    } else if (side === 'right' && pair.rightPoint) {
+        // Supprimer le marqueur de la carte
+        if (pair.rightPoint.marker) {
+            layer_img_pts_right.removeLayer(pair.rightPoint.marker);
+        }
+        pair.rightPoint = null;
+    }
+    
+    // Si la paire est maintenant vide, la supprimer complètement
+    if (!pair.leftPoint && !pair.rightPoint) {
+        window.pointPairs.splice(pairIndex, 1);
+    }
+    
+    // Mettre à jour l'interface
+    updateControlPointsTable();
+    checkGeoreferencingAvailability();
+    
+    console.log(`Point ${pointId} ${side} supprimé`);
+}
+
+// Rendre la fonction disponible globalement
+window.removeIndividualPoint = removeIndividualPoint;
 
 /**
  * Fonction pour supprimer un point spécifique

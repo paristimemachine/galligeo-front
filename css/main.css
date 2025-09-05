@@ -1,22 +1,137 @@
+/* =====================================================
+   LAYOUT PRINCIPAL - VERSION SIMPLIFIÉE
+   ===================================================== */
+
+/* Structure principale du body - approche simplifiée */
 body {
-    display: flex;
-    flex-flow: column nowrap;
-    height: 100vh;
     margin: 0;
     padding: 0;
-    overflow: hidden;
+    height: 100vh;
+    overflow-x: hidden;
+    overflow-y: hidden; /* Empêcher explicitement le scroll vertical */
 }
 
-/* Assurer que les styles DSFR sont préservés */
-body > * {
-    flex-shrink: 0;
+/* Header garde sa position normale */
+.fr-header {
+    position: relative;
+    z-index: 1000;
 }
 
-/* Le conteneur principal prend l'espace restant */
-body > .fr-container--fluid {
-    flex: 1;
-    min-height: 0;
+/* Navigation avec taille contrôlée */
+nav.fr-nav {
+    position: relative;
+    z-index: 999;
+    max-height: 120px;
+    overflow: visible;
+    padding: 8px 0;
+}
+
+nav.fr-nav .fr-grid-row {
+    align-items: center;
+    height: auto;
+    min-height: auto;
+}
+
+/* Container principal pour tout le contenu */
+.main-content-container {
+    position: relative;
+    width: 100%;
+}
+
+/* Le grid row principal - hauteur calculée pour éviter le scroll */
+.main-content-row {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    height: calc(100vh - 240px); /* Réservation plus importante pour éviter tout débordement */
+    max-height: calc(100vh - 240px);
     overflow: hidden;
+    margin-bottom: 5px; /* Réduction de la marge */
+}
+
+
+
+/* Footer garde sa position normale */
+.footer {
+    position: relative;
+    bottom: 0;
+    width: 100%;
+    background-color: #f6f6f6;
+    border-top: 1px solid #ddd;
+    color: #666;
+    text-align: center;
+    height: 50px;
+    padding: 0.75rem 0;
+    font-size: 0.875rem;
+    z-index: 1000;
+    margin-top: -4px;
+}
+
+/* ===================================================== */
+
+/* Corrections spécifiques pour la navigation */
+.fr-nav {
+    padding: 8px 0;
+    min-height: auto;
+}
+
+.fr-nav .fr-grid-row {
+    align-items: center;
+    min-height: auto;
+}
+
+/* Optimisation de la navigation pour réduire sa hauteur */
+#header-navigation {
+    max-height: 120px;
+    overflow: visible;
+    /* Variables CSS pour le calcul dynamique des hauteurs */
+    --nav-height: 120px;
+}
+
+#header-navigation .fr-grid-row {
+    height: auto;
+    min-height: auto;
+}
+
+/* Variables CSS globales pour le calcul des hauteurs - Fallback pour navigateurs supportant les variables */
+:root {
+    --header-height: 120px;
+    --footer-height: 62px;
+    --content-buffer: 20px;
+    --total-reserved: calc(var(--header-height) + var(--footer-height) + var(--content-buffer));
+}
+
+/* Conteneurs de cartes - hauteurs ajustées pour éviter le scroll */
+#map-container-left,
+#map-container-right,
+#map-container-left-at-startup {
+  height: calc(100vh - 240px);
+  min-height: 0;
+  max-height: calc(100vh - 240px);
+  overflow: hidden;
+  border: 1px solid #e3e3fd;
+  border-radius: 4px;
+  margin-bottom: 5px;
+}
+
+#map-left,
+#map-right {
+  height: 100%;
+  width: 100%;
+  max-height: 100%;
+}
+
+/* Sidebar avec hauteur adaptée */
+/* Sidebar avec hauteur ajustée pour éviter le scroll */
+#sidebar {
+  height: calc(100vh - 240px);
+  width: 400px;
+  background-color: white;
+  max-height: calc(100vh - 240px);
+  overflow-y: auto;
+  border: 1px solid #e3e3fd;
+  border-radius: 4px;
+  margin-bottom: 5px;
 }
 
 .fr-header__body-row {
@@ -49,25 +164,241 @@ body > .fr-container--fluid {
 }
 
 .input-controls-section .fr-btns-group {
-    flex-direction: column;
+    flex-direction: row;
     gap: 4px;
+    justify-content: space-between;
 }
 
 .input-controls-section .fr-btn--sm {
     font-size: 0.75rem;
-    padding: 0.5rem 0.75rem;
+    padding: 0.375rem 0.5rem;
+    flex: 1;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
 }
 
 /* Ajustements pour la sidebar */
 #sidebar {
     overflow-y: auto;
-    max-height: calc(100vh - 200px);
+    max-height: calc(100vh - 240px);
 }
 
 /* Réduction de l'espacement dans la navigation */
 #nav-tools4 .fr-toggle,
 #nav-tools4 .fr-segmented {
     margin: 4px 0;
+}
+
+/* Styles pour le contrôle de métadonnées sur la carte */
+.leaflet-control-metadata-info {
+    background: white;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    border: 2px solid #000091;
+    z-index: 1000 !important;
+}
+
+.leaflet-control-metadata-button {
+    display: block;
+    width: 40px;
+    height: 40px;
+    line-height: 40px;
+    text-align: center;
+    text-decoration: none;
+    color: #000091;
+    font-size: 20px;
+    font-weight: bold;
+    background: white;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    border: none;
+    position: relative;
+    z-index: 1001 !important;
+}
+
+.leaflet-control-metadata-button::before {
+    content: "ℹ";
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.leaflet-control-metadata-button:hover {
+    background: #f0f0f0;
+    color: #000074;
+    transform: scale(1.05);
+}
+
+.leaflet-control-metadata-button.active {
+    background: #000091;
+    color: white;
+    box-shadow: 0 0 10px rgba(0,0,145,0.5);
+}
+
+/* Panneau de métadonnées */
+.metadata-info-panel {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    width: 400px;
+    max-height: 80vh;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    z-index: 1001;
+    overflow: hidden;
+    border: 1px solid #ddd;
+}
+
+.metadata-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: #f6f6f6;
+    border-bottom: 1px solid #ddd;
+}
+
+.metadata-panel-header h3 {
+    margin: 0;
+    color: #000091;
+    font-weight: 600;
+}
+
+.metadata-panel-content {
+    padding: 20px;
+    max-height: calc(80vh - 80px);
+    overflow-y: auto;
+}
+
+/* Styles améliorés pour les métadonnées */
+.metadata-panel-content .metadata-item {
+    margin-bottom: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.metadata-panel-content .metadata-item:last-child {
+    border-bottom: none;
+}
+
+.metadata-panel-content .metadata-label {
+    font-weight: 600;
+    color: #000091;
+    font-size: 0.875rem;
+    margin-bottom: 4px;
+    display: block;
+}
+
+.metadata-panel-content .metadata-value {
+    color: #333;
+    font-size: 0.875rem;
+    line-height: 1.4;
+}
+
+.metadata-panel-content .metadata-url {
+    word-break: break-all;
+    color: #000091;
+    text-decoration: none;
+}
+
+.metadata-panel-content .metadata-url:hover {
+    text-decoration: underline;
+}
+
+/* Responsive pour petits écrans */
+@media (max-width: 768px) {
+    .metadata-info-panel {
+        width: calc(100vw - 40px);
+        left: 20px;
+        right: 20px;
+    }
+}
+
+/* Styles pour le tableau des points amélioré */
+.point-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    min-height: 32px;
+    padding: 4px 0;
+}
+
+.point-coords {
+    flex: 1;
+    font-size: 0.875rem;
+    margin-right: 8px;
+}
+
+.point-delete-btn {
+    margin-left: 8px;
+    padding: 4px 6px !important;
+    min-height: 28px !important;
+    width: 28px !important;
+    color: #ce0500 !important;
+    background-color: #fff5f5 !important;
+    border: 1px solid #ffb3b3 !important;
+    border-radius: 4px !important;
+    opacity: 0.8;
+    transition: all 0.2s ease;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px !important;
+    line-height: 1 !important;
+}
+
+.point-delete-btn:hover {
+    opacity: 1;
+    background-color: #fee9e7 !important;
+    border-color: #ce0500 !important;
+    transform: scale(1.1);
+    box-shadow: 0 2px 4px rgba(206, 5, 0, 0.2);
+}
+
+.point-delete-btn .fr-icon-close-circle-fill::before {
+    content: "✕";
+    font-size: 14px;
+    font-weight: bold;
+    color: #ce0500;
+}
+
+.point-delete-btn:hover .fr-icon-close-circle-fill::before {
+    color: #b30400;
+}
+
+/* Amélioration du tableau des points */
+#table-control-points .fr-table table {
+    font-size: 0.875rem;
+}
+
+#table-control-points .fr-table td {
+    padding: 8px 6px;
+    vertical-align: middle;
+    position: relative;
+}
+
+#table-control-points .fr-table th {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #000091;
+    text-align: center;
+}
+
+/* Ligne avec paire complète */
+#table-control-points .fr-table tr[style*="border-left"] {
+    background-color: #f9f8f6 !important;
+}
+
+#table-control-points .fr-table tr:hover {
+    background-color: #f0f0f0;
+}
+
+/* Espacement amélioré dans la sidebar */
+.input-controls-section {
+    border-top: 1px solid #e5e5e5;
+    margin-top: 12px;
+    padding-top: 12px;
 }
 
 
@@ -97,21 +428,7 @@ body > .fr-container--fluid {
 }
 
 
-.footer {
-    position: sticky;
-    bottom: 0;
-    width: 100%;
-    background-color: #f6f6f6;
-    border-top: 1px solid #ddd;
-    color: #666;
-    text-align: center;
-    height: 50px;
-    padding: 0.75rem 0;
-    font-size: 0.875rem;
-    z-index: 1000;
-    margin-top: auto;
-    flex-shrink: 0;
-}
+
 
 .footer p {
     margin: 0;
@@ -216,44 +533,13 @@ body > .fr-container--fluid {
 
 #sidebar{
   margin-left: 0;
-  height: calc(100vh - 200px);
+  height: calc(100vh - 240px);
   overflow-y: auto;
   overflow-x: hidden;
+  max-height: calc(100vh - 240px);
 }
 
-/* Layout principal pour éviter le débordement */
-.fr-container--fluid {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
 
-/* Navigation et header gardent leurs styles par défaut */
-.fr-header,
-.fr-nav,
-nav.fr-nav {
-  flex-shrink: 0;
-}
-
-.fr-grid-row {
-  flex: 1;
-  min-height: 0;
-}
-
-/* Conteneurs de cartes */
-#map-container-left,
-#map-container-right,
-#map-container-left-at-startup {
-  height: calc(100vh - 250px); /* Ajusté pour tenir compte du header et footer */
-  min-height: 0;
-}
-
-#map-left,
-#map-right {
-  height: 100%;
-  width: 100%;
-}
 
 /* S'assurer que la vidéo s'ajuste aussi */
 .image_box {
@@ -679,6 +965,25 @@ nav.fr-nav {
 
 .leaflet-container.input-disabled {
   cursor: default !important;
+  pointer-events: none !important;
+  position: relative;
+}
+
+.leaflet-container.input-disabled::after {
+  content: '🔒 Saisie verrouillée';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(255, 255, 255, 0.95);
+  border: 2px solid #ce0500;
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-weight: bold;
+  color: #ce0500;
+  z-index: 10000;
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
 
 /* Animation pour les cartes actives */
