@@ -340,6 +340,9 @@ L.Control.MetadataInfo = L.Control.extend({
         this._button = button;
         this._container = container;
         
+        // Créer le panneau immédiatement pour qu'il soit disponible
+        this._createMetadataPanel();
+        
         return container;
     },
 
@@ -369,6 +372,7 @@ L.Control.MetadataInfo = L.Control.extend({
         // Créer le panneau de métadonnées
         var panel = L.DomUtil.create('div', 'metadata-info-panel', document.body);
         panel.id = 'metadata-info-panel';
+        panel.style.display = 'none'; // Caché par défaut
         
         var header = L.DomUtil.create('div', 'metadata-panel-header', panel);
         header.innerHTML = `
@@ -382,8 +386,6 @@ L.Control.MetadataInfo = L.Control.extend({
         content.id = 'metadata-panel-content';
         content.innerHTML = '<p class="fr-text--sm">Chargez une image Gallica pour voir les métadonnées.</p>';
         
-        this._button.classList.add('active');
-        
         // Empêcher la propagation des événements de clic sur le panneau
         L.DomEvent.disableClickPropagation(panel);
     },
@@ -392,27 +394,94 @@ L.Control.MetadataInfo = L.Control.extend({
         var content = document.getElementById('metadata-panel-content');
         if (content) {
             content.innerHTML = metadataHtml;
+        } else {
+            console.warn('Élément metadata-panel-content non trouvé');
         }
     }
 });
 
 // Initialiser le nouveau système de saisie lorsque le fichier est chargé
 document.addEventListener('DOMContentLoaded', function() {
-    // Attendre un peu pour s'assurer que tous les éléments sont prêts
+    // Fonction pour initialiser le contrôle de métadonnées
+    function initMetadataControl() {
+        if (typeof left_map !== 'undefined' && left_map && !window.metadataControl) {
+            console.log('Initialisation du contrôle de métadonnées');
+            var metadataControl = new L.Control.MetadataInfo();
+            left_map.addControl(metadataControl);
+            
+            // Rendre le contrôle disponible globalement
+            window.metadataControl = metadataControl;
+            return true;
+        }
+        return false;
+    }
+    
+    // Essayer d'initialiser immédiatement
+    if (!initMetadataControl()) {
+        // Si pas encore possible, attendre et réessayer
+        let attempts = 0;
+        const maxAttempts = 50; // 10 secondes maximum
+        
+        const retryInterval = setInterval(() => {
+            attempts++;
+            
+            if (initMetadataControl() || attempts >= maxAttempts) {
+                clearInterval(retryInterval);
+                if (attempts >= maxAttempts) {
+                    console.warn('Impossible d\'initialiser le contrôle de métadonnées : carte gauche non disponible');
+                }
+            }
+        }, 200); // Essayer toutes les 200ms
+    }
+    
+    // Initialiser le système de saisie avancé
     setTimeout(function() {
         if (typeof setupAdvancedInputSystem === 'function') {
             setupAdvancedInputSystem();
-            
-            // Ajouter le contrôle de métadonnées à la carte gauche
-            if (typeof left_map !== 'undefined') {
-                var metadataControl = new L.Control.MetadataInfo();
-                left_map.addControl(metadataControl);
-                
-                // Rendre le contrôle disponible globalement
-                window.metadataControl = metadataControl;
-            }
         } else {
             console.warn('Système de saisie avancé non disponible. Vérifiez que advanced-input-system.js est chargé.');
         }
     }, 1000);
 });
+
+/**
+ * Fonction utilitaire pour s'assurer que le contrôle de métadonnées est disponible
+ * Peut être appelée depuis d'autres scripts si nécessaire
+ */
+window.ensureMetadataControlAvailable = function() {
+    return new Promise((resolve, reject) => {
+        if (window.metadataControl) {
+            resolve(window.metadataControl);
+            return;
+        }
+        
+        // Essayer d'initialiser
+        if (typeof left_map !== 'undefined' && left_map) {
+            console.log('Initialisation forcée du contrôle de métadonnées');
+            var metadataControl = new L.Control.MetadataInfo();
+            left_map.addControl(metadataControl);
+            window.metadataControl = metadataControl;
+            resolve(metadataControl);
+            return;
+        }
+        
+        // Attendre que la carte soit disponible
+        let attempts = 0;
+        const maxAttempts = 25; // 5 secondes
+        
+        const retryInterval = setInterval(() => {
+            attempts++;
+            
+            if (typeof left_map !== 'undefined' && left_map) {
+                var metadataControl = new L.Control.MetadataInfo();
+                left_map.addControl(metadataControl);
+                window.metadataControl = metadataControl;
+                clearInterval(retryInterval);
+                resolve(metadataControl);
+            } else if (attempts >= maxAttempts) {
+                clearInterval(retryInterval);
+                reject(new Error('Impossible d\'initialiser le contrôle de métadonnées'));
+            }
+        }, 200);
+    });
+};

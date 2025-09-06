@@ -58,3 +58,6 @@ window.isInputLocked = false;
 window.pointPairs = [];
 window.currentPolygon = null;
 window.isDragging = false;
+
+// Variable globale pour stocker les métadonnées
+window.metadataDict = {};
