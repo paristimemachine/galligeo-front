@@ -279,6 +279,11 @@ function handlePointClick(event, mapSide, map, layer) {
     // Configurer les événements de drag
     setupMarkerDragEvents(marker, pointPair, mapSide);
     
+    // Marquer qu'il y a des changements non sauvegardés
+    if (window.controlPointsBackup && typeof window.controlPointsBackup.markUnsavedChanges === 'function') {
+        window.controlPointsBackup.markUnsavedChanges();
+    }
+    
     // Mettre à jour la table des points de contrôle
     updateControlPointsTable();
     
@@ -374,9 +379,11 @@ function setupMarkerDragEvents(marker, pointPair, mapSide) {
         updateControlPointsTable();
         
         // Déclencher une sauvegarde automatique après déplacement de point
-        if (window.controlPointsBackup && typeof window.controlPointsBackup.saveCurrentState === 'function') {
+        if (window.controlPointsBackup && typeof window.controlPointsBackup.saveCurrentStateIfChanged === 'function') {
+            // Marquer qu'il y a des changements puis sauvegarder si nécessaire
+            window.controlPointsBackup.markUnsavedChanges();
             setTimeout(() => {
-                window.controlPointsBackup.saveCurrentState('point-moved');
+                window.controlPointsBackup.saveCurrentStateIfChanged('point-moved');
             }, 100);
         }
     });
@@ -473,10 +480,12 @@ function handleEmpriseClick(event, map) {
         updatePolygonData();
         
         // Déclencher une sauvegarde automatique après modification de l'emprise
-        if (window.controlPointsBackup && typeof window.controlPointsBackup.saveCurrentState === 'function') {
+        if (window.controlPointsBackup && typeof window.controlPointsBackup.saveCurrentStateIfChanged === 'function') {
+            // Marquer qu'il y a des changements puis sauvegarder si nécessaire
+            window.controlPointsBackup.markUnsavedChanges();
             // Petit délai pour s'assurer que toutes les données sont mises à jour
             setTimeout(() => {
-                window.controlPointsBackup.saveCurrentState('emprise-modification');
+                window.controlPointsBackup.saveCurrentStateIfChanged('emprise-modification');
             }, 200);
         }
     }
@@ -536,10 +545,12 @@ function updatePolygonData() {
     list_points_polygon_crop = polyJson;
     
     // Déclencher une sauvegarde automatique après mise à jour des données polygone
-    if (window.controlPointsBackup && typeof window.controlPointsBackup.saveCurrentState === 'function') {
+    if (window.controlPointsBackup && typeof window.controlPointsBackup.saveCurrentStateIfChanged === 'function') {
+        // Marquer qu'il y a des changements puis sauvegarder si nécessaire
+        window.controlPointsBackup.markUnsavedChanges();
         // Petit délai pour s'assurer que toutes les données sont mises à jour
         setTimeout(() => {
-            window.controlPointsBackup.saveCurrentState('emprise-data-update');
+            window.controlPointsBackup.saveCurrentStateIfChanged('emprise-data-update');
         }, 100);
     }
 }
@@ -901,9 +912,10 @@ function removeIndividualPoint(pointId, side) {
     checkGeoreferencingAvailability();
     
     // Déclencher une sauvegarde automatique après suppression de point
-    if (window.controlPointsBackup && typeof window.controlPointsBackup.saveCurrentState === 'function') {
+    if (window.controlPointsBackup && typeof window.controlPointsBackup.saveCurrentStateIfChanged === 'function') {
+        window.controlPointsBackup.markUnsavedChanges();
         setTimeout(() => {
-            window.controlPointsBackup.saveCurrentState('point-removed');
+            window.controlPointsBackup.saveCurrentStateIfChanged('point-removed');
         }, 100);
     }
 }
@@ -978,8 +990,9 @@ function clearEmprise() {
     updateUIForInputMode();
     
     // Déclencher une sauvegarde automatique après suppression de l'emprise
-    if (window.controlPointsBackup && typeof window.controlPointsBackup.saveCurrentState === 'function') {
-        window.controlPointsBackup.saveCurrentState('emprise-suppression');
+    if (window.controlPointsBackup && typeof window.controlPointsBackup.saveCurrentStateIfChanged === 'function') {
+        window.controlPointsBackup.markUnsavedChanges();
+        window.controlPointsBackup.saveCurrentStateIfChanged('emprise-suppression');
     }
 }
 

@@ -9,8 +9,10 @@ class ControlPointsBackup {
         this.autosaveInterval = null;
         this.isEnabled = true;
         this.maxBackups = 10; // Sera mis à jour par les paramètres
-        this.autosaveFrequency = 30000; // 30 secondes par défaut
+        this.autosaveFrequency = 120000; // 2 minutes par défaut (augmenté de 30s)
         this.lastSaveTime = null;
+        this.lastSavedStateHash = null; // Pour détecter les changements
+        this.hasUnsavedChanges = false; // Indicateur de changements
         
         // Écouter les changements de paramètres
         this.setupSettingsListener();
@@ -39,8 +41,10 @@ class ControlPointsBackup {
         if (this.isEnabled) {
             // Utiliser la fréquence configurée
             this.autosaveInterval = setInterval(() => {
-                this.saveCurrentState();
+                this.saveCurrentStateIfChanged();
             }, this.autosaveFrequency);
+            
+            console.log(`Autosave démarré avec fréquence: ${this.autosaveFrequency/1000}s`);
         }
     }
 
@@ -86,7 +90,8 @@ class ControlPointsBackup {
         const autosaveEnabled = settings['checkbox-autosave'] !== undefined ? settings['checkbox-autosave'] : true;
         
         // Fréquence de sauvegarde (en secondes, convertir en millisecondes)
-        const frequency = parseInt(settings['select-backup-frequency']) || 30;
+        // Minimum 2 minutes pour éviter la sauvegarde trop fréquente
+        const frequency = Math.max(parseInt(settings['select-backup-frequency']) || 120, 120);
         this.autosaveFrequency = frequency * 1000;
         
         // Nombre maximum de sauvegardes
@@ -94,6 +99,8 @@ class ControlPointsBackup {
         
         // Activer/désactiver selon les paramètres
         this.setEnabled(autosaveEnabled);
+        
+        console.log(`Paramètres autosave appliqués: enabled=${autosaveEnabled}, frequency=${frequency}s, maxBackups=${this.maxBackups}`);
     }
 
     /**
@@ -157,9 +164,99 @@ class ControlPointsBackup {
             clearTimeout(this.saveTimeout);
         }
         
+        // Marquer qu'il y a des changements non sauvegardés
+        this.hasUnsavedChanges = true;
+        
         this.saveTimeout = setTimeout(() => {
-            this.saveCurrentState('user-action');
-        }, 1000); // Attendre 1 seconde après le dernier changement
+            this.saveCurrentStateIfChanged('user-action');
+        }, 2000); // Augmenté à 2 secondes pour éviter la sauvegarde trop fréquente
+    }
+
+    /**
+     * Sauvegarde l'état actuel des points de contrôle seulement s'il y a eu des changements
+     */
+    saveCurrentStateIfChanged(trigger = 'auto') {
+        if (!this.isEnabled) {
+            return;
+        }
+
+        // Ne pas sauvegarder automatiquement s'il n'y a pas de changements non sauvegardés
+        if (trigger === 'auto' && !this.hasUnsavedChanges) {
+            console.log('Pas de changements détectés, saut de l\'autosave');
+            return;
+        }
+
+        const currentState = this.getCurrentControlPointsState();
+        
+        // Ne sauvegarder que s'il y a des données
+        if (!currentState || (!currentState.pointPairs?.length && !currentState.polygon?.length)) {
+            console.log('Aucune donnée à sauvegarder');
+            return;
+        }
+
+        // Calculer le hash de l'état actuel
+        const currentHash = this.calculateStateHash(currentState);
+        
+        // Comparer avec le dernier hash sauvegardé
+        if (this.lastSavedStateHash === currentHash) {
+            console.log('État identique à la dernière sauvegarde, saut');
+            this.hasUnsavedChanges = false; // Réinitialiser le flag
+            return;
+        }
+
+        // Procéder à la sauvegarde normale
+        this.saveCurrentState(trigger);
+        
+        // Mettre à jour le hash et réinitialiser le flag de changements
+        this.lastSavedStateHash = currentHash;
+        this.hasUnsavedChanges = false;
+    }
+
+    /**
+     * Calcule un hash simple de l'état pour détecter les changements
+     */
+    calculateStateHash(state) {
+        try {
+            // Créer une représentation simplifiée de l'état pour le hash
+            const hashData = {
+                pointPairs: state.pointPairs?.map(pair => ({
+                    id: pair.id,
+                    left: pair.leftPoint ? { lat: pair.leftPoint.lat, lng: pair.leftPoint.lng } : null,
+                    right: pair.rightPoint ? { lat: pair.rightPoint.lat, lng: pair.rightPoint.lng } : null
+                })) || [],
+                polygon: state.polygon?.map(point => ({ lat: point.lat, lng: point.lng })) || []
+            };
+            
+            // Convertir en string et calculer un hash simple
+            const jsonString = JSON.stringify(hashData);
+            return this.simpleHash(jsonString);
+        } catch (error) {
+            console.error('Erreur lors du calcul du hash:', error);
+            return Date.now().toString(); // Fallback unique
+        }
+    }
+
+    /**
+     * Calcule un hash simple d'une chaîne
+     */
+    simpleHash(str) {
+        let hash = 0;
+        if (str.length === 0) return hash;
+        
+        for (let i = 0; i < str.length; i++) {
+            const char = str.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash; // Convertir en entier 32 bits
+        }
+        
+        return hash.toString();
+    }
+
+    /**
+     * Marque qu'il y a des changements non sauvegardés
+     */
+    markUnsavedChanges() {
+        this.hasUnsavedChanges = true;
     }
 
     /**
@@ -205,8 +302,14 @@ class ControlPointsBackup {
             localStorage.setItem(this.storageKey, JSON.stringify(existingBackups));
             this.lastSaveTime = new Date();
             
+            // Mettre à jour le hash de la dernière sauvegarde
+            this.lastSavedStateHash = this.calculateStateHash(currentState);
+            this.hasUnsavedChanges = false;
+            
             // Émettre un événement pour notifier la sauvegarde
             this.notifyBackupSaved(backup);
+
+            console.log(`Sauvegarde effectuée (${trigger}): ${currentState.pointPairs?.length || 0} points, ${currentState.polygon?.length || 0} points d'emprise`);
 
         } catch (error) {
             console.error('Erreur lors de la sauvegarde des points de contrôle:', error);
@@ -778,6 +881,73 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 console.log('Module de sauvegarde des points de contrôle chargé');
+
+// Fonction de test pour vérifier les optimisations d'autosave
+window.testAutosaveOptimizations = function() {
+    console.log('🧪 Test des optimisations d\'autosave');
+    
+    if (window.controlPointsBackup) {
+        const backup = window.controlPointsBackup;
+        
+        console.log('📊 Configuration actuelle:', {
+            enabled: backup.isEnabled,
+            frequency: backup.autosaveFrequency + 'ms (' + (backup.autosaveFrequency/1000) + 's)',
+            hasUnsavedChanges: backup.hasUnsavedChanges,
+            lastSavedStateHash: backup.lastSavedStateHash
+        });
+        
+        // Test 1: Sauvegarder sans changements
+        console.log('🧪 Test 1: Tentative de sauvegarde sans changements...');
+        backup.saveCurrentStateIfChanged('test-no-changes');
+        
+        // Test 2: Marquer des changements et sauvegarder
+        console.log('🧪 Test 2: Marquer des changements et sauvegarder...');
+        backup.markUnsavedChanges();
+        backup.saveCurrentStateIfChanged('test-with-changes');
+        
+        // Test 3: Tentative de sauvegarde du même état
+        console.log('🧪 Test 3: Tentative de sauvegarde du même état...');
+        backup.saveCurrentStateIfChanged('test-duplicate');
+        
+        console.log('✅ Tests terminés');
+    } else {
+        console.error('❌ System de sauvegarde non initialisé');
+    }
+};
+
+// Fonction pour forcer un test de changement d'état
+window.testStateChange = function() {
+    console.log('🔄 Test de changement d\'état');
+    
+    if (window.controlPointsBackup && window.pointPairs) {
+        const backup = window.controlPointsBackup;
+        
+        // Calculer le hash actuel
+        const currentState = backup.getCurrentControlPointsState();
+        const currentHash = backup.calculateStateHash(currentState);
+        
+        console.log('📊 État actuel:', {
+            pointPairs: currentState.pointPairs?.length || 0,
+            polygon: currentState.polygon?.length || 0,
+            hash: currentHash,
+            lastHash: backup.lastSavedStateHash,
+            hasUnsavedChanges: backup.hasUnsavedChanges
+        });
+        
+        // Comparer avec le dernier hash
+        const isIdentical = backup.lastSavedStateHash === currentHash;
+        console.log(isIdentical ? '🟰 État identique au dernier sauvegardé' : '🔄 État différent du dernier sauvegardé');
+        
+        return {
+            currentHash,
+            lastHash: backup.lastSavedStateHash,
+            isIdentical,
+            hasUnsavedChanges: backup.hasUnsavedChanges
+        };
+    }
+};
+
+console.log('🧪 Fonctions de test d\'autosave disponibles: testAutosaveOptimizations(), testStateChange()');
 
 // Fonction de test globale pour debug
 window.testBackupSystem = function() {
