@@ -33,6 +33,9 @@ async function load_ark_picture() {
             input_ark = splitUrl[5];
         }
 
+        // Assurer que window.input_ark est aussi défini pour le système de sauvegarde
+        window.input_ark = input_ark;
+
         console.log(input_ark)
 
         var splitUrl = input.split('/');
@@ -47,6 +50,9 @@ async function load_ark_picture() {
         }else{
             input_ark = splitUrl[5];
         }
+
+        // Assurer que window.input_ark est aussi défini pour le système de sauvegarde
+        window.input_ark = input_ark;
 
         console.log(input_ark)
 
@@ -141,6 +147,18 @@ async function load_ark_picture() {
         // document.getElementById('etape-georef').textContent = "Étape 2 sur 4";
         document.getElementById('etape-suite').textContent = "Puis cliquer sur Géoréférencer";
         document.getElementById('steps').setAttribute('data-fr-current-step', '2');
+
+        // Vérifier s'il y a des sauvegardes à restaurer pour cet ARK
+        if (window.controlPointsBackup && input_ark) {
+            setTimeout(() => {
+                window.controlPointsBackup.checkForAutoRestore();
+                
+                // Mettre à jour l'état des boutons de sauvegarde
+                if (typeof updateBackupButtonsState === 'function') {
+                    updateBackupButtonsState();
+                }
+            }, 500); // Petit délai pour s'assurer que tout est initialisé
+        }
     
 }
 

@@ -275,6 +275,13 @@ class ControlPointsBackup {
                 return;
             }
 
+            // Vérifier qu'un ARK est chargé
+            const currentArk = this.getCurrentArk();
+            if (!currentArk) {
+                console.log('Aucun ARK chargé, sauvegarde annulée');
+                return;
+            }
+
             const backup = {
                 timestamp: new Date().toISOString(),
                 trigger: trigger,
@@ -283,23 +290,23 @@ class ControlPointsBackup {
                 metadata: {
                     userAgent: navigator.userAgent,
                     url: window.location.href,
-                    arkId: window.input_ark || null
+                    arkId: currentArk
                 }
             };
 
-            // Récupérer les sauvegardes existantes
-            const existingBackups = this.getAllBackups();
+            // Récupérer les sauvegardes existantes pour cet ARK
+            const existingBackups = this.getBackupsForArk(currentArk);
             
             // Ajouter la nouvelle sauvegarde au début
             existingBackups.unshift(backup);
             
-            // Limiter le nombre de sauvegardes
+            // Limiter le nombre de sauvegardes par ARK
             if (existingBackups.length > this.maxBackups) {
                 existingBackups.splice(this.maxBackups);
             }
 
-            // Sauvegarder dans localStorage
-            localStorage.setItem(this.storageKey, JSON.stringify(existingBackups));
+            // Sauvegarder pour cet ARK spécifique
+            this.saveBackupsForArk(existingBackups, currentArk);
             this.lastSaveTime = new Date();
             
             // Mettre à jour le hash de la dernière sauvegarde
@@ -309,7 +316,7 @@ class ControlPointsBackup {
             // Émettre un événement pour notifier la sauvegarde
             this.notifyBackupSaved(backup);
 
-            console.log(`Sauvegarde effectuée (${trigger}): ${currentState.pointPairs?.length || 0} points, ${currentState.polygon?.length || 0} points d'emprise`);
+            console.log(`Sauvegarde effectuée pour ARK ${currentArk} (${trigger}): ${currentState.pointPairs?.length || 0} points, ${currentState.polygon?.length || 0} points d'emprise`);
 
         } catch (error) {
             console.error('Erreur lors de la sauvegarde des points de contrôle:', error);
@@ -393,7 +400,23 @@ class ControlPointsBackup {
     }
 
     /**
-     * Récupère toutes les sauvegardes existantes
+     * Récupère l'ARK actuel depuis la variable globale
+     */
+    getCurrentArk() {
+        // Essayer d'abord window.input_ark, puis input_ark global
+        return window.input_ark || (typeof input_ark !== 'undefined' ? input_ark : null);
+    }
+
+    /**
+     * Génère une clé de stockage spécifique à un ARK
+     */
+    getArkStorageKey(arkId) {
+        if (!arkId) return null;
+        return `${this.storageKey}-ark-${arkId}`;
+    }
+
+    /**
+     * Récupère toutes les sauvegardes existantes (toutes ARKs confondues)
      */
     getAllBackups() {
         try {
@@ -406,9 +429,114 @@ class ControlPointsBackup {
     }
 
     /**
-     * Récupère la dernière sauvegarde
+     * Récupère les sauvegardes pour un ARK spécifique
+     */
+    getBackupsForArk(arkId = null) {
+        const currentArk = arkId || this.getCurrentArk();
+        if (!currentArk) {
+            console.log('Aucun ARK spécifié, retour de toutes les sauvegardes');
+            return this.getAllBackups();
+        }
+
+        try {
+            const arkStorageKey = this.getArkStorageKey(currentArk);
+            if (!arkStorageKey) return [];
+            
+            const stored = localStorage.getItem(arkStorageKey);
+            return stored ? JSON.parse(stored) : [];
+        } catch (error) {
+            console.error('Erreur lors de la récupération des sauvegardes pour ARK:', currentArk, error);
+            return [];
+        }
+    }
+
+    /**
+     * Récupère toutes les sauvegardes existantes
+     */
+    getAllBackupsOld() {
+        try {
+            const stored = localStorage.getItem(this.storageKey);
+            return stored ? JSON.parse(stored) : [];
+        } catch (error) {
+            console.error('Erreur lors de la récupération des sauvegardes:', error);
+            return [];
+        }
+    }
+
+    /**
+     * Récupère la dernière sauvegarde pour l'ARK actuel
      */
     getLatestBackup() {
+        const backups = this.getBackupsForArk();
+        return backups.length > 0 ? backups[0] : null;
+    }
+
+    /**
+     * Sauvegarde les sauvegardes pour un ARK spécifique
+     */
+    saveBackupsForArk(backups, arkId = null) {
+        const currentArk = arkId || this.getCurrentArk();
+        if (!currentArk) {
+            console.warn('Impossible de sauvegarder sans ARK spécifié');
+            return false;
+        }
+
+        try {
+            const arkStorageKey = this.getArkStorageKey(currentArk);
+            if (!arkStorageKey) return false;
+            
+            localStorage.setItem(arkStorageKey, JSON.stringify(backups));
+            
+            // Aussi maintenir une liste globale pour la migration et les statistiques
+            this.updateGlobalBackupsList(currentArk);
+            
+            return true;
+        } catch (error) {
+            console.error('Erreur lors de la sauvegarde pour ARK:', currentArk, error);
+            return false;
+        }
+    }
+
+    /**
+     * Met à jour la liste globale des ARKs ayant des sauvegardes
+     */
+    updateGlobalBackupsList(arkId) {
+        try {
+            const globalKey = `${this.storageKey}-arks-list`;
+            let arksList = [];
+            
+            const stored = localStorage.getItem(globalKey);
+            if (stored) {
+                arksList = JSON.parse(stored);
+            }
+            
+            if (!arksList.includes(arkId)) {
+                arksList.push(arkId);
+                localStorage.setItem(globalKey, JSON.stringify(arksList));
+            }
+        } catch (error) {
+            console.error('Erreur lors de la mise à jour de la liste globale:', error);
+        }
+    }
+
+    /**
+     * Récupère la liste de tous les ARKs ayant des sauvegardes
+     */
+    getAllArksWithBackups() {
+        try {
+            const globalKey = `${this.storageKey}-arks-list`;
+            const stored = localStorage.getItem(globalKey);
+            return stored ? JSON.parse(stored) : [];
+        } catch (error) {
+            console.error('Erreur lors de la récupération de la liste des ARKs:', error);
+            return [];
+        }
+    }
+
+    /**
+     * Récupère la dernière sauvegarde
+     */
+    getLatestBackupOld() {
         const backups = this.getAllBackups();
         return backups.length > 0 ? backups[0] : null;
     }
@@ -612,18 +740,34 @@ class ControlPointsBackup {
      * Vérifie s'il y a des sauvegardes disponibles pour restauration
      */
     hasBackupsAvailable() {
-        const backups = this.getAllBackups();
+        const backups = this.getBackupsForArk();
         return backups.length > 0;
+    }
+
+    /**
+     * Vérifie si le bouton de restauration devrait être actif
+     * (carte chargée = ARK défini)
+     */
+    isRestoreButtonEnabled() {
+        const currentArk = this.getCurrentArk();
+        return currentArk !== null && currentArk !== undefined && currentArk !== 0;
     }
 
     /**
      * Affiche une interface de restauration
      */
     showRestoreInterface() {
-        const backups = this.getAllBackups();
+        const currentArk = this.getCurrentArk();
+        
+        if (!currentArk) {
+            alert('Aucune carte chargée. Chargez d\'abord une carte Gallica pour voir les sauvegardes associées.');
+            return;
+        }
+
+        const backups = this.getBackupsForArk(currentArk);
         
         if (backups.length === 0) {
-            alert('Aucune sauvegarde disponible');
+            alert(`Aucune sauvegarde disponible pour cette carte (ARK: ${currentArk})`);
             return;
         }
 
@@ -635,8 +779,17 @@ class ControlPointsBackup {
             return;
         }
 
+        // Ajouter un en-tête pour indiquer l'ARK
+        let headerHtml = `
+            <div class="fr-alert fr-alert--info fr-mb-2w">
+                <p class="fr-alert__title">Sauvegardes pour la carte actuelle</p>
+                <p>ARK: ${currentArk}</p>
+                <p>Nombre de sauvegardes: ${backups.length}</p>
+            </div>
+        `;
+
         // Remplir le contenu de la modale
-        container.innerHTML = backups.map((backup, index) => `
+        container.innerHTML = headerHtml + backups.map((backup, index) => `
             <div class="fr-card fr-my-2w">
                 <div class="fr-card__body">
                     <div class="fr-card__content">
@@ -647,11 +800,17 @@ class ControlPointsBackup {
                             Type: ${backup.trigger === 'auto' ? 'Automatique' : 'Manuelle'}<br>
                             Points: ${backup.data?.pointPairs?.length || 0}<br>
                             Emprise: ${backup.data?.polygon?.length > 0 ? 'Oui' : 'Non'}
+                            ${backup.metadata?.arkId ? `<br>ARK: ${backup.metadata.arkId}` : ''}
                         </p>
                         <div class="fr-card__footer">
-                            <button class="fr-btn fr-btn--sm" onclick="window.controlPointsBackup.restoreBackupByIndex(${index}).then(() => window.controlPointsBackup.closeBackupModal())">
-                                Restaurer
-                            </button>
+                            <div class="fr-btns-group fr-btns-group--inline">
+                                <button class="fr-btn fr-btn--sm" onclick="window.controlPointsBackup.restoreBackupByIndex(${index}).then(() => window.controlPointsBackup.closeBackupModal())">
+                                    Restaurer
+                                </button>
+                                <button class="fr-btn fr-btn--sm fr-btn--secondary" onclick="window.controlPointsBackup.deleteBackupByIndex(${index})">
+                                    Supprimer
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -715,7 +874,14 @@ class ControlPointsBackup {
      */
     async restoreBackupByIndex(index) {
         try {
-            const backups = this.getAllBackups();
+            const currentArk = this.getCurrentArk();
+            if (!currentArk) {
+                console.error('Aucun ARK actuel disponible');
+                this.showNotification('Aucune carte chargée', 'error');
+                return false;
+            }
+
+            const backups = this.getBackupsForArk(currentArk);
             if (index >= 0 && index < backups.length) {
                 const success = await this.restoreBackup(backups[index]);
                 return success;
@@ -775,14 +941,38 @@ class ControlPointsBackup {
      * Vérifie automatiquement s'il faut proposer une restauration au démarrage
      */
     async checkForAutoRestore() {
+        console.log('🔍 Vérification des sauvegardes à restaurer...');
+        
         // Ne pas restaurer automatiquement s'il y a déjà des points
         if (window.pointPairs && window.pointPairs.length > 0) {
+            console.log('⏭️ Des points existent déjà, pas de restauration automatique');
+            return;
+        }
+
+        // Vérifier qu'un ARK est chargé
+        const currentArk = this.getCurrentArk();
+        console.log('🏷️ ARK actuel détecté:', currentArk);
+        console.log('📊 Détails ARK:', {
+            'window.input_ark': window.input_ark,
+            'global input_ark': typeof input_ark !== 'undefined' ? input_ark : 'undefined'
+        });
+        
+        if (!currentArk) {
+            console.log('❌ Aucun ARK chargé, pas de restauration automatique');
             return;
         }
 
         const latestBackup = this.getLatestBackup();
+        console.log('💾 Dernière sauvegarde trouvée:', latestBackup ? 'Oui' : 'Non');
         
         if (!latestBackup) {
+            console.log('📭 Aucune sauvegarde disponible pour cet ARK');
+            return;
+        }
+
+        // Vérifier que la sauvegarde correspond à l'ARK actuel
+        if (latestBackup.metadata?.arkId && latestBackup.metadata.arkId !== currentArk) {
+            console.log(`🔄 Sauvegarde trouvée pour un ARK différent (${latestBackup.metadata.arkId} vs ${currentArk}), pas de restauration automatique`);
             return;
         }
 
@@ -790,16 +980,21 @@ class ControlPointsBackup {
         const backupAge = Date.now() - new Date(latestBackup.timestamp).getTime();
         const maxAge = 24 * 60 * 60 * 1000; // 24 heures
 
+        console.log('⏰ Âge de la sauvegarde:', Math.round(backupAge / (60 * 1000)), 'minutes');
+
         if (backupAge < maxAge && latestBackup.data.pointPairs?.length > 0) {
             const pointsCount = latestBackup.data.pointPairs.length;
             const polygonInfo = latestBackup.data.polygon?.length ? ` et une emprise` : '';
             
-            if (confirm(`Une sauvegarde récente a été trouvée avec ${pointsCount} paire(s) de points${polygonInfo}.\n\nVoulez-vous la restaurer ?`)) {
+            console.log('✅ Proposition de restauration automatique');
+            if (confirm(`Une sauvegarde récente a été trouvée pour cette carte avec ${pointsCount} paire(s) de points${polygonInfo}.\n\nVoulez-vous la restaurer ?`)) {
                 const success = await this.restoreBackup(latestBackup);
                 if (success) {
                     this.showNotification('Sauvegarde restaurée automatiquement', 'success');
                 }
             }
+        } else {
+            console.log('📅 Sauvegarde trop ancienne ou vide, pas de proposition de restauration');
         }
     }
 
@@ -862,10 +1057,120 @@ class ControlPointsBackup {
             lastSave: this.lastSaveTime
         };
     }
+
+    /**
+     * Supprime une sauvegarde par son index pour l'ARK actuel
+     */
+    deleteBackupByIndex(index) {
+        try {
+            const currentArk = this.getCurrentArk();
+            if (!currentArk) {
+                console.error('Aucun ARK actuel disponible');
+                this.showNotification('Aucune carte chargée', 'error');
+                return false;
+            }
+
+            const backups = this.getBackupsForArk(currentArk);
+            if (index >= 0 && index < backups.length) {
+                backups.splice(index, 1);
+                this.saveBackupsForArk(backups, currentArk);
+                this.showNotification('Sauvegarde supprimée', 'success');
+                
+                // Rafraîchir l'interface si elle est ouverte
+                if (document.getElementById('fr-modal-backup-restore').hasAttribute('open')) {
+                    this.showRestoreInterface();
+                }
+                
+                return true;
+            } else {
+                console.error('Index de sauvegarde invalide:', index);
+                this.showNotification('Index de sauvegarde invalide', 'error');
+                return false;
+            }
+        } catch (error) {
+            console.error('Erreur lors de la suppression par index:', error);
+            this.showNotification('Erreur lors de la suppression: ' + error.message, 'error');
+            return false;
+        }
+    }
+
+    /**
+     * Migre les anciennes sauvegardes vers le nouveau système par ARK
+     */
+    migrateOldBackups() {
+        try {
+            const oldBackups = this.getAllBackupsOld();
+            if (oldBackups.length === 0) {
+                return; // Rien à migrer
+            }
+
+            console.log(`Migration de ${oldBackups.length} anciennes sauvegardes...`);
+            
+            for (const backup of oldBackups) {
+                const arkId = backup.metadata?.arkId || backup.data?.arkId;
+                if (arkId) {
+                    // Récupérer les sauvegardes existantes pour cet ARK
+                    const existingBackups = this.getBackupsForArk(arkId);
+                    
+                    // Vérifier que cette sauvegarde n'existe pas déjà
+                    const exists = existingBackups.some(existing => 
+                        existing.timestamp === backup.timestamp
+                    );
+                    
+                    if (!exists) {
+                        existingBackups.push(backup);
+                        existingBackups.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                        
+                        // Limiter le nombre de sauvegardes
+                        if (existingBackups.length > this.maxBackups) {
+                            existingBackups.splice(this.maxBackups);
+                        }
+                        
+                        this.saveBackupsForArk(existingBackups, arkId);
+                        console.log(`Sauvegarde migrée pour ARK ${arkId}`);
+                    }
+                }
+            }
+
+            // Renommer l'ancien stockage pour éviter de le remigrer
+            const oldKey = this.storageKey;
+            const archiveKey = `${this.storageKey}-archived-${Date.now()}`;
+            localStorage.setItem(archiveKey, localStorage.getItem(oldKey));
+            localStorage.removeItem(oldKey);
+            
+            console.log('Migration terminée');
+        } catch (error) {
+            console.error('Erreur lors de la migration:', error);
+        }
+    }
+
+    /**
+     * Obtient des statistiques sur les sauvegardes par ARK
+     */
+    getBackupStatsByArk() {
+        const stats = {};
+        const arks = this.getAllArksWithBackups();
+        
+        for (const ark of arks) {
+            const backups = this.getBackupsForArk(ark);
+            stats[ark] = {
+                count: backups.length,
+                latestTimestamp: backups.length > 0 ? backups[0].timestamp : null,
+                totalSize: JSON.stringify(backups).length
+            };
+        }
+        
+        return stats;
+    }
 }
 
 // Initialisation globale
 window.controlPointsBackup = new ControlPointsBackup();
+
+// Migration automatique des anciennes sauvegardes
+setTimeout(() => {
+    window.controlPointsBackup.migrateOldBackups();
+}, 1000);
 
 // Rendre certaines fonctions disponibles globalement pour les boutons HTML
 window.restoreBackupByIndex = function(index) {
@@ -873,12 +1178,65 @@ window.restoreBackupByIndex = function(index) {
 };
 
 // Fonction pour vérifier la restauration automatique au démarrage
-document.addEventListener('DOMContentLoaded', () => {
-    // Attendre un peu que le système soit initialisé
-    setTimeout(async () => {
-        await window.controlPointsBackup.checkForAutoRestore();
-    }, 2000);
-});
+// Fonction de test pour vérifier l'état du bouton restaurer
+window.testRestoreButton = function() {
+    console.log('🧪 Test de l\'état du bouton restaurer');
+    
+    const ark = window.controlPointsBackup.getCurrentArk();
+    const isEnabled = window.controlPointsBackup.isRestoreButtonEnabled();
+    const hasBackups = window.controlPointsBackup.hasBackupsAvailable();
+    
+    console.log('🏷️ ARK actuel:', ark);
+    console.log('🔘 Bouton activé:', isEnabled);
+    console.log('💾 A des sauvegardes:', hasBackups);
+    
+    const btn = document.getElementById('btn_restore_backup');
+    if (btn) {
+        console.log('🎛️ État du bouton DOM:', {
+            disabled: btn.disabled,
+            opacity: btn.style.opacity,
+            title: btn.title
+        });
+    } else {
+        console.error('❌ Bouton restaurer non trouvé dans le DOM');
+    }
+    
+    if (ark && isEnabled) {
+        console.log('✅ Bouton devrait être actif');
+    } else if (!ark) {
+        console.log('⚠️ Bouton devrait être inactif (pas d\'ARK)');
+    }
+};
+
+// Fonction de test pour vérifier la détection d'ARK
+window.testArkDetection = function() {
+    console.log('🧪 Test de détection ARK');
+    console.log('window.input_ark:', window.input_ark);
+    console.log('global input_ark:', typeof input_ark !== 'undefined' ? input_ark : 'undefined');
+    console.log('getCurrentArk():', window.controlPointsBackup.getCurrentArk());
+    
+    const ark = window.controlPointsBackup.getCurrentArk();
+    if (ark) {
+        console.log('✅ ARK détecté:', ark);
+        const backups = window.controlPointsBackup.getBackupsForArk(ark);
+        console.log('💾 Sauvegardes pour cet ARK:', backups.length);
+        if (backups.length > 0) {
+            console.log('📋 Dernière sauvegarde:', backups[0]);
+        }
+    } else {
+        console.log('❌ Aucun ARK détecté');
+    }
+};
+
+// Fonction de test pour forcer la vérification de restauration
+window.testForceAutoRestore = function() {
+    console.log('🔄 Test forcé de restauration automatique');
+    if (window.controlPointsBackup) {
+        window.controlPointsBackup.checkForAutoRestore();
+    } else {
+        console.error('❌ Système de backup non initialisé');
+    }
+};
 
 console.log('Module de sauvegarde des points de contrôle chargé');
 

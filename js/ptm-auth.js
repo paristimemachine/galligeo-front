@@ -106,29 +106,46 @@ class PTMAuth {
     }
 
     /**
-     * Sauvegarde les données d'une application spécifique
+     * Sauvegarde les données d'une application spécifique, optionnellement pour un ARK donné
      */
-    async saveAppData(appName, data) {
-        return this.apiCall(`/auth/app/${appName}/data`, {
+    async saveAppData(appName, data, arkId = null) {
+        let endpoint = `/auth/app/${appName}/data`;
+        const bodyData = { ...data };
+        
+        if (arkId) {
+            bodyData.arkId = arkId;
+        }
+        
+        return this.apiCall(endpoint, {
             method: 'POST',
-            body: JSON.stringify(data)
+            body: JSON.stringify(bodyData)
         });
     }
 
     /**
-     * Récupère les données d'une application spécifique
+     * Récupère les données d'une application spécifique, optionnellement pour un ARK donné
      */
-    async getAppData(appName) {
-        return this.apiCall(`/auth/app/${appName}/data`, {
+    async getAppData(appName, arkId = null) {
+        let endpoint = `/auth/app/${appName}/data`;
+        if (arkId) {
+            endpoint += `?ark=${encodeURIComponent(arkId)}`;
+        }
+        
+        return this.apiCall(endpoint, {
             method: 'GET'
         });
     }
 
     /**
-     * Supprime les données d'une application spécifique
+     * Supprime les données d'une application spécifique, optionnellement pour un ARK donné
      */
-    async deleteAppData(appName) {
-        return this.apiCall(`/auth/app/${appName}/data`, {
+    async deleteAppData(appName, arkId = null) {
+        let endpoint = `/auth/app/${appName}/data`;
+        if (arkId) {
+            endpoint += `?ark=${encodeURIComponent(arkId)}`;
+        }
+        
+        return this.apiCall(endpoint, {
             method: 'DELETE'
         });
     }
@@ -209,11 +226,12 @@ class PTMAuth {
     }
 
     /**
-     * Récupère spécifiquement les paramètres Galligeo de l'utilisateur
+     * Récupère spécifiquement les paramètres Galligeo de l'utilisateur pour un ARK donné
      */
-    async getGalligeoSettings() {
+    async getGalligeoSettings(arkId = null) {
         try {
-            const data = await this.getAppData('galligeo');
+            const currentArk = arkId || window.input_ark;
+            const data = await this.getAppData('galligeo', currentArk);
             return data?.settings || null;
         } catch (error) {
             console.error('Erreur lors de la récupération des paramètres Galligeo:', error);
@@ -222,15 +240,21 @@ class PTMAuth {
     }
 
     /**
-     * Sauvegarde spécifiquement les paramètres Galligeo
+     * Sauvegarde spécifiquement les paramètres Galligeo pour un ARK donné
      */
-    async saveGalligeoSettings(settings) {
+    async saveGalligeoSettings(settings, arkId = null) {
         try {
+            const currentArk = arkId || window.input_ark;
+            if (!currentArk) {
+                throw new Error('Aucun ARK spécifié pour la sauvegarde');
+            }
+            
             const data = {
                 settings: settings,
-                lastUpdated: new Date().toISOString()
+                lastUpdated: new Date().toISOString(),
+                arkId: currentArk
             };
-            return await this.saveAppData('galligeo', data);
+            return await this.saveAppData('galligeo', data, currentArk);
         } catch (error) {
             console.error('Erreur lors de la sauvegarde des paramètres Galligeo:', error);
             throw error;
@@ -276,18 +300,24 @@ class GalligeoSettingsAPI {
     }
 
     /**
-     * Sauvegarde les paramètres Galligeo
+     * Sauvegarde les paramètres Galligeo pour un ARK spécifique
      */
-    async saveSettings(settings) {
+    async saveSettings(settings, arkId = null) {
         try {
+            const currentArk = arkId || window.input_ark;
+            if (!currentArk) {
+                throw new Error('Aucun ARK spécifié pour la sauvegarde');
+            }
+
             const data = {
                 version: "1.0",
                 settings: settings,
-                last_updated: new Date().toISOString()
+                last_updated: new Date().toISOString(),
+                arkId: currentArk
             };
 
-            const result = await window.ptmAuth.saveAppData(this.appName, data);
-            console.log('Paramètres sauvegardés sur le serveur:', result);
+            const result = await window.ptmAuth.saveAppData(this.appName, data, currentArk);
+            console.log(`Paramètres sauvegardés sur le serveur pour ARK ${currentArk}:`, result);
             
             return result;
         } catch (error) {
@@ -297,14 +327,20 @@ class GalligeoSettingsAPI {
     }
 
     /**
-     * Charge les paramètres Galligeo depuis le serveur
+     * Charge les paramètres Galligeo depuis le serveur pour un ARK spécifique
      */
-    async loadSettings() {
+    async loadSettings(arkId = null) {
         try {
-            const data = await window.ptmAuth.getAppData(this.appName);
+            const currentArk = arkId || window.input_ark;
+            if (!currentArk) {
+                console.log('Aucun ARK spécifié, pas de chargement possible');
+                return null;
+            }
+
+            const data = await window.ptmAuth.getAppData(this.appName, currentArk);
             
             if (data && data.settings) {
-                console.log('Paramètres chargés depuis le serveur:', data.settings);
+                console.log(`Paramètres chargés depuis le serveur pour ARK ${currentArk}:`, data.settings);
                 return data.settings;
             }
             
@@ -317,12 +353,17 @@ class GalligeoSettingsAPI {
     }
 
     /**
-     * Supprime les paramètres Galligeo du serveur
+     * Supprime les paramètres Galligeo du serveur pour un ARK spécifique
      */
-    async deleteSettings() {
+    async deleteSettings(arkId = null) {
         try {
-            const result = await window.ptmAuth.deleteAppData(this.appName);
-            console.log('Paramètres supprimés du serveur:', result);
+            const currentArk = arkId || window.input_ark;
+            if (!currentArk) {
+                throw new Error('Aucun ARK spécifié pour la suppression');
+            }
+
+            const result = await window.ptmAuth.deleteAppData(this.appName, currentArk);
+            console.log(`Paramètres supprimés du serveur pour ARK ${currentArk}:`, result);
             return result;
         } catch (error) {
             console.error('Erreur lors de la suppression des paramètres:', error);
