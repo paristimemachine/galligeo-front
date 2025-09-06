@@ -1,5 +1,3 @@
-let metadataDict = {};
-
 async function load_ark_picture() {
         console.log("load ark picture");
 
@@ -59,6 +57,16 @@ async function load_ark_picture() {
         //first get metadata
         try {
             const wait = await load_oai_metada(input_ark);
+            
+            // S'assurer que le contrôle de métadonnées est disponible après le chargement
+            if (window.ensureMetadataControlAvailable && !window.metadataControl) {
+                console.log('Tentative d\'initialisation du contrôle de métadonnées après chargement');
+                try {
+                    await window.ensureMetadataControlAvailable();
+                } catch (error) {
+                    console.warn('Impossible d\'initialiser le contrôle de métadonnées:', error);
+                }
+            }
         } catch (error) {
             document.querySelector('#search-784-input').value = "L'API de Gallica ne répond pas...";
         }
@@ -175,7 +183,8 @@ async function load_oai_metada(input_ark) {
         .then(response => response.json())
         .then(data => {
             var inner_html_metadata = '';
-            metadataDict = metadataDict || {};
+            // Utiliser la variable globale
+            window.metadataDict = window.metadataDict || {};
 
             const canvas = data.sequences[0].canvases[0];
             data.metadata.push(
@@ -235,7 +244,7 @@ async function load_oai_metada(input_ark) {
                 }
                 
                 // Stocker dans le dictionnaire avec le label traduit
-                metadataDict[frenchLabel] = element.value;
+                window.metadataDict[frenchLabel] = element.value;
                 // formater les champs URL en lien
                 if (element.label === 'Source Images' || element.label === 'Metadata Source') {
                     inner_html_metadata += '<b>' + frenchLabel + ' : </b>'
@@ -259,7 +268,7 @@ async function load_oai_metada(input_ark) {
                 }
             });
 
-            console.log(metadataDict);
+            console.log('Métadonnées chargées:', window.metadataDict);
 
             // Mise à jour de l'ancienne interface (pour compatibilité)
             const oldMetadataElement = document.getElementById('text-metadata');
@@ -298,62 +307,88 @@ async function load_oai_metada(input_ark) {
  * @param {Array} metadata - Tableau des métadonnées
  */
 function updateMetadataPanel(metadata) {
-    if (!window.metadataControl) return;
-    
-    let formattedHtml = '';
-    
-    const labelMapping = {
-        'Title': 'Titre',
-        'Creator': 'Créateur',
-        'Publisher': 'Éditeur',
-        'Date': 'Date',
-        'Format': 'Format',
-        'Language': 'Langue',
-        'Type': 'Type',
-        'Height' : 'Hauteur',
-        'Width' : 'Largeur',
-        'Source': 'Source',
-        'Relation': 'Relation',
-        'Coverage': 'Couverture',
-        'Rights': 'Droits',
-        'Source Images': 'Images Source',
-        'Metadata Source': 'Source des Métadonnées',
-        'Subject': 'Sujet',
-        'Description': 'Description',
-        'Identifier': 'Identifiant',
-        'Shelfmark': 'Cote',
-        'Repository': 'Dépôt',
-        'Digitised by': 'Numérisé par'
-    };
-    
-    metadata.forEach(element => {
-        if (!element) return;
-        
-        const frenchLabel = labelMapping[element.label] || element.label;
-        let value = element.value;
-        
-        // Traitement spécial pour les URLs
-        if (element.label === 'Source Images' || element.label === 'Metadata Source') {
-            value = `<a href="${value}" target="_blank" class="metadata-url">${value}</a>`;
-        } else if (Array.isArray(value)) {
-            value = value.map(item => item['@value'] || item).join(', ');
-        } else if (typeof value === 'string' && value.length > 100) {
-            // Formater les textes longs
-            value = value.replace(/(.{80})/g, '$1<br>');
+    // Fonction pour essayer de mettre à jour le panneau
+    function tryUpdatePanel() {
+        if (!window.metadataControl) {
+            return false;
         }
         
-        formattedHtml += `
-            <div class="metadata-item">
-                <span class="metadata-label">${frenchLabel}</span>
-                <div class="metadata-value">${value}</div>
-            </div>
-        `;
-    });
-    
-    if (formattedHtml === '') {
-        formattedHtml = '<p class="fr-text--sm">Aucune métadonnée disponible.</p>';
+        let formattedHtml = '';
+        
+        const labelMapping = {
+            'Title': 'Titre',
+            'Creator': 'Créateur',
+            'Publisher': 'Éditeur',
+            'Date': 'Date',
+            'Format': 'Format',
+            'Language': 'Langue',
+            'Type': 'Type',
+            'Height' : 'Hauteur',
+            'Width' : 'Largeur',
+            'Source': 'Source',
+            'Relation': 'Relation',
+            'Coverage': 'Couverture',
+            'Rights': 'Droits',
+            'Source Images': 'Images Source',
+            'Metadata Source': 'Source des Métadonnées',
+            'Subject': 'Sujet',
+            'Description': 'Description',
+            'Identifier': 'Identifiant',
+            'Shelfmark': 'Cote',
+            'Repository': 'Dépôt',
+            'Digitised by': 'Numérisé par'
+        };
+        
+        metadata.forEach(element => {
+            if (!element) return;
+            
+            const frenchLabel = labelMapping[element.label] || element.label;
+            let value = element.value;
+            
+            // Traitement spécial pour les URLs
+            if (element.label === 'Source Images' || element.label === 'Metadata Source') {
+                value = `<a href="${value}" target="_blank" class="metadata-url">${value}</a>`;
+            } else if (Array.isArray(value)) {
+                value = value.map(item => item['@value'] || item).join(', ');
+            } else if (typeof value === 'string' && value.length > 100) {
+                // Formater les textes longs
+                value = value.replace(/(.{80})/g, '$1<br>');
+            }
+            
+            formattedHtml += `
+                <div class="metadata-item">
+                    <span class="metadata-label">${frenchLabel}</span>
+                    <div class="metadata-value">${value}</div>
+                </div>
+            `;
+        });
+        
+        if (formattedHtml === '') {
+            formattedHtml = '<p class="fr-text--sm">Aucune métadonnée disponible.</p>';
+        }
+        
+        // Mettre à jour le contenu du panneau
+        window.metadataControl.updateContent(formattedHtml);
+        return true;
     }
     
-    // Mettre à jour le contenu du panneau
-    window.metadataControl.updateContent(formattedHtml);
+    // Essayer immédiatement
+    if (tryUpdatePanel()) {
+        return;
+    }
+    
+    // Si le contrôle n'est pas disponible, attendre et réessayer
+    let attempts = 0;
+    const maxAttempts = 20; // 4 secondes maximum
+    
+    const retryInterval = setInterval(() => {
+        attempts++;
+        
+        if (tryUpdatePanel() || attempts >= maxAttempts) {
+            clearInterval(retryInterval);
+            if (attempts >= maxAttempts) {
+                console.warn('Impossible de mettre à jour le panneau de métadonnées : contrôle non disponible');
+            }
+        }
+    }, 200); // Essayer toutes les 200ms
 }
