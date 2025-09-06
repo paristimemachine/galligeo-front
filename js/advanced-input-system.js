@@ -40,6 +40,12 @@ function setupAdvancedInputSystem() {
     // Configurer le survol et déplacement des points
     setupPointInteractions();
     
+    // S'assurer que l'emprise existante n'interfère pas avec la saisie de points
+    if (window.currentPolygon && window.currentPolygon.layer) {
+        // Désactiver l'édition par défaut au démarrage
+        disableEmpriseEditing();
+    }
+    
     // Initialiser l'état
     updateInputState();
     
@@ -85,6 +91,7 @@ function setupControlEvents() {
             if (this.checked && !window.isInputLocked) {
                 window.currentInputMode = 'points';
                 updateInputState();
+                console.log('Mode saisie de points activé - édition d\'emprise désactivée');
             }
         });
     }
@@ -94,6 +101,7 @@ function setupControlEvents() {
             if (this.checked && !window.isInputLocked) {
                 window.currentInputMode = 'emprise';
                 updateInputState();
+                console.log('Mode saisie d\'emprise activé - édition d\'emprise réactivée');
             }
         });
     }
@@ -103,12 +111,18 @@ function updateInputState() {
     if (window.isInputLocked) {
         window.inputMode = 'disabled';
         setMapCursors('default');
+        // Désactiver l'édition de l'emprise quand verrouillé
+        disableEmpriseEditing();
     } else {
         window.inputMode = window.currentInputMode;
         if (window.inputMode === 'points') {
             setMapCursors('crosshair');
+            // Désactiver l'édition de l'emprise en mode saisie de points
+            disableEmpriseEditing();
         } else if (window.inputMode === 'emprise') {
             setMapCursors('crosshair');
+            // Activer l'édition de l'emprise uniquement en mode emprise
+            enableEmpriseEditing();
         }
     }
     
@@ -125,12 +139,56 @@ function setMapCursors(cursor) {
     }
 }
 
+/**
+ * Désactive l'édition de l'emprise pour éviter les conflits avec la saisie de points
+ * CORRECTION Issue #1: Cette fonction résout le problème où le curseur de saisie de points 
+ * était remplacé par une main de déplacement quand une emprise recouvrait la zone de clic.
+ * En mode saisie de points, l'emprise n'est plus éditable pour donner priorité à la saisie.
+ */
+function disableEmpriseEditing() {
+    if (window.currentPolygon && window.currentPolygon.layer && window.currentPolygon.layer.editing) {
+        try {
+            window.currentPolygon.layer.editing.disable();
+            // Forcer le curseur de la carte à être une croix en mode saisie
+            if (window.inputMode === 'points' && typeof left_map !== 'undefined') {
+                left_map.getContainer().style.cursor = 'crosshair';
+            }
+        } catch (error) {
+            console.warn('Erreur lors de la désactivation de l\'édition d\'emprise:', error);
+        }
+    }
+}
+
+/**
+ * Active l'édition de l'emprise uniquement en mode emprise
+ */
+function enableEmpriseEditing() {
+    if (window.currentPolygon && window.currentPolygon.layer && window.currentPolygon.layer.editing) {
+        try {
+            window.currentPolygon.layer.editing.enable();
+        } catch (error) {
+            console.warn('Erreur lors de l\'activation de l\'édition d\'emprise:', error);
+        }
+    }
+}
+
 function setupMapClickEvents() {
     // Événements de clic pour la carte gauche
     if (typeof left_map !== 'undefined') {
+        // Enlever tous les anciens listeners d'abord
+        left_map.off('click');
+        left_map.off('dblclick');
+        
         left_map.on('click', function(e) {
+            // S'assurer que le mode saisie de points a la priorité
+            if (window.inputMode === 'points') {
+                // Arrêter la propagation pour empêcher l'interaction avec l'emprise
+                e.originalEvent && e.originalEvent.stopPropagation && e.originalEvent.stopPropagation();
+                handleMapClick(e, 'left');
+                return;
+            }
             handleMapClick(e, 'left');
-        });
+        }, true); // Utiliser la phase de capture pour prendre priorité
         
         // Double-clic pour finaliser l'emprise
         left_map.on('dblclick', function(e) {
@@ -143,6 +201,7 @@ function setupMapClickEvents() {
     
     // Événements de clic pour la carte droite
     if (typeof right_map !== 'undefined') {
+        right_map.off('click');
         right_map.on('click', function(e) {
             handleMapClick(e, 'right');
         });
@@ -157,7 +216,15 @@ function handleMapClick(event, mapSide) {
     const map = mapSide === 'left' ? left_map : right_map;
     const layer = mapSide === 'left' ? layer_img_pts_left : layer_img_pts_right;
     
+    // En mode saisie de points, empêcher l'interaction avec l'emprise
     if (window.inputMode === 'points') {
+        // Empêcher la propagation si on clique sur l'emprise
+        if (event.originalEvent && event.originalEvent.target && 
+            event.originalEvent.target.closest && 
+            event.originalEvent.target.closest('.leaflet-interactive')) {
+            // Si on clique sur un élément interactif (comme l'emprise), on prend quand même le contrôle
+            console.log('Clic intercepté sur emprise - mode saisie de points prioritaire');
+        }
         handlePointClick(event, mapSide, map, layer);
     } else if (window.inputMode === 'emprise' && mapSide === 'left') {
         handleEmpriseClick(event, map);
@@ -385,8 +452,8 @@ function handleEmpriseClick(event, map) {
         
         layer_img_emprise_left.addLayer(window.currentPolygon.layer);
         
-        // Rendre le polygone éditable
-        if (window.currentPolygon.layer.editing) {
+        // Rendre le polygone éditable seulement si on est en mode emprise
+        if (window.inputMode === 'emprise' && window.currentPolygon.layer.editing) {
             window.currentPolygon.layer.editing.enable();
             
             // Écouter les événements d'édition pour déclencher la sauvegarde

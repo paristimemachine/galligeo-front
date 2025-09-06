@@ -959,6 +959,14 @@ nav.fr-nav .fr-grid-row {
   cursor: crosshair !important;
 }
 
+.leaflet-container.input-mode-points * {
+  cursor: crosshair !important;
+}
+
+.leaflet-container.input-mode-points .leaflet-interactive {
+  cursor: crosshair !important;
+}
+
 .leaflet-container.input-mode-emprise {
   cursor: crosshair !important;
 }
