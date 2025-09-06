@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <title>Test Migration Galligeo</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test de la migration Galligeo</h1>
+    
+    <div class="test-section info">
+        <h2>Informations de migration</h2>
+        <p><strong>Date :</strong> 6 septembre 2025</p>
+        <p><strong>Action :</strong> Migration de ggo.html vers index.html</p>
+        <p><strong>But :</strong> Préparer la release avec URL propre</p>
+    </div>
+
+    <div class="test-section success">
+        <h2>✅ Tests à effectuer</h2>
+        
+        <h3>1. URL principale</h3>
+        <p>✅ <a href="/" target="_blank">https://app.ptm.huma-num.fr/galligeo/</a> - Doit charger l'application complète</p>
+        
+        <h3>2. URL de compatibilité avec paramètres</h3>
+        <p>✅ <a href="/ggo.html?ark=btv1b53019735r" target="_blank">ggo.html?ark=btv1b53019735r</a> - Doit rediriger vers /?ark=btv1b53019735r</p>
+        
+        <h3>3. URL externe Cartoquete</h3>
+        <p>✅ Test d'intégration : les liens depuis Cartoquete vers ggo.html?ark= doivent fonctionner</p>
+        
+        <h3>4. Authentification</h3>
+        <p>✅ <a href="https://api.ptm.huma-num.fr/auth/login?redirect_url=https://app.ptm.huma-num.fr/galligeo/" target="_blank">Connexion ORCID</a> - Doit rediriger vers la racine</p>
+        
+        <h3>5. Liens internes dans l'application</h3>
+        <p>✅ Les favoris Cartoquete doivent pointer vers la nouvelle URL</p>
+        <p>✅ Les boutons "Résultat" doivent ouvrir georef/ correctement</p>
+    </div>
+    
+    <div class="test-section info">
+        <h2>🔧 Modifications effectuées</h2>
+        <ul>
+            <li><strong>index.html :</strong> Contient maintenant l'application complète (copie de ggo.html)</li>
+            <li><strong>ggo.html :</strong> Page de redirection automatique vers index.html (avec preservation des paramètres)</li>
+            <li><strong>cartoquete-manager.js :</strong> Liens mis à jour vers la nouvelle URL</li>
+            <li><strong>package.json :</strong> Point d'entrée mis à jour</li>
+        </ul>
+    </div>
+    
+    <div class="test-section">
+        <h2>🌐 URLs à tester</h2>
+        
+        <h3>Cas d'usage ARK</h3>
+        <ul>
+            <li><a href="/?ark=btv1b53019735r" target="_blank">/?ark=btv1b53019735r</a></li>
+            <li><a href="/ggo.html?ark=btv1b53019735r" target="_blank">/ggo.html?ark=btv1b53019735r</a> (redirection)</li>
+        </ul>
+        
+        <h3>Liens vers georef (externes)</h3>
+        <ul>
+            <li><a href="/georef/?ark=btv1b53121232b" target="_blank">Paris 1944</a></li>
+            <li><a href="/georef/?ark=btv1b532480876" target="_blank">Fils télégraphiques</a></li>
+        </ul>
+    </div>
+    
+    <script>
+        // Test automatique de redirection
+        function testRedirect() {
+            console.log('Test de redirection en cours...');
+            
+            // Simuler le comportement de ggo.html
+            const testUrl = new URL(window.location.origin + '/ggo.html?ark=btv1b53019735r#test');
+            const params = testUrl.search;
+            const hash = testUrl.hash;
+            const newUrl = testUrl.origin + '/galligeo/' + params + hash;
+            
+            console.log('URL test:', testUrl.href);
+            console.log('Redirection attendue:', newUrl);
+            
+            document.getElementById('redirect-result').innerHTML = 
+                '<strong>Redirection simulée :</strong><br>' +
+                'De: ' + testUrl.href + '<br>' +
+                'Vers: ' + newUrl;
+        }
+        
+        // Lancer le test au chargement
+        document.addEventListener('DOMContentLoaded', testRedirect);
+    </script>
+    
+    <div class="test-section">
+        <h2>📊 Résultat du test de redirection</h2>
+        <div id="redirect-result">Chargement...</div>
+    </div>
+    
+    <div class="test-section info">
+        <h2>📝 Notes importantes</h2>
+        <ul>
+            <li>La compatibilité avec les applications externes (Cartoquete) est maintenue</li>
+            <li>Les URLs ggo.html?ark= continuent de fonctionner via redirection</li>
+            <li>L'URL principale est maintenant propre : app.ptm.huma-num.fr/galligeo/</li>
+            <li>Tous les liens internes pointent vers la nouvelle structure</li>
+        </ul>
+    </div>
+</body>
+</html>

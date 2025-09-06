@@ -169,7 +169,7 @@ class CartoqueteManager {
         const arkId = favorite.ark;
         const thumbnailUrl = metadata.thumbnailUrl;
         const gallicaUrl = metadata.gallicaUrl;
-        const georefUrl = `https://app.ptm.huma-num.fr/galligeo/ggo.html?ark=${arkId}`;
+        const georefUrl = `https://app.ptm.huma-num.fr/galligeo/?ark=${arkId}`;
 
         // Construire la description
         let description = '';
