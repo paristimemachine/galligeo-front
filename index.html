@@ -1169,12 +1169,25 @@
         }
         
         if (restoreBtn && window.controlPointsBackup) {
+            // Le bouton est activé si une carte est chargée (ARK défini)
+            const isEnabled = window.controlPointsBackup.isRestoreButtonEnabled();
             const hasBackups = window.controlPointsBackup.hasBackupsAvailable();
-            restoreBtn.disabled = !hasBackups;
-            restoreBtn.style.opacity = hasBackups ? '1' : '0.5';
-            restoreBtn.title = hasBackups ? 'Restaurer des points de contrôle sauvegardés' : 'Aucune sauvegarde disponible';
+            
+            restoreBtn.disabled = !isEnabled;
+            restoreBtn.style.opacity = isEnabled ? '1' : '0.5';
+            
+            if (!isEnabled) {
+                restoreBtn.title = 'Chargez d\'abord une carte Gallica';
+            } else if (hasBackups) {
+                restoreBtn.title = 'Restaurer des points de contrôle sauvegardés';
+            } else {
+                restoreBtn.title = 'Voir les sauvegardes (aucune disponible pour cette carte)';
+            }
         }
     }
+
+    // Rendre la fonction accessible globalement
+    window.updateBackupButtonsState = updateBackupButtonsState;
 
     // Fonction pour mettre à jour le statut de sauvegarde
     function updateBackupStatus(message) {
