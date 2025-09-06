@@ -2,7 +2,7 @@
   "name": "galligeo-front",
   "version": "1.0.0",
   "description": "Interface de géoréférencement pour cartes historiques avec intégration Gallica",
-  "main": "ggo.html",
+  "main": "index.html",
   "scripts": {
     "build-version": "node scripts/build-version.js",
     "version-info": "node scripts/version-info.js",
