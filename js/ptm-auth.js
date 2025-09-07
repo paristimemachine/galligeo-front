@@ -227,11 +227,16 @@ class PTMAuth {
 
     /**
      * Récupère spécifiquement les paramètres Galligeo de l'utilisateur pour un ARK donné
+     * Si aucun ARK n'est fourni, récupère les paramètres généraux de l'application
      */
     async getGalligeoSettings(arkId = null) {
         try {
             const currentArk = arkId || window.input_ark;
-            const data = await this.getAppData('galligeo', currentArk);
+            
+            // Utiliser un ARK spécial pour les paramètres généraux
+            const effectiveArk = currentArk || 'general-settings';
+            const data = await this.getAppData('galligeo', effectiveArk);
+            
             return data?.settings || null;
         } catch (error) {
             console.error('Erreur lors de la récupération des paramètres Galligeo:', error);
@@ -241,20 +246,21 @@ class PTMAuth {
 
     /**
      * Sauvegarde spécifiquement les paramètres Galligeo pour un ARK donné
+     * Si aucun ARK n'est fourni, sauvegarde les paramètres généraux de l'application
      */
     async saveGalligeoSettings(settings, arkId = null) {
         try {
             const currentArk = arkId || window.input_ark;
-            if (!currentArk) {
-                throw new Error('Aucun ARK spécifié pour la sauvegarde');
-            }
             
             const data = {
                 settings: settings,
                 lastUpdated: new Date().toISOString(),
-                arkId: currentArk
+                arkId: currentArk || null
             };
-            return await this.saveAppData('galligeo', data, currentArk);
+            
+            // Utiliser un ARK spécial pour les paramètres généraux
+            const effectiveArk = currentArk || 'general-settings';
+            return await this.saveAppData('galligeo', data, effectiveArk);
         } catch (error) {
             console.error('Erreur lors de la sauvegarde des paramètres Galligeo:', error);
             throw error;
