@@ -1101,4 +1101,37 @@ nav.fr-nav .fr-grid-row {
   font-weight: 500;
 }
 
+/* Styles pour les options non disponibles dans les formulaires */
+.fr-select option:disabled {
+  color: #999 !important;
+  font-style: italic !important;
+  background-color: #f5f5f5 !important;
+}
+
+.fr-select option[disabled]:before {
+  content: "⏳ ";
+  color: #666;
+}
+
+/* Style pour les selects avec options non disponibles */
+.fr-select:has(option:disabled) {
+  position: relative;
+}
+
+/* Message d'info pour les champs avec options non disponibles */
+.form-field-unavailable-notice {
+  font-size: 0.8em;
+  color: #666;
+  font-style: italic;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.form-field-unavailable-notice::before {
+  content: "ℹ️";
+  font-size: 0.9em;
+}
+
 /* ===================================================================== */

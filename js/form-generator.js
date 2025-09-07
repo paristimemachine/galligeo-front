@@ -57,23 +57,31 @@ class FormGenerator {
 
         // Options du select
         field.options.forEach(option => {
-            // Filtrer les options non autorisées pour la fréquence de sauvegarde
-            if (field.id === 'select-backup-frequency' && option.value === '60') {
-                return; // Skip cette option (fréquence trop élevée)
-            }
-            
             const optionElement = document.createElement('option');
             optionElement.value = option.value;
-            optionElement.textContent = option.label;
             
-            // Sélectionner l'option par défaut
-            if (field.defaultValue && option.value === field.defaultValue) {
+            // Gérer les options non disponibles
+            if (option.available === false) {
+                optionElement.textContent = `${option.label} (bientôt disponible)`;
+                optionElement.disabled = true;
+                optionElement.style.color = '#999';
+                optionElement.style.fontStyle = 'italic';
+            } else {
+                optionElement.textContent = option.label;
+            }
+            
+            // Sélectionner l'option par défaut seulement si elle est disponible
+            if (field.defaultValue && option.value === field.defaultValue && option.available !== false) {
                 optionElement.selected = true;
             }
             
             // Ajouter la description comme attribut title pour l'accessibilité
             if (option.description) {
-                optionElement.title = option.description;
+                if (option.available === false) {
+                    optionElement.title = `${option.description} (Non disponible actuellement)`;
+                } else {
+                    optionElement.title = option.description;
+                }
             }
             
             select.appendChild(optionElement);
@@ -81,6 +89,15 @@ class FormGenerator {
 
         selectGroup.appendChild(label);
         selectGroup.appendChild(select);
+
+        // Ajouter un message d'information si le champ contient des options non disponibles
+        const hasUnavailableOptions = field.options.some(option => option.available === false);
+        if (hasUnavailableOptions) {
+            const infoMessage = document.createElement('div');
+            infoMessage.className = 'form-field-unavailable-notice';
+            infoMessage.textContent = 'Certaines options sont en cours de développement.';
+            selectGroup.appendChild(infoMessage);
+        }
 
         return selectGroup;
     }

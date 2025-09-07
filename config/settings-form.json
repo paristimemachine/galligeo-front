@@ -11,10 +11,10 @@
       "required": false,
       "defaultValue": "polynomial",
       "options": [
-        { "value": "polynomial", "label": "Polynomial", "description": "Transformation polynomiale (recommandé pour la plupart des cas)" },
-        { "value": "helmert", "label": "Helmert", "description": "Transformation de Helmert (rotation, translation, échelle)" },
-        { "value": "affine", "label": "Affine", "description": "Transformation affine (rotation, translation, échelle, cisaillement)" },
-        { "value": "tps", "label": "Thin Plate Spline", "description": "Spline de plaque mince (pour les déformations complexes)" }
+        { "value": "polynomial", "label": "Polynomial", "description": "Transformation polynomiale (recommandé pour la plupart des cas)", "available": true },
+        { "value": "helmert", "label": "Helmert", "description": "Transformation de Helmert (rotation, translation, échelle)", "available": true },
+        { "value": "affine", "label": "Affine", "description": "Transformation affine (rotation, translation, échelle, cisaillement)", "available": false },
+        { "value": "tps", "label": "Thin Plate Spline", "description": "Spline de plaque mince (pour les déformations complexes)", "available": false }
       ]
     },
     {
@@ -26,10 +26,10 @@
       "required": false,
       "defaultValue": "bilinear",
       "options": [
-        { "value": "nearest", "label": "Plus proche voisin", "description": "Rapide mais peut créer des effets de pixellisation" },
-        { "value": "bilinear", "label": "Bilinéaire", "description": "Bon équilibre qualité/performance (recommandé)" },
-        { "value": "cubic", "label": "Cubique", "description": "Meilleure qualité mais plus lent" },
-        { "value": "lanczos", "label": "Lanczos", "description": "Très haute qualité pour les images détaillées" }
+        { "value": "nearest", "label": "Plus proche voisin", "description": "Rapide mais peut créer des effets de pixellisation", "available": true },
+        { "value": "bilinear", "label": "Bilinéaire", "description": "Bon équilibre qualité/performance (recommandé)", "available": true },
+        { "value": "cubic", "label": "Cubique", "description": "Meilleure qualité mais plus lent", "available": false },
+        { "value": "lanczos", "label": "Lanczos", "description": "Très haute qualité pour les images détaillées", "available": false }
       ]
     },
     {
@@ -111,9 +111,10 @@
         "value": true
       },
       "options": [
-        { "value": "120", "label": "2 minutes", "description": "Recommandé - équilibre optimal" },
+        { "value": "120", "label": "2 minutes", "description": "Recommandé - évite la sauvegarde trop fréquente" },
         { "value": "300", "label": "5 minutes", "description": "Sauvegarde espacée" },
-        { "value": "600", "label": "10 minutes", "description": "Sauvegarde très espacée" }
+        { "value": "600", "label": "10 minutes", "description": "Sauvegarde très espacée" },
+        { "value": "60", "label": "1 minute", "description": "Plus fréquent (déconseillé)" }
       ]
     },
     {

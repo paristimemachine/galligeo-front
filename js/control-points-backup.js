@@ -9,7 +9,7 @@ class ControlPointsBackup {
         this.autosaveInterval = null;
         this.isEnabled = true;
         this.maxBackups = 10; // Sera mis à jour par les paramètres
-        this.autosaveFrequency = 120000; // 2 minutes par défaut (120 secondes = valeur minimum)
+        this.autosaveFrequency = 120000; // 2 minutes par défaut (recommandé)
         this.lastSaveTime = null;
         this.lastSavedStateHash = null; // Pour détecter les changements
         this.hasUnsavedChanges = false; // Indicateur de changements
