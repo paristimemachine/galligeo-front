@@ -634,6 +634,9 @@ function updateControlPointsTable() {
         }
     }
 
+    // Mettre à jour les données de géoréférencement
+    updateGeoreferencingData();
+    
     // Émettre un événement pour notifier les changements
     const event = new CustomEvent('controlPointsChanged', {
         detail: { 
@@ -642,12 +645,15 @@ function updateControlPointsTable() {
         }
     });
     document.dispatchEvent(event);
-}function updateGeoreferencingData() {
+}
+
+function updateGeoreferencingData() {
     // Mettre à jour list_georef_points pour l'API
     list_georef_points = [];
     
     window.pointPairs.forEach(pair => {
         if (pair.isComplete()) {
+            // Créer un objet PointA_PointB compatible avec l'API
             const pointAB = new PointA_PointB(
                 new Point({ lat: pair.leftPoint.lat, lng: pair.leftPoint.lng }),
                 new Point({ lat: pair.rightPoint.lat, lng: pair.rightPoint.lng })
@@ -660,9 +666,16 @@ function updateControlPointsTable() {
     count_points = window.pointPairs.filter(pair => pair.isComplete()).length;
     
     console.log('Données de géoréférencement mises à jour:', list_georef_points);
+    console.log('Nombre de paires complètes:', count_points);
+    
+    // Aussi log en format JSON pour voir ce qui sera envoyé à l'API
+    console.log('JSON qui sera envoyé à l\'API:', JSON.stringify(list_georef_points, null, 2));
 }
 
 function checkGeoreferencingAvailability() {
+    // Mettre à jour les données de géoréférencement
+    updateGeoreferencingData();
+    
     const completePairs = window.pointPairs.filter(pair => pair.isComplete()).length;
     const totalPoints = window.pointPairs.length;
     const leftPoints = window.pointPairs.filter(pair => pair.leftPoint).length;
