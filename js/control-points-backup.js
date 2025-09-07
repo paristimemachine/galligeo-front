@@ -9,7 +9,7 @@ class ControlPointsBackup {
         this.autosaveInterval = null;
         this.isEnabled = true;
         this.maxBackups = 10; // Sera mis à jour par les paramètres
-        this.autosaveFrequency = 120000; // 2 minutes par défaut (augmenté de 30s)
+        this.autosaveFrequency = 120000; // 2 minutes par défaut (120 secondes = valeur minimum)
         this.lastSaveTime = null;
         this.lastSavedStateHash = null; // Pour détecter les changements
         this.hasUnsavedChanges = false; // Indicateur de changements
@@ -90,8 +90,20 @@ class ControlPointsBackup {
         const autosaveEnabled = settings['checkbox-autosave'] !== undefined ? settings['checkbox-autosave'] : true;
         
         // Fréquence de sauvegarde (en secondes, convertir en millisecondes)
-        // Minimum 2 minutes pour éviter la sauvegarde trop fréquente
-        const frequency = Math.max(parseInt(settings['select-backup-frequency']) || 120, 120);
+        // Minimum 2 minutes pour éviter la surcharge du système
+        const requestedFrequency = parseInt(settings['select-backup-frequency']) || 120;
+        const frequency = Math.max(requestedFrequency, 120);
+        
+        // Notifier si la fréquence a été ajustée
+        if (requestedFrequency < 120 && requestedFrequency > 0) {
+            if (window.settingsManager && typeof window.settingsManager.showNotification === 'function') {
+                window.settingsManager.showNotification(
+                    `Fréquence ajustée à 2 minutes minimum`, 
+                    'warning'
+                );
+            }
+        }
+        
         this.autosaveFrequency = frequency * 1000;
         
         // Nombre maximum de sauvegardes

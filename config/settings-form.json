@@ -111,10 +111,9 @@
         "value": true
       },
       "options": [
-        { "value": "120", "label": "2 minutes", "description": "Recommandé - évite la sauvegarde trop fréquente" },
+        { "value": "120", "label": "2 minutes", "description": "Recommandé - équilibre optimal" },
         { "value": "300", "label": "5 minutes", "description": "Sauvegarde espacée" },
-        { "value": "600", "label": "10 minutes", "description": "Sauvegarde très espacée" },
-        { "value": "60", "label": "1 minute", "description": "Plus fréquent (déconseillé)" }
+        { "value": "600", "label": "10 minutes", "description": "Sauvegarde très espacée" }
       ]
     },
     {

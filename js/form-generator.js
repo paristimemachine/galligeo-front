@@ -12,7 +12,9 @@ class FormGenerator {
      */
     async loadConfig() {
         try {
-            const response = await fetch(this.configPath);
+            // Ajouter un timestamp pour éviter le cache du navigateur
+            const timestamp = new Date().getTime();
+            const response = await fetch(`${this.configPath}?v=${timestamp}`);
             if (!response.ok) {
                 throw new Error(`Erreur lors du chargement de la configuration: ${response.status}`);
             }
@@ -55,6 +57,11 @@ class FormGenerator {
 
         // Options du select
         field.options.forEach(option => {
+            // Filtrer les options non autorisées pour la fréquence de sauvegarde
+            if (field.id === 'select-backup-frequency' && option.value === '60') {
+                return; // Skip cette option (fréquence trop élevée)
+            }
+            
             const optionElement = document.createElement('option');
             optionElement.value = option.value;
             optionElement.textContent = option.label;
