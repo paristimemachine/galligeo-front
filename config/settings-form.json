@@ -27,7 +27,7 @@
       "defaultValue": "bilinear",
       "options": [
         { "value": "nearest", "label": "Plus proche voisin", "description": "Rapide mais peut créer des effets de pixellisation", "available": true },
-        { "value": "bilinear", "label": "Bilinéaire", "description": "Bon équilibre qualité/performance (recommandé)", "available": true },
+        { "value": "bilinear", "label": "Bilinéaire", "description": "Bon équilibre qualité/performance (recommandé)", "available": false },
         { "value": "cubic", "label": "Cubique", "description": "Meilleure qualité mais plus lent", "available": false },
         { "value": "lanczos", "label": "Lanczos", "description": "Très haute qualité pour les images détaillées", "available": false }
       ]
@@ -39,7 +39,7 @@
       "label": "Qualité image Gallica",
       "placeholder": "Sélectionner une qualité",
       "required": false,
-      "defaultValue": "hd",
+      "defaultValue": "medium",
       "options": [
         { "value": "medium", "label": "Medium", "description": "Qualité standard, traitement plus rapide" },
         { "value": "hd", "label": "Haute définition", "description": "Meilleure qualité, traitement plus lent" }
