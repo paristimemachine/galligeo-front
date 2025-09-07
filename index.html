@@ -506,6 +506,22 @@
                                             </div>
                                         </div>
 
+                                        <!-- Section Cartes Travaillées -->
+                                        <div id="worked-maps-section" style="display:none;">
+                                            <h4 class="fr-h5 fr-mb-2w">
+                                                <span class="fr-icon-map-pin-2-fill fr-mr-1w" aria-hidden="true"></span>
+                                                Vos cartes travaillées
+                                            </h4>
+                                            <div class="fr-grid-row fr-grid-row--gutters fr-mb-4w" id="worked-maps-container">
+                                                <!-- Les cartes travaillées seront chargées ici dynamiquement -->
+                                                <div class="fr-col-12">
+                                                    <div class="fr-alert fr-alert--info">
+                                                        <p>Chargement de vos cartes travaillées...</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
                                         <!-- Section Exemples -->
                                         <h4 class="fr-h5 fr-mb-2w">
                                             <span class="fr-icon-map-2-fill fr-mr-1w" aria-hidden="true"></span>
@@ -596,7 +612,7 @@
                                         </div>
 
                                         <p class="fr-text--sm fr-mt-2w">
-                                            <span id="cartoquete-status-message">Connectez-vous pour voir vos favoris Cartoquete.</span>
+                                            <span id="cartoquete-status-message">Connectez-vous pour voir vos favoris Cartoquete et vos cartes travaillées.</span>
                                         </p>
                                     </section>
                                 </div>
@@ -906,6 +922,7 @@
     <script src="js/settings-manager.js"></script>
     <script src="js/settings-utils.js"></script>
     <script src="js/cartoquete-manager.js"></script>
+    <script src="js/worked-maps-manager.js"></script>
     <script src="js/control-points-backup.js"></script>
 
     <script>
@@ -1308,10 +1325,10 @@
         }
     }
 
-    // Fonction pour charger les favoris Cartoquete
+    // Fonction pour charger les favoris Cartoquete et les cartes travaillées
     async function loadCartoqueteFavorites() {
         try {
-            console.log('Chargement des favoris Cartoquete...');
+            console.log('Chargement des favoris Cartoquete et des cartes travaillées...');
             
             // Afficher la section des favoris
             const favoritesSection = document.getElementById('cartoquete-favorites-section');
@@ -1322,20 +1339,40 @@
             }
             
             if (statusMessage) {
-                statusMessage.textContent = 'Chargement des favoris Cartoquete...';
+                statusMessage.textContent = 'Chargement des favoris Cartoquete et cartes travaillées...';
             }
             
-            // Charger et afficher les favoris
+            // Charger et afficher les favoris Cartoquete
             await window.cartoqueteManager.displayFavorites();
+            
+            // Charger et afficher les cartes travaillées
+            if (window.workedMapsManager) {
+                await window.workedMapsManager.displayWorkedMaps();
+            }
             
             // Mettre à jour le message de statut
             const favorites = window.cartoqueteManager.favorites;
+            const workedMaps = window.workedMapsManager ? window.workedMapsManager.workedMaps : [];
+            
             if (statusMessage) {
+                let message = '';
+                
                 if (favorites && favorites.length > 0) {
-                    statusMessage.innerHTML = `Vous avez <strong>${favorites.length} favori(s) Cartoquete</strong>. Les exemples de cartes ci-dessous sont fournis à titre illustratif.`;
-                } else {
-                    statusMessage.innerHTML = 'Aucun favori Cartoquete trouvé. Ajoutez des cartes à vos favoris sur <strong>Cartoquete</strong> pour les voir apparaître ici.';
+                    message += `Vous avez <strong>${favorites.length} favori(s) Cartoquete</strong>`;
                 }
+                
+                if (workedMaps && workedMaps.length > 0) {
+                    if (message) message += ' et ';
+                    message += `<strong>${workedMaps.length} carte(s) travaillée(s)</strong>`;
+                }
+                
+                if (message) {
+                    message += '. Les exemples de cartes ci-dessous sont fournis à titre illustratif.';
+                } else {
+                    message = 'Aucun favori Cartoquete ou carte travaillée trouvé. Ajoutez des cartes à vos favoris sur <strong>Cartoquete</strong> ou commencez à géoréférencer une carte pour les voir apparaître ici.';
+                }
+                
+                statusMessage.innerHTML = message;
             }
             
         } catch (error) {

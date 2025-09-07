@@ -218,6 +218,13 @@ async function georef_api_post(url = urlToAPI, data = {}) {
       // Réactiver le bouton de géoréférencement après succès
     setGeoreferencingButtonState('normal');
 
+    // Mettre à jour le statut de la carte vers "géoréférencée" si l'utilisateur est connecté
+    if (window.workedMapsManager && window.input_ark) {
+      window.workedMapsManager.updateMapStatus(window.input_ark, 'georeferenced').catch(error => {
+        console.error('Erreur lors de la mise à jour du statut de la carte:', error);
+      });
+    }
+
     // let galligeoLayer = L.tileLayer(URL_TILE_SERVER + 'tiles/12148/' + input_ark + '/{z}/{x}/{y}.png', {
     //   // minNativeZoom: json.minzoom,
     //   // maxNativeZoom: json.maxzoom,

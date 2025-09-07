@@ -122,7 +122,7 @@ class PTMAuth {
         });
     }
 
-    /**
+    /****
      * Récupère les données d'une application spécifique, optionnellement pour un ARK donné
      */
     async getAppData(appName, arkId = null) {
@@ -290,6 +290,120 @@ class PTMAuth {
         } catch (error) {
             console.error('Erreur lors de la récupération des favoris Cartoquete:', error);
             return [];
+        }
+    }
+
+    /**
+     * Récupère les cartes travaillées par l'utilisateur
+     */
+    async getWorkedMaps() {
+        try {
+            const data = await this.getAppData('galligeo');
+            return data?.rec_ark || [];
+        } catch (error) {
+            console.error('Erreur lors de la récupération des cartes travaillées:', error);
+            return [];
+        }
+    }
+
+    /**
+     * Ajoute ou met à jour une carte dans la liste des cartes travaillées
+     * @param {string} arkId - L'identifiant ARK de la carte
+     * @param {object} mapData - Les données de la carte (métadonnées, statut, etc.)
+     * @param {string} status - Le statut de la carte ('en-cours', 'georeferenced', 'deposee')
+     */
+    async updateWorkedMap(arkId, mapData, status = 'en-cours') {
+        try {
+            const currentData = await this.getAppData('galligeo') || {};
+            const workedMaps = currentData.rec_ark || [];
+            
+            // Vérifier si la carte existe déjà
+            const existingMapIndex = workedMaps.findIndex(map => map.ark === arkId);
+            
+            const mapRecord = {
+                ark: arkId,
+                status: status,
+                lastUpdated: new Date().toISOString(),
+                firstWorked: existingMapIndex >= 0 ? workedMaps[existingMapIndex].firstWorked : new Date().toISOString(),
+                ...mapData
+            };
+            
+            if (existingMapIndex >= 0) {
+                // Mettre à jour la carte existante
+                workedMaps[existingMapIndex] = mapRecord;
+            } else {
+                // Ajouter une nouvelle carte
+                workedMaps.push(mapRecord);
+            }
+            
+            // Sauvegarder les données mises à jour
+            const updatedData = {
+                ...currentData,
+                rec_ark: workedMaps
+            };
+            
+            return await this.saveAppData('galligeo', updatedData);
+        } catch (error) {
+            console.error('Erreur lors de la mise à jour de la carte travaillée:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Met à jour le statut d'une carte travaillée
+     * @param {string} arkId - L'identifiant ARK de la carte
+     * @param {string} status - Le nouveau statut ('en-cours', 'georeferenced', 'deposee')
+     * @param {object} additionalData - Données supplémentaires (ex: DOI pour les cartes déposées)
+     */
+    async updateMapStatus(arkId, status, additionalData = {}) {
+        try {
+            const currentData = await this.getAppData('galligeo') || {};
+            const workedMaps = currentData.rec_ark || [];
+            
+            const mapIndex = workedMaps.findIndex(map => map.ark === arkId);
+            if (mapIndex >= 0) {
+                workedMaps[mapIndex] = {
+                    ...workedMaps[mapIndex],
+                    status: status,
+                    lastUpdated: new Date().toISOString(),
+                    ...additionalData
+                };
+                
+                const updatedData = {
+                    ...currentData,
+                    rec_ark: workedMaps
+                };
+                
+                return await this.saveAppData('galligeo', updatedData);
+            } else {
+                throw new Error('Carte non trouvée dans la liste des cartes travaillées');
+            }
+        } catch (error) {
+            console.error('Erreur lors de la mise à jour du statut de la carte:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Supprime une carte de la liste des cartes travaillées
+     * @param {string} arkId - L'identifiant ARK de la carte
+     */
+    async removeWorkedMap(arkId) {
+        try {
+            const currentData = await this.getAppData('galligeo') || {};
+            const workedMaps = currentData.rec_ark || [];
+            
+            const filteredMaps = workedMaps.filter(map => map.ark !== arkId);
+            
+            const updatedData = {
+                ...currentData,
+                rec_ark: filteredMaps
+            };
+            
+            return await this.saveAppData('galligeo', updatedData);
+        } catch (error) {
+            console.error('Erreur lors de la suppression de la carte travaillée:', error);
+            throw error;
         }
     }
 }

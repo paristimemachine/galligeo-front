@@ -293,6 +293,15 @@ async function deposerSurNakala(apiKey_in, collection_id_in) {
         const result = await response.json();
         alert('Dépôt réussi sur Nakala !');
         console.log(result);
+        
+        // Mettre à jour le statut de la carte vers "déposée" avec le DOI
+        if (window.workedMapsManager && window.input_ark && result.doi) {
+            window.workedMapsManager.updateMapStatus(window.input_ark, 'deposee', { 
+                doi: result.doi 
+            }).catch(error => {
+                console.error('Erreur lors de la mise à jour du statut de la carte après dépôt:', error);
+            });
+        }
 
         // fermer la modale
         document.getElementById('fr-modal-deposit').style.display = 'none';

@@ -284,6 +284,15 @@ function handlePointClick(event, mapSide, map, layer) {
         window.controlPointsBackup.markUnsavedChanges();
     }
     
+    // Ajouter la carte à la liste des cartes travaillées si c'est le premier point
+    // et si l'utilisateur est connecté
+    if (window.pointPairs.length === 1 && window.workedMapsManager && window.input_ark) {
+        // C'est le premier point créé pour cette carte, l'ajouter aux cartes travaillées
+        window.workedMapsManager.addWorkedMap(window.input_ark).catch(error => {
+            console.error('Erreur lors de l\'ajout de la carte aux cartes travaillées:', error);
+        });
+    }
+    
     // Mettre à jour la table des points de contrôle
     updateControlPointsTable();
     
