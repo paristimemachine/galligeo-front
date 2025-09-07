@@ -647,6 +647,11 @@ function updateControlPointsTable() {
     document.dispatchEvent(event);
 }
 
+/**
+ * Met à jour les données de géoréférencement pour l'API
+ * Synchronise window.pointPairs avec list_georef_points
+ * Cette fonction est appelée automatiquement quand les points de contrôle changent
+ */
 function updateGeoreferencingData() {
     // Mettre à jour list_georef_points pour l'API
     list_georef_points = [];
@@ -665,11 +670,7 @@ function updateGeoreferencingData() {
     // Mettre à jour le compteur global pour compatibilité
     count_points = window.pointPairs.filter(pair => pair.isComplete()).length;
     
-    console.log('Données de géoréférencement mises à jour:', list_georef_points);
-    console.log('Nombre de paires complètes:', count_points);
-    
-    // Aussi log en format JSON pour voir ce qui sera envoyé à l'API
-    console.log('JSON qui sera envoyé à l\'API:', JSON.stringify(list_georef_points, null, 2));
+    console.log(`Données de géoréférencement mises à jour: ${count_points} paire(s) complète(s)`);
 }
 
 function checkGeoreferencingAvailability() {
