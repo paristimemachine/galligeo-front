@@ -178,6 +178,15 @@ class WorkedMapsManager {
             linksHTML += `<p class="fr-card__desc">
                 <a href="${georefUrl}" target="_blank" rel="noopener">Voir le géoréférencement</a>
             </p>`;
+            // Ajouter un bouton pour proposer le dépôt sur Nakala
+            linksHTML += `<p class="fr-card__desc">
+                <button class="fr-btn fr-btn--sm fr-btn--secondary fr-btn--deposit" 
+                        onclick="window.workedMapsManager.openDepositModalForMap('${arkId}')"
+                        title="Déposer cette carte géoréférencée sur Nakala">
+                    <span class="fr-icon-upload-line" aria-hidden="true"></span>
+                    Déposer sur Nakala
+                </button>
+            </p>`;
         } else if (status === 'deposee') {
             linksHTML += `<p class="fr-card__desc">
                 <a href="${georefUrl}" target="_blank" rel="noopener">Voir le géoréférencement</a>
@@ -398,6 +407,190 @@ class WorkedMapsManager {
     async init() {
         console.log('Initialisation du gestionnaire des cartes travaillées...');
         await this.displayWorkedMaps();
+    }
+
+    /**
+     * Ouvre la modale de dépôt pour une carte spécifique
+     * @param {string} arkId - L'identifiant ARK de la carte
+     */
+    async openDepositModalForMap(arkId) {
+        console.log(`Ouverture de la modale de dépôt pour la carte ${arkId}`);
+        
+        // Vérifier que l'utilisateur est connecté
+        if (!window.ptmAuth || !window.ptmAuth.isAuthenticated()) {
+            alert('Vous devez être connecté pour déposer une carte. Veuillez vous connecter d\'abord.');
+            return;
+        }
+        
+        try {
+            // Définir la carte courante pour le dépôt
+            window.input_ark = arkId;
+            
+            // Charger les métadonnées de la carte pour préremplir le formulaire
+            await this.loadMapForDeposit(arkId);
+            
+            // Préremplir les informations utilisateur dans la modale
+            await this.prefillUserDataInModal();
+            
+            // Ouvrir la modale de dépôt
+            const modal = document.getElementById('fr-modal-deposit');
+            if (modal) {
+                modal.showModal();
+            } else {
+                console.error('Modale de dépôt non trouvée');
+                alert('Erreur : modale de dépôt non trouvée.');
+            }
+        } catch (error) {
+            console.error('Erreur lors de l\'ouverture de la modale de dépôt:', error);
+            alert('Erreur lors de l\'ouverture de la modale de dépôt. Veuillez réessayer.');
+        }
+    }
+
+    /**
+     * Prérempli les données utilisateur dans la modale de dépôt
+     */
+    async prefillUserDataInModal() {
+        try {
+            // Récupérer le profil utilisateur
+            const userProfile = await window.ptmAuth.getUserProfile();
+            
+            if (userProfile) {
+                // Préremplir le nom et prénom si les champs existent
+                const nameField = document.getElementById('input-family-name-1');
+                const firstNameField = document.getElementById('input-firstname-1');
+                const institutionField = document.getElementById('input-institution');
+                
+                if (nameField && userProfile.name) {
+                    // Si le nom complet est disponible, essayer de le diviser
+                    const nameParts = userProfile.name.split(' ');
+                    if (nameParts.length > 1) {
+                        nameField.value = nameParts[nameParts.length - 1]; // Dernier mot = nom de famille
+                        if (firstNameField) {
+                            firstNameField.value = nameParts.slice(0, -1).join(' '); // Reste = prénom(s)
+                        }
+                    } else {
+                        nameField.value = userProfile.name;
+                    }
+                }
+                
+                if (institutionField && userProfile.institution) {
+                    institutionField.value = userProfile.institution;
+                }
+                
+                console.log('Données utilisateur préremplies dans la modale');
+            }
+        } catch (error) {
+            console.error('Erreur lors du préremplissage des données utilisateur:', error);
+            // Ne pas bloquer l'ouverture de la modale pour cette erreur
+        }
+    }
+
+    /**
+     * Charge une carte spécifique pour le dépôt
+     * @param {string} arkId - L'identifiant ARK de la carte
+     */
+    async loadMapForDeposit(arkId) {
+        try {
+            console.log(`Chargement de la carte ${arkId} pour dépôt...`);
+            
+            // Récupérer les métadonnées de la carte
+            const metadata = await this.getGallicaMetadata(arkId);
+            
+            // Définir les variables globales nécessaires pour le dépôt
+            window.metadataDict = {
+                'Titre': metadata.metadata['Titre'] || 'Titre non disponible',
+                'Créateur': metadata.metadata['Créateur'] || 'Créateur non disponible',
+                'Date': metadata.metadata['Date'] || '',
+                'Cote': metadata.metadata['Cote'] || 'BNF Gallica',
+                'Source Images': metadata.gallicaUrl || `https://gallica.bnf.fr/ark:/12148/${arkId}`
+            };
+            
+            // Vérifier s'il y a des points de contrôle en mémoire
+            if (!window.pointPairs || window.pointPairs.length === 0) {
+                console.warn('Aucun point de contrôle trouvé en mémoire.');
+                
+                // Essayer de récupérer les points de contrôle sauvegardés
+                const hasBackupPoints = await this.tryRestoreControlPoints(arkId);
+                
+                if (!hasBackupPoints) {
+                    // Créer des points de contrôle par défaut et informer l'utilisateur
+                    this.createDefaultControlPoints(arkId);
+                    
+                    // Afficher un avertissement à l'utilisateur
+                    const warningMessage = `
+                        Attention : Aucun point de contrôle n'a été trouvé pour cette carte.
+                        Des points de contrôle par défaut ont été créés pour permettre le dépôt,
+                        mais ils ne correspondent pas au géoréférencement réel de la carte.
+                        
+                        Pour déposer des points de contrôle précis, veuillez d'abord retourner
+                        sur la page de géoréférencement et sauvegarder vos points.
+                    `;
+                    
+                    if (confirm(warningMessage + '\n\nSouhaitez-vous continuer le dépôt avec les points par défaut ?')) {
+                        console.log('Utilisateur a accepté de continuer avec les points par défaut');
+                    } else {
+                        throw new Error('Dépôt annulé par l\'utilisateur');
+                    }
+                }
+            }
+            
+            console.log('Carte chargée pour dépôt:', window.metadataDict);
+            console.log('Points de contrôle disponibles:', window.pointPairs?.length || 0);
+            
+        } catch (error) {
+            console.error('Erreur lors du chargement de la carte pour dépôt:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Essaie de restaurer les points de contrôle depuis la sauvegarde
+     * @param {string} arkId - L'identifiant ARK de la carte
+     * @returns {boolean} - True si des points ont été restaurés
+     */
+    async tryRestoreControlPoints(arkId) {
+        try {
+            if (window.controlPointsBackup && typeof window.controlPointsBackup.getBackupsForArk === 'function') {
+                const backups = window.controlPointsBackup.getBackupsForArk(arkId);
+                
+                if (backups && backups.length > 0) {
+                    // Prendre la sauvegarde la plus récente
+                    const latestBackup = backups[0];
+                    
+                    console.log('Points de contrôle trouvés dans la sauvegarde:', latestBackup);
+                    
+                    // Restaurer les points
+                    if (typeof window.controlPointsBackup.restoreFromBackup === 'function') {
+                        await window.controlPointsBackup.restoreFromBackup(latestBackup);
+                        console.log('Points de contrôle restaurés depuis la sauvegarde');
+                        return true;
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Erreur lors de la restauration des points de contrôle:', error);
+        }
+        
+        return false;
+    }
+
+    /**
+     * Crée des points de contrôle par défaut pour une carte (fallback)
+     * @param {string} arkId - L'identifiant ARK de la carte
+     */
+    createDefaultControlPoints(arkId) {
+        console.log(`Création de points de contrôle par défaut pour ${arkId}`);
+        
+        // Créer une structure minimale de points de contrôle
+        // Ceci est un fallback - idéalement les points devraient être récupérés depuis l'API
+        window.pointPairs = [{
+            id: 1,
+            leftPoint: { lat: 48.8566, lng: 2.3522 }, // Paris par défaut
+            rightPoint: { lat: 48.8566, lng: 2.3522 },
+            isComplete: () => true
+        }];
+        
+        console.log('Points de contrôle par défaut créés');
     }
 }
 

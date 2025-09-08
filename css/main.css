@@ -49,6 +49,39 @@ nav.fr-nav .fr-grid-row {
     margin-bottom: 5px; /* Réduction de la marge */
 }
 
+/* =====================================================
+   STYLES POUR LES CARTES TRAVAILLÉES
+   ===================================================== */
+
+/* Bouton de dépôt dans les cartes */
+.fr-card .fr-btn--deposit {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0.5rem 0;
+    width: auto;
+    max-width: 100%;
+}
+
+.fr-card .fr-btn--deposit .fr-icon-upload-line {
+    flex-shrink: 0;
+}
+
+/* Style pour les boutons d'action dans les cartes */
+.fr-card__desc .fr-btn {
+    margin-top: 0.25rem;
+    margin-bottom: 0.25rem;
+}
+
+/* Amélioration de l'espacement des liens dans les cartes */
+.fr-card__desc {
+    margin-bottom: 0.5rem;
+}
+
+.fr-card__desc:last-child {
+    margin-bottom: 0;
+}
+
 
 
 /* Footer garde sa position normale */
