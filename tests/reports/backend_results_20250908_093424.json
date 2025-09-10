@@ -1,0 +1,5 @@
+{"timestamp": "2025-09-08T09:34:24+02:00", "tests": [
+    {"name": "galligeo_health", "status": "failed", "error": "API non accessible", "timestamp": "2025-09-08T09:34:24+02:00"},
+    {"name": "georef_endpoint", "status": "failed", "http_code": "307", "timestamp": "2025-09-08T09:34:24+02:00"},
+    {"name": "tile_server", "status": "passed", "timestamp": "2025-09-08T09:34:24+02:00"}
+], "summary": {"total": 3, "passed": 1, "failed": 2, "success_rate": 33}}

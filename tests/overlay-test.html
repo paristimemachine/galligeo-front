@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tests Galligeo - Mode Direct</title>
+    <style>
+        /* Styles pour l'overlay de test */
+        #testOverlay {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            width: 350px;
+            max-height: 400px;
+            background: rgba(255, 255, 255, 0.95);
+            border: 2px solid #007bff;
+            border-radius: 10px;
+            padding: 15px;
+            z-index: 10000;
+            font-family: Arial, sans-serif;
+            font-size: 0.9em;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow-y: auto;
+        }
+        
+        #testOverlay h3 {
+            margin: 0 0 15px 0;
+            color: #007bff;
+            font-size: 1.1em;
+        }
+        
+        .test-btn {
+            padding: 8px 12px;
+            margin: 3px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.85em;
+        }
+        
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-success { background-color: #28a745; color: white; }
+        .btn-warning { background-color: #ffc107; color: black; }
+        .btn-danger { background-color: #dc3545; color: white; }
+        
+        .test-result {
+            margin: 3px 0;
+            padding: 5px;
+            border-radius: 3px;
+            font-size: 0.8em;
+        }
+        
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+        
+        #testResults {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+        
+        .minimize-btn {
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            background: none;
+            border: none;
+            font-size: 1.2em;
+            cursor: pointer;
+            color: #007bff;
+        }
+        
+        .minimized {
+            height: 50px !important;
+            overflow: hidden;
+        }
+        
+        .auth-notice {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-size: 0.85em;
+        }
+    </style>
+</head>
+<body>
+    <!-- Overlay de test -->
+    <div id="testOverlay">
+        <button class="minimize-btn" onclick="toggleMinimize()">−</button>
+        <h3>🧪 Tests Galligeo</h3>
+        
+        <div id="testContent">
+            <div class="auth-notice">
+                <strong>⚠️ Note:</strong> Si une popup d'authentification s'ouvre, fermez-la pour continuer les tests.
+            </div>
+            
+            <div style="margin-bottom: 10px;">
+                <button class="test-btn btn-primary" onclick="runElementTests()">🔍 Détecter éléments</button>
+                <button class="test-btn btn-success" onclick="runJSTests()">⚙️ Tester JS</button>
+                <button class="test-btn btn-warning" onclick="clearResults()">🗑️ Effacer</button>
+                <button class="test-btn btn-danger" onclick="closeTests()">❌ Fermer</button>
+            </div>
+            
+            <div id="testResults"></div>
+        </div>
+    </div>
+
+    <script>
+        let isMinimized = false;
+        
+        function log(level, message) {
+            const results = document.getElementById('testResults');
+            const className = level === 'error' ? 'error' : level === 'success' ? 'success' : 'info';
+            results.innerHTML += `<div class="test-result ${className}">[${level.toUpperCase()}] ${message}</div>`;
+            results.scrollTop = results.scrollHeight;
+        }
+
+        function clearResults() {
+            document.getElementById('testResults').innerHTML = '';
+        }
+
+        function toggleMinimize() {
+            const overlay = document.getElementById('testOverlay');
+            const content = document.getElementById('testContent');
+            const btn = document.querySelector('.minimize-btn');
+            
+            isMinimized = !isMinimized;
+            if (isMinimized) {
+                content.style.display = 'none';
+                overlay.style.height = '40px';
+                btn.textContent = '+';
+            } else {
+                content.style.display = 'block';
+                overlay.style.height = 'auto';
+                btn.textContent = '−';
+            }
+        }
+
+        function closeTests() {
+            document.getElementById('testOverlay').style.display = 'none';
+        }
+
+        function runElementTests() {
+            log('info', '🔍 Test de détection d\'éléments...');
+            
+            const selectors = {
+                arkInput: '#search-784-input',
+                loadButton: 'button[title="Ark : -> Gallica"]',
+                georefButton: '#btn_georef',
+                leftMap: '#map-left',
+                rightMap: '#map-right',
+                toggle: '#toggle'
+            };
+
+            let found = 0;
+            let total = Object.keys(selectors).length;
+
+            Object.entries(selectors).forEach(([name, selector]) => {
+                const element = document.querySelector(selector);
+                if (element) {
+                    log('success', `✅ ${name}: trouvé`);
+                    found++;
+                } else {
+                    log('error', `❌ ${name}: non trouvé`);
+                }
+            });
+
+            log('info', `📊 Résultat: ${found}/${total} éléments trouvés`);
+            
+            if (found === 0) {
+                log('error', '❌ Aucun élément trouvé - Attendez le chargement complet');
+            } else {
+                log('success', '🎉 Éléments détectés avec succès !');
+            }
+        }
+
+        function runJSTests() {
+            log('info', '⚙️ Test des objets JavaScript...');
+            
+            const tests = [
+                { name: 'Leaflet (L)', obj: 'L' },
+                { name: 'PTMAuth classe', obj: 'PTMAuth' },
+                { name: 'auth instance', obj: 'auth' },
+                { name: 'settingsManager', obj: 'settingsManager' },
+                { name: 'FormGenerator', obj: 'FormGenerator' }
+            ];
+
+            let jsFound = 0;
+            tests.forEach(test => {
+                if (typeof window[test.obj] !== 'undefined') {
+                    log('success', `✅ ${test.name}: disponible`);
+                    jsFound++;
+                } else {
+                    log('error', `❌ ${test.name}: non disponible`);
+                }
+            });
+
+            log('info', `📊 JS: ${jsFound}/${tests.length} objets trouvés`);
+        }
+
+        // Empêcher les redirections d'authentification pour les tests
+        function preventAuthRedirect() {
+            // Essayer d'intercepter les redirections
+            const originalOpen = window.open;
+            window.open = function(url, name, features) {
+                if (url && (url.includes('orcid.org') || url.includes('auth') || url.includes('login'))) {
+                    log('info', '🛡️ Redirection d\'authentification bloquée pour les tests');
+                    return { close: function() {} }; // Mock window
+                }
+                return originalOpen.call(this, url, name, features);
+            };
+            
+            // Essayer d'intercepter les changements de location
+            const originalAssign = window.location.assign;
+            window.location.assign = function(url) {
+                if (url && (url.includes('orcid.org') || url.includes('auth') || url.includes('login'))) {
+                    log('info', '🛡️ Redirection d\'authentification bloquée pour les tests');
+                    return;
+                }
+                return originalAssign.call(this, url);
+            };
+        }
+
+        // Initialisation
+        window.addEventListener('load', function() {
+            log('info', '📋 Interface de test chargée');
+            log('info', '💡 Cliquez sur "Détecter éléments" pour commencer');
+            
+            // Bloquer les redirections d'auth
+            preventAuthRedirect();
+            
+            // Auto-test après un délai
+            setTimeout(() => {
+                if (document.querySelector('#search-784-input')) {
+                    log('success', '🎉 Application semble chargée automatiquement');
+                    runElementTests();
+                } else {
+                    log('info', '⏳ En attente du chargement de l\'application...');
+                }
+            }, 3000);
+        });
+
+        // Charger l'application Galligeo dans la même page
+        const script = document.createElement('script');
+        script.onload = function() {
+            log('success', '✅ Scripts de l\'application chargés');
+        };
+        script.onerror = function() {
+            log('error', '❌ Erreur de chargement des scripts');
+        };
+        
+        // Au lieu de charger un script, rediriger après le chargement de cet overlay
+        setTimeout(() => {
+            window.location.href = '../index.html#test=true';
+        }, 1000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interface de Tests Galligeo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; }
+        .test-container { max-width: 1400px; margin: 20px auto; }
+        .app-frame { width: 100%; height: 600px; border: 2px solid #dee2e6; border-radius: 8px; }
+        .test-results { background-color: #212529; color: #fff; font-family: monospace; font-size: 0.85em; max-height: 400px; overflow-y: auto; padding: 15px; }
+        .status-passed { color: #28a745; }
+        .status-failed { color: #dc3545; }
+        .status-running { color: #17a2b8; }
+        .status-pending { color: #ffc107; }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="test-container">
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <h1 class="card-title">🧪 Interface de Tests Galligeo</h1>
+                            <p class="card-text">Tests avec application intégrée</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Application Galligeo -->
+                <div class="col-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>📱 Application Galligeo</h5>
+                        </div>
+                        <div class="card-body p-0">
+                            <iframe id="galligeoApp" src="../index.html" class="app-frame"></iframe>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Panneau de Tests -->
+                <div class="col-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>🧪 Tests</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <button class="btn btn-primary w-100 mb-2" onclick="runFrontendTests()">
+                                    🎨 Tests Frontend
+                                </button>
+                                <button class="btn btn-secondary w-100 mb-2" onclick="runAuthTests()">
+                                    🔐 Tests Authentification
+                                </button>
+                                <button class="btn btn-info w-100 mb-2" onclick="runSettingsTests()">
+                                    ⚙️ Tests Paramètres
+                                </button>
+                                <button class="btn btn-warning w-100" onclick="clearResults()">
+                                    🗑️ Effacer
+                                </button>
+                            </div>
+                            
+                            <div class="progress mb-3" style="display: none;" id="progressBar">
+                                <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h6>📋 Résultats</h6>
+                        </div>
+                        <div class="card-body p-0">
+                            <div id="testResults" class="test-results">
+                                Prêt pour les tests...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="config/test-config.js"></script>
+    <script src="config/test-utils.js"></script>
+    
+    <script>
+        let testResults = [];
+        let currentTestIndex = 0;
+        let totalTests = 0;
+
+        // Utilitaires de logging
+        function log(level, message, data = null) {
+            const timestamp = new Date().toLocaleTimeString();
+            const resultsDiv = document.getElementById('testResults');
+            const statusClass = level === 'error' ? 'status-failed' : 
+                               level === 'success' ? 'status-passed' :
+                               level === 'info' ? 'status-running' : 'status-pending';
+            
+            const logEntry = `<div class="${statusClass}">[${timestamp}] ${message}</div>`;
+            resultsDiv.innerHTML += logEntry;
+            resultsDiv.scrollTop = resultsDiv.scrollHeight;
+            
+            if (data) {
+                console.log(message, data);
+            }
+        }
+
+        function clearResults() {
+            document.getElementById('testResults').innerHTML = 'Résultats effacés...';
+            testResults = [];
+        }
+
+        // Accès à l'iframe de l'application
+        function getAppWindow() {
+            const iframe = document.getElementById('galligeoApp');
+            if (!iframe) return null;
+            
+            try {
+                return iframe.contentWindow;
+            } catch (e) {
+                console.warn('Accès à l\'iframe bloqué (cross-origin):', e);
+                return null;
+            }
+        }
+
+        function getAppDocument() {
+            const iframe = document.getElementById('galligeoApp');
+            if (!iframe) return null;
+            
+            try {
+                return iframe.contentDocument;
+            } catch (e) {
+                console.warn('Accès au document iframe bloqué (cross-origin):', e);
+                return null;
+            }
+        }
+
+        // Vérifier si l'iframe a été redirigée
+        function checkIframeStatus() {
+            const iframe = document.getElementById('galligeoApp');
+            if (!iframe) return 'no-iframe';
+            
+            try {
+                const doc = iframe.contentDocument;
+                if (!doc) return 'no-access';
+                
+                const url = doc.location.href;
+                if (url.includes('orcid.org') || url.includes('auth') || url.includes('login')) {
+                    return 'redirected';
+                }
+                
+                if (doc.title && doc.title.includes('Galligeo')) {
+                    return 'loaded';
+                }
+                
+                return 'loading';
+            } catch (e) {
+                return 'cross-origin';
+            }
+        }
+
+        // Attendre que l'application soit chargée
+        function waitForAppLoad() {
+            return new Promise((resolve) => {
+                const iframe = document.getElementById('galligeoApp');
+                
+                const checkStatus = () => {
+                    const status = checkIframeStatus();
+                    log('info', `État iframe: ${status}`);
+                    
+                    if (status === 'loaded') {
+                        log('success', '✅ Application chargée avec succès');
+                        setTimeout(resolve, 1000);
+                    } else if (status === 'redirected' || status === 'cross-origin') {
+                        log('error', '❌ Application redirigée vers authentification');
+                        log('info', '💡 Suggestion: Ouvrez l\'application dans un nouvel onglet pour éviter la redirection');
+                        
+                        // Proposer une solution alternative
+                        const resultsDiv = document.getElementById('testResults');
+                        resultsDiv.innerHTML += `
+                            <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; margin: 10px 0; border-radius: 5px;">
+                                <h5>🔄 Solution alternative</h5>
+                                <p>L'application a été redirigée vers l'authentification ORCID.</p>
+                                <button onclick="openAppInNewTab()" style="background: #007bff; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer;">
+                                    🚀 Ouvrir l'application dans un nouvel onglet
+                                </button>
+                                <br><br>
+                                <small><strong>Instructions:</strong> 
+                                1. Cliquez le bouton ci-dessus<br>
+                                2. Fermez la popup d'authentification si elle apparaît<br>
+                                3. Revenez à cet onglet<br>
+                                4. Relancez les tests
+                                </small>
+                            </div>
+                        `;
+                        resolve();
+                    } else {
+                        // Réessayer après un délai
+                        setTimeout(checkStatus, 1000);
+                    }
+                };
+                
+                iframe.onload = checkStatus;
+                // Démarrer la vérification immédiatement aussi
+                setTimeout(checkStatus, 500);
+            });
+        }
+
+        // Ouvrir l'application dans un nouvel onglet
+        function openAppInNewTab() {
+            const newWindow = window.open('../index.html', 'galligeoApp', 'width=1200,height=800');
+            if (newWindow) {
+                log('info', '🚀 Application ouverte dans un nouvel onglet');
+                log('info', '💡 Fermez la popup d\'authentification et revenez ici pour les tests');
+            } else {
+                log('error', '❌ Impossible d\'ouvrir un nouvel onglet (popup bloqué)');
+            }
+        }
+
+        // Tests Frontend
+        async function runFrontendTests() {
+            log('info', '🎨 Début des tests frontend...');
+            
+            try {
+                await waitForAppLoad();
+                const appWindow = getAppWindow();
+                const appDoc = getAppDocument();
+                
+                const status = checkIframeStatus();
+                if (status !== 'loaded') {
+                    log('error', '❌ Application non accessible pour les tests');
+                    log('info', '💡 Utilisez la solution alternative proposée ci-dessus');
+                    return;
+                }
+                
+                // Test 1: Chargement de la page
+                log('info', 'Test: Chargement de la page');
+                if (appDoc && appDoc.readyState === 'complete') {
+                    log('success', '✅ Page chargée');
+                } else {
+                    log('error', '❌ Page non chargée');
+                }
+
+                // Test 2: Présence des éléments critiques
+                const selectors = window.GALLIGEO_TEST_CONFIG.SELECTORS;
+                
+                log('info', 'Test: Présence des éléments UI');
+                const arkInput = appDoc.querySelector(selectors.arkInput);
+                if (arkInput) {
+                    log('success', '✅ Champ ARK trouvé');
+                } else {
+                    log('error', '❌ Champ ARK introuvable');
+                }
+
+                const loadButton = appDoc.querySelector(selectors.loadButton);
+                if (loadButton) {
+                    log('success', '✅ Bouton de chargement trouvé');
+                } else {
+                    log('error', '❌ Bouton de chargement introuvable');
+                }
+
+                const georefButton = appDoc.querySelector(selectors.georefButton);
+                if (georefButton) {
+                    log('success', '✅ Bouton géoréférencement trouvé');
+                } else {
+                    log('error', '❌ Bouton géoréférencement introuvable');
+                }
+
+                // Test 3: Leaflet Maps
+                log('info', 'Test: Initialisation des cartes');
+                if (appWindow.L) {
+                    log('success', '✅ Leaflet disponible');
+                } else {
+                    log('error', '❌ Leaflet indisponible');
+                }
+
+                log('success', '🎨 Tests frontend terminés');
+                
+            } catch (error) {
+                log('error', '❌ Erreur dans les tests frontend: ' + error.message);
+            }
+        }
+
+        // Tests Authentification
+        async function runAuthTests() {
+            log('info', '🔐 Début des tests authentification...');
+            
+            try {
+                await waitForAppLoad();
+                const appWindow = getAppWindow();
+                
+                // Test 1: Classe PTMAuth
+                log('info', 'Test: Disponibilité de PTMAuth');
+                if (appWindow.PTMAuth) {
+                    log('success', '✅ Classe PTMAuth disponible');
+                } else {
+                    log('error', '❌ Classe PTMAuth indisponible');
+                }
+
+                // Test 2: Instance auth
+                log('info', 'Test: Instance auth');
+                if (appWindow.auth) {
+                    log('success', '✅ Instance auth disponible');
+                    
+                    // Test des méthodes
+                    if (typeof appWindow.auth.getToken === 'function') {
+                        log('success', '✅ Méthode getToken disponible');
+                    } else {
+                        log('error', '❌ Méthode getToken indisponible');
+                    }
+
+                    if (typeof appWindow.auth.setToken === 'function') {
+                        log('success', '✅ Méthode setToken disponible');
+                    } else {
+                        log('error', '❌ Méthode setToken indisponible');
+                    }
+                } else {
+                    log('error', '❌ Instance auth indisponible');
+                }
+
+                log('success', '🔐 Tests authentification terminés');
+                
+            } catch (error) {
+                log('error', '❌ Erreur dans les tests auth: ' + error.message);
+            }
+        }
+
+        // Tests Paramètres
+        async function runSettingsTests() {
+            log('info', '⚙️ Début des tests paramètres...');
+            
+            try {
+                await waitForAppLoad();
+                const appWindow = getAppWindow();
+                
+                // Test 1: SettingsManager
+                log('info', 'Test: Disponibilité de settingsManager');
+                if (appWindow.settingsManager) {
+                    log('success', '✅ settingsManager disponible');
+                    
+                    // Test des méthodes
+                    const methods = ['init', 'loadSettings', 'saveSettings'];
+                    methods.forEach(method => {
+                        if (typeof appWindow.settingsManager[method] === 'function') {
+                            log('success', `✅ Méthode ${method} disponible`);
+                        } else {
+                            log('error', `❌ Méthode ${method} indisponible`);
+                        }
+                    });
+                } else {
+                    log('error', '❌ settingsManager indisponible');
+                }
+
+                // Test 2: FormGenerator
+                log('info', 'Test: Disponibilité de FormGenerator');
+                if (appWindow.FormGenerator) {
+                    log('success', '✅ Classe FormGenerator disponible');
+                } else {
+                    log('error', '❌ Classe FormGenerator indisponible');
+                }
+
+                log('success', '⚙️ Tests paramètres terminés');
+                
+            } catch (error) {
+                log('error', '❌ Erreur dans les tests paramètres: ' + error.message);
+            }
+        }
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', function() {
+            log('info', '🚀 Interface de tests initialisée');
+            log('info', '⏳ Chargement de l\'application...');
+        });
+    </script>
+</body>
+</html>

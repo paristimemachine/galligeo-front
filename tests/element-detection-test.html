@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test de Détection d'Éléments</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f5f5f5; }
+        .result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+        .iframe-container { width: 100%; height: 400px; border: 2px solid #dee2e6; margin: 20px 0; }
+        .iframe { width: 100%; height: 100%; border: none; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Test de Détection d'Éléments</h1>
+    
+    <button onclick="testElementDetection()">🧪 Tester la détection</button>
+    <button onclick="clearResults()">🗑️ Effacer</button>
+    
+    <div id="results"></div>
+    
+    <h3>Application Galligeo dans iframe :</h3>
+    <div class="iframe-container">
+        <iframe id="galligeoApp" src="../index.html?test=true&no_auth=true" class="iframe"></iframe>
+    </div>
+
+    <script>
+        function log(level, message) {
+            const results = document.getElementById('results');
+            const className = level === 'error' ? 'error' : level === 'success' ? 'success' : 'info';
+            results.innerHTML += `<div class="result ${className}"><strong>[${level.toUpperCase()}]</strong> ${message}</div>`;
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        function getTargetDocument() {
+            // 1. Si on a un iframe dans le document actuel
+            const iframe = document.getElementById('galligeoApp');
+            if (iframe && iframe.contentDocument) {
+                return iframe.contentDocument;
+            }
+            
+            // 2. Utiliser le document actuel par defaut
+            return document;
+        }
+
+        function querySelector(selector) {
+            const targetDoc = getTargetDocument();
+            const element = targetDoc.querySelector(selector);
+            
+            log('info', `Recherche de ${selector} dans ${targetDoc === document ? 'document actuel' : 'iframe'}`);
+            
+            if (element) {
+                log('success', `✅ Élément trouvé: ${selector} (${element.tagName})`);
+            } else {
+                log('error', `❌ Élément non trouvé: ${selector}`);
+            }
+            
+            return element;
+        }
+
+        function testElementDetection() {
+            log('info', '🚀 Début du test de détection d\'éléments');
+            
+            // Attendre un peu que l'iframe se charge
+            setTimeout(() => {
+                const selectors = {
+                    arkInput: '#search-784-input',
+                    loadButton: 'button[title="Ark : -> Gallica"]',
+                    georefButton: '#btn_georef',
+                    leftMap: '#map-left',
+                    rightMap: '#map-right',
+                    toggle: '#toggle'
+                };
+
+                let found = 0;
+                let total = Object.keys(selectors).length;
+
+                Object.entries(selectors).forEach(([name, selector]) => {
+                    const element = querySelector(selector);
+                    if (element) found++;
+                });
+
+                log('info', `📊 Résultat: ${found}/${total} éléments trouvés`);
+                
+                // Test de l'état de l'iframe
+                const iframe = document.getElementById('galligeoApp');
+                if (iframe) {
+                    log('info', `📱 État iframe: ${iframe.contentDocument ? 'Document accessible' : 'Document non accessible'}`);
+                    if (iframe.contentDocument) {
+                        log('info', `📄 Titre iframe: "${iframe.contentDocument.title}"`);
+                        log('info', `🔗 URL iframe: ${iframe.contentDocument.location.href}`);
+                    }
+                }
+                
+            }, 2000); // Attendre 2 secondes pour le chargement
+        }
+
+        // Auto-test au chargement
+        window.addEventListener('load', () => {
+            log('info', '📋 Interface de test chargée');
+            log('info', '⏳ Attendez 3 secondes puis cliquez sur "Tester la détection"');
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tests de Non-Régression Galligeo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; }
+        .test-container { max-width: 1200px; margin: 20px auto; }
+        .test-card { margin-bottom: 20px; }
+        .test-status { display: inline-block; width: 20px; height: 20px; border-radius: 50%; margin-right: 10px; }
+        .status-pending { background-color: #ffc107; }
+        .status-running { background-color: #17a2b8; animation: pulse 1s infinite; }
+        .status-passed { background-color: #28a745; }
+        .status-failed { background-color: #dc3545; }
+        .status-skipped { background-color: #6c757d; }
+        .console-output { background-color: #212529; color: #fff; font-family: monospace; font-size: 0.85em; max-height: 400px; overflow-y: auto; }
+        .progress-section { position: sticky; top: 20px; z-index: 100; }
+        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+        .test-detail { font-size: 0.9em; margin-top: 10px; }
+        .category-header { cursor: pointer; user-select: none; }
+        .category-header:hover { background-color: #e9ecef; }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="test-container">
+            <!-- En-tête -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <h1 class="card-title">🧪 Tests de Non-Régression Galligeo</h1>
+                            <p class="card-text">Système de validation automatique avant déploiement</p>
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-primary" onclick="startAllTests()">
+                                    🚀 Lancer Tous les Tests
+                                </button>
+                                <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                                    Tests Spécifiques
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#" onclick="startCategoryTests('backend')">📡 Backend/API</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="startCategoryTests('frontend')">🎨 Frontend</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="startCategoryTests('integration')">🔗 Intégration</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="startCategoryTests('e2e')">🎭 End-to-End</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section de progression -->
+            <div class="row progress-section">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">📊 Progression des Tests</h5>
+                            <div class="progress mb-3" style="height: 25px;">
+                                <div id="overall-progress" class="progress-bar progress-bar-striped" role="progressbar" style="width: 0%"></div>
+                            </div>
+                            <div class="row text-center">
+                                <div class="col-md-2">
+                                    <div class="h4 text-primary" id="total-tests">0</div>
+                                    <small>Total</small>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="h4 text-success" id="passed-tests">0</div>
+                                    <small>Réussis</small>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="h4 text-danger" id="failed-tests">0</div>
+                                    <small>Échoués</small>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="h4 text-warning" id="skipped-tests">0</div>
+                                    <small>Ignorés</small>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="h4 text-info" id="success-rate">0%</div>
+                                    <small>Réussite</small>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="h4 text-muted" id="duration">0s</div>
+                                    <small>Durée</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Résultats des tests -->
+            <div class="row">
+                <div class="col-lg-8">
+                    <!-- Tests Backend -->
+                    <div class="card test-card">
+                        <div class="card-header category-header" data-bs-toggle="collapse" data-bs-target="#backend-tests">
+                            <span class="test-status status-pending" id="backend-status"></span>
+                            📡 Tests Backend/API
+                            <span class="float-end" id="backend-summary">En attente</span>
+                        </div>
+                        <div class="collapse" id="backend-tests">
+                            <div class="card-body">
+                                <div id="backend-results">
+                                    <p class="text-muted">Tests backend non exécutés</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tests Frontend -->
+                    <div class="card test-card">
+                        <div class="card-header category-header" data-bs-toggle="collapse" data-bs-target="#frontend-tests">
+                            <span class="test-status status-pending" id="frontend-status"></span>
+                            🎨 Tests Frontend
+                            <span class="float-end" id="frontend-summary">En attente</span>
+                        </div>
+                        <div class="collapse" id="frontend-tests">
+                            <div class="card-body">
+                                <div id="frontend-results">
+                                    <p class="text-muted">Tests frontend non exécutés</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tests d'Intégration -->
+                    <div class="card test-card">
+                        <div class="card-header category-header" data-bs-toggle="collapse" data-bs-target="#integration-tests">
+                            <span class="test-status status-pending" id="integration-status"></span>
+                            🔗 Tests d'Intégration
+                            <span class="float-end" id="integration-summary">En attente</span>
+                        </div>
+                        <div class="collapse" id="integration-tests">
+                            <div class="card-body">
+                                <div id="integration-results">
+                                    <p class="text-muted">Tests d'intégration non exécutés</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tests E2E -->
+                    <div class="card test-card">
+                        <div class="card-header category-header" data-bs-toggle="collapse" data-bs-target="#e2e-tests">
+                            <span class="test-status status-pending" id="e2e-status"></span>
+                            🎭 Tests End-to-End
+                            <span class="float-end" id="e2e-summary">En attente</span>
+                        </div>
+                        <div class="collapse" id="e2e-tests">
+                            <div class="card-body">
+                                <div id="e2e-results">
+                                    <p class="text-muted">Tests E2E non exécutés</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Console et informations -->
+                <div class="col-lg-4">
+                    <!-- Console de sortie -->
+                    <div class="card">
+                        <div class="card-header">
+                            <span>💻 Console</span>
+                            <button class="btn btn-sm btn-outline-secondary float-end" onclick="clearConsole()">Effacer</button>
+                        </div>
+                        <div class="card-body p-0">
+                            <div id="console-output" class="console-output p-3" style="height: 300px;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Informations système -->
+                    <div class="card mt-3">
+                        <div class="card-header">ℹ️ Informations Système</div>
+                        <div class="card-body">
+                            <small>
+                                <div><strong>Version Galligeo:</strong> <span id="galligeo-version">-</span></div>
+                                <div><strong>Navigateur:</strong> <span id="browser-info">-</span></div>
+                                <div><strong>Résolution:</strong> <span id="screen-resolution">-</span></div>
+                                <div><strong>Authentifié:</strong> <span id="auth-status">-</span></div>
+                                <div><strong>Dernière exécution:</strong> <span id="last-run">-</span></div>
+                            </small>
+                        </div>
+                    </div>
+
+                    <!-- Actions rapides -->
+                    <div class="card mt-3">
+                        <div class="card-header">🔧 Actions Rapides</div>
+                        <div class="card-body">
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-outline-primary btn-sm" onclick="exportResults()">📥 Exporter Résultats</button>
+                                <button class="btn btn-outline-secondary btn-sm" onclick="resetTests()">🔄 Réinitialiser</button>
+                                <button class="btn btn-outline-info btn-sm" onclick="viewDetailedReport()">📋 Rapport Détaillé</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pied de page -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <small class="text-muted">
+                                Tests de non-régression Galligeo | 
+                                <span id="current-time"></span>
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Configuration et utilitaires de test -->
+    <script src="config/test-config.js"></script>
+    <script src="config/test-utils.js"></script>
+    
+    <!-- Tests Backend -->
+    <script src="backend/galligeo-api-tests.js"></script>
+    <script src="backend/ptm-auth-api-tests.js"></script>
+    <script src="backend/tile-server-tests.js"></script>
+    
+    <!-- Tests Frontend -->
+    <script src="frontend/georeferencing-interface-tests.js"></script>
+    <script src="frontend/authentication-tests.js"></script>
+    <script src="frontend/settings-manager-tests.js"></script>
+    
+    <!-- Tests d'intégration -->
+    <script src="integration/integration-tests.js"></script>
+    
+    <!-- Tests E2E -->
+    <script src="e2e/e2e-tests.js"></script>
+    
+    <!-- Orchestrateur principal -->
+    <script src="test-runner.js"></script>
+
+    <script>
+        // Variables globales
+        let testRunner = null;
+        let startTime = null;
+        let timerInterval = null;
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeTestInterface();
+            updateSystemInfo();
+            updateClock();
+            
+            // Timer
+            setInterval(updateClock, 1000);
+        });
+
+        function initializeTestInterface() {
+            testRunner = new GalligeoTestRunner();
+            
+            // Configuration de la console de sortie
+            window.TestUtils.onLog = function(level, message, data) {
+                appendToConsole(level, message, data);
+            };
+            
+            appendToConsole('info', 'Interface de tests initialisée');
+        }
+
+        function updateSystemInfo() {
+            document.getElementById('galligeo-version').textContent = window.GALLIGEO_VERSION || 'Non définie';
+            document.getElementById('browser-info').textContent = navigator.userAgent.split(' ').slice(-2).join(' ');
+            document.getElementById('screen-resolution').textContent = `${screen.width}x${screen.height}`;
+            document.getElementById('auth-status').textContent = (window.ptmAuth && window.ptmAuth.isAuthenticated()) ? 'Oui' : 'Non';
+            
+            const lastRun = localStorage.getItem('galligeo_last_test_run');
+            document.getElementById('last-run').textContent = lastRun ? new Date(lastRun).toLocaleString('fr-FR') : 'Jamais';
+        }
+
+        function updateClock() {
+            document.getElementById('current-time').textContent = new Date().toLocaleTimeString('fr-FR');
+        }
+
+        async function startAllTests() {
+            if (testRunner.isRunning) {
+                appendToConsole('warning', 'Tests déjà en cours d\'exécution');
+                return;
+            }
+
+            startTime = Date.now();
+            timerInterval = setInterval(updateDuration, 1000);
+            
+            appendToConsole('info', 'Début de l\'exécution de tous les tests');
+            
+            try {
+                const results = await testRunner.runAllRegressionTests();
+                onTestsComplete(results);
+            } catch (error) {
+                appendToConsole('error', 'Erreur lors de l\'exécution des tests', error);
+            } finally {
+                clearInterval(timerInterval);
+                localStorage.setItem('galligeo_last_test_run', new Date().toISOString());
+            }
+        }
+
+        async function startCategoryTests(category) {
+            if (testRunner.isRunning) {
+                appendToConsole('warning', 'Tests déjà en cours d\'exécution');
+                return;
+            }
+
+            startTime = Date.now();
+            timerInterval = setInterval(updateDuration, 1000);
+            
+            appendToConsole('info', `Début des tests: ${category}`);
+            
+            try {
+                const results = await testRunner.runSpecificCategory(category);
+                updateCategoryDisplay(category, results);
+            } catch (error) {
+                appendToConsole('error', `Erreur lors des tests ${category}`, error);
+            } finally {
+                clearInterval(timerInterval);
+            }
+        }
+
+        function updateDuration() {
+            if (startTime) {
+                const duration = Math.floor((Date.now() - startTime) / 1000);
+                document.getElementById('duration').textContent = `${duration}s`;
+            }
+        }
+
+        function updateCategoryDisplay(category, results) {
+            const statusElement = document.getElementById(`${category}-status`);
+            const summaryElement = document.getElementById(`${category}-summary`);
+            const resultsElement = document.getElementById(`${category}-results`);
+
+            if (results.error) {
+                statusElement.className = 'test-status status-failed';
+                summaryElement.textContent = 'Erreur';
+                resultsElement.innerHTML = `<div class="alert alert-danger">${results.error}</div>`;
+            } else {
+                const successRate = results.total > 0 ? (results.passed / results.total * 100).toFixed(1) : 0;
+                statusElement.className = `test-status status-${successRate >= 90 ? 'passed' : successRate >= 70 ? 'running' : 'failed'}`;
+                summaryElement.textContent = `${results.passed}/${results.total} (${successRate}%)`;
+                
+                resultsElement.innerHTML = generateCategoryHTML(results);
+            }
+
+            // Ouvrir automatiquement la section
+            const collapseElement = document.getElementById(`${category}-tests`);
+            if (collapseElement) {
+                collapseElement.classList.add('show');
+            }
+        }
+
+        function generateCategoryHTML(results) {
+            let html = '';
+            
+            for (const [key, value] of Object.entries(results)) {
+                if (value && typeof value === 'object' && value.results) {
+                    html += `
+                    <div class="mb-3">
+                        <h6>${key}</h6>
+                        ${value.results.map(result => `
+                            <div class="test-detail">
+                                <span class="badge bg-${result.status === 'passed' ? 'success' : result.status === 'failed' ? 'danger' : 'warning'}">
+                                    ${result.status === 'passed' ? '✅' : result.status === 'failed' ? '❌' : '⏭️'}
+                                </span>
+                                ${result.name || 'Test sans nom'}
+                                ${result.error ? `<small class="text-danger">- ${result.error}</small>` : ''}
+                            </div>
+                        `).join('')}
+                    </div>`;
+                }
+            }
+            
+            return html || '<p class="text-muted">Aucun résultat disponible</p>';
+        }
+
+        function onTestsComplete(results) {
+            appendToConsole('success', 'Tous les tests terminés');
+            
+            // Mise à jour des statistiques globales
+            updateOverallStats(results.summary);
+            
+            // Mise à jour de chaque catégorie
+            for (const [category, categoryResults] of Object.entries(results.details)) {
+                if (categoryResults) {
+                    updateCategoryDisplay(category, categoryResults);
+                }
+            }
+            
+            // Afficher le résumé final
+            showFinalSummary(results.summary);
+        }
+
+        function updateOverallStats(summary) {
+            document.getElementById('total-tests').textContent = summary.total || 0;
+            document.getElementById('passed-tests').textContent = summary.passed || 0;
+            document.getElementById('failed-tests').textContent = summary.failed || 0;
+            document.getElementById('skipped-tests').textContent = (summary.total || 0) - (summary.passed || 0) - (summary.failed || 0);
+            document.getElementById('success-rate').textContent = `${summary.successRate || 0}%`;
+            
+            // Mise à jour de la barre de progression
+            const progressBar = document.getElementById('overall-progress');
+            progressBar.style.width = `${summary.successRate || 0}%`;
+            progressBar.className = `progress-bar ${summary.successRate >= 90 ? 'bg-success' : summary.successRate >= 70 ? 'bg-warning' : 'bg-danger'}`;
+        }
+
+        function showFinalSummary(summary) {
+            const alertType = summary.successRate >= 90 ? 'success' : summary.successRate >= 70 ? 'warning' : 'danger';
+            const icon = summary.successRate >= 90 ? '🎉' : summary.successRate >= 70 ? '⚠️' : '🚨';
+            
+            const summaryHTML = `
+                <div class="alert alert-${alertType} alert-dismissible fade show" role="alert">
+                    <h4 class="alert-heading">${icon} Tests Terminés</h4>
+                    <p><strong>Résultat:</strong> ${summary.passed}/${summary.total} tests réussis (${summary.successRate}%)</p>
+                    <p><strong>Durée:</strong> ${Math.round(summary.duration / 1000)}s</p>
+                    <hr>
+                    <p class="mb-0">
+                        ${summary.successRate >= 90 ? 'Excellent! Prêt pour le déploiement.' : 
+                          summary.successRate >= 70 ? 'Quelques problèmes détectés, investigation recommandée.' : 
+                          'Attention! Problèmes critiques détectés, déploiement non recommandé.'}
+                    </p>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            document.querySelector('.test-container').insertAdjacentHTML('afterbegin', summaryHTML);
+        }
+
+        function appendToConsole(level, message, data) {
+            const console = document.getElementById('console-output');
+            const timestamp = new Date().toLocaleTimeString('fr-FR');
+            const levelColors = {
+                info: '#17a2b8',
+                success: '#28a745',
+                warning: '#ffc107',
+                error: '#dc3545'
+            };
+            
+            const logEntry = document.createElement('div');
+            logEntry.innerHTML = `
+                <span style="color: #6c757d;">[${timestamp}]</span>
+                <span style="color: ${levelColors[level] || '#fff'};">[${level.toUpperCase()}]</span>
+                ${message}
+                ${data ? `<pre style="margin: 5px 0; font-size: 0.8em; color: #adb5bd;">${JSON.stringify(data, null, 2)}</pre>` : ''}
+            `;
+            
+            console.appendChild(logEntry);
+            console.scrollTop = console.scrollHeight;
+        }
+
+        function clearConsole() {
+            document.getElementById('console-output').innerHTML = '';
+        }
+
+        function resetTests() {
+            if (confirm('Êtes-vous sûr de vouloir réinitialiser tous les tests?')) {
+                location.reload();
+            }
+        }
+
+        function exportResults() {
+            if (testRunner && testRunner.results && testRunner.results.summary) {
+                const dataStr = JSON.stringify(testRunner.results, null, 2);
+                const dataBlob = new Blob([dataStr], {type: 'application/json'});
+                const url = URL.createObjectURL(dataBlob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `galligeo-test-results-${new Date().toISOString().split('T')[0]}.json`;
+                link.click();
+            } else {
+                alert('Aucun résultat à exporter. Veuillez d\'abord exécuter des tests.');
+            }
+        }
+
+        function viewDetailedReport() {
+            if (testRunner && testRunner.results && testRunner.results.summary) {
+                // Cette fonction ouvrira le rapport HTML détaillé
+                appendToConsole('info', 'Génération du rapport détaillé...');
+                // Le rapport HTML sera généré par le testRunner
+            } else {
+                alert('Aucun rapport disponible. Veuillez d\'abord exécuter des tests.');
+            }
+        }
+    </script>
+</body>
+</html>

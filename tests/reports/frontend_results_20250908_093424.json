@@ -1,0 +1,5 @@
+{"timestamp": "2025-09-08T09:34:24+02:00", "tests": [
+    {"name": "critical_js_files", "status": "passed", "timestamp": "2025-09-08T09:34:24+02:00"},
+    {"name": "html_structure", "status": "failed", "error": "Structure HTML invalide", "timestamp": "2025-09-08T09:34:24+02:00"},
+    {"name": "css_assets", "status": "passed", "timestamp": "2025-09-08T09:34:24+02:00"}
+], "summary": {"total": 3, "passed": 2, "failed": 1, "success_rate": 66}}

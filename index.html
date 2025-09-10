@@ -902,6 +902,46 @@
     <!-- END Modal login  -->
     <!--  -->
 
+        <!--  -->
+    <!-- Modal Backup Restore DSFR -->
+    <!--  -->
+    <dialog class="fr-modal" id="fr-modal-backup-restore" aria-labelledby="fr-modal-backup-restore-title">
+        <div class="fr-container fr-container--fluid fr-container-md">
+            <div class="fr-grid-row fr-grid-row--center">
+                <div class="fr-col-12 fr-col-md-8 fr-col-lg-6">
+                    <div class="fr-modal__body">
+                        <div class="fr-modal__header">
+                            <button class="fr-link--close fr-link" aria-controls="fr-modal-backup-restore">Fermer</button>
+                        </div>
+                        <div class="fr-modal__content">
+                            <h1 id="fr-modal-backup-restore-title" class="fr-modal__title">
+                                <span class="fr-fi-save-line fr-fi--lg"></span>
+                                Restaurer une sauvegarde
+                            </h1>
+                            <p>Choisissez une sauvegarde à restaurer :</p>
+                            <div id="backup-list-container">
+                                <!-- Le contenu sera généré dynamiquement -->
+                            </div>
+                        </div>
+                        <div class="fr-modal__footer">
+                            <ul class="fr-btns-group fr-btns-group--right fr-btns-group--inline-reverse fr-btns-group--inline-lg">
+                                <li>
+                                    <button class="fr-btn fr-btn--secondary" aria-controls="fr-modal-backup-restore">Annuler</button>
+                                </li>
+                                <li>
+                                    <button class="fr-btn fr-btn--secondary fr-btn--icon-left fr-icon-delete-line" onclick="window.controlPointsBackup?.clearAllBackupsSafely()">Vider toutes les sauvegardes</button>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </dialog>
+    <!--  -->
+    <!-- END Modal Backup Restore  -->
+    <!--  -->
+
     <!-- Script en version es6 module et nomodule pour les navigateurs le ne supportant pas -->
     <script type="module" src="node_modules/@gouvfr/dsfr/dist/dsfr.module.min.js"></script>
     <script type="text/javascript" nomodule src="node_modules/@gouvfr/dsfr/dist/dsfr.nomodule.min.js"></script>
@@ -1561,45 +1601,23 @@
         }
     </script>
 
-    <!--  -->
-    <!-- Modal Backup Restore DSFR -->
-    <!--  -->
-    <dialog class="fr-modal" id="fr-modal-backup-restore" aria-labelledby="fr-modal-backup-restore-title">
-        <div class="fr-container fr-container--fluid fr-container-md">
-            <div class="fr-grid-row fr-grid-row--center">
-                <div class="fr-col-12 fr-col-md-8 fr-col-lg-6">
-                    <div class="fr-modal__body">
-                        <div class="fr-modal__header">
-                            <button class="fr-link--close fr-link" aria-controls="fr-modal-backup-restore">Fermer</button>
-                        </div>
-                        <div class="fr-modal__content">
-                            <h1 id="fr-modal-backup-restore-title" class="fr-modal__title">
-                                <span class="fr-fi-save-line fr-fi--lg"></span>
-                                Restaurer une sauvegarde
-                            </h1>
-                            <p>Choisissez une sauvegarde à restaurer :</p>
-                            <div id="backup-list-container">
-                                <!-- Le contenu sera généré dynamiquement -->
-                            </div>
-                        </div>
-                        <div class="fr-modal__footer">
-                            <ul class="fr-btns-group fr-btns-group--right fr-btns-group--inline-reverse fr-btns-group--inline-lg">
-                                <li>
-                                    <button class="fr-btn fr-btn--secondary" aria-controls="fr-modal-backup-restore">Annuler</button>
-                                </li>
-                                <li>
-                                    <button class="fr-btn fr-btn--secondary fr-btn--icon-left fr-icon-delete-line" onclick="window.controlPointsBackup?.clearAllBackupsSafely()">Vider toutes les sauvegardes</button>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </dialog>
-    <!--  -->
-    <!-- END Modal Backup Restore  -->
-    <!--  -->
+
+
+    <!-- Matomo -->
+    <script>
+    var _paq = window._paq = window._paq || [];
+    /* tracker methods like "setCustomDimension" should be called before "trackPageView" */
+    _paq.push(['trackPageView']);
+    _paq.push(['enableLinkTracking']);
+    (function() {
+        var u="//ptm.huma-num.fr/matomo/";
+        _paq.push(['setTrackerUrl', u+'matomo.php']);
+        _paq.push(['setSiteId', '23']);
+        var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+        g.async=true; g.src=u+'matomo.js'; s.parentNode.insertBefore(g,s);
+    })();
+    </script>
+    <!-- End Matomo Code -->
 
   </body>
 </html>
