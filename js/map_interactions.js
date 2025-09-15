@@ -4,35 +4,44 @@
 const POLYGON_FILL_COLOR = 'rgba(255, 0, 0, 0)';
 const POLYGON_STROKE_COLOR = 'rgba(0, 55, 255)';
 
-var left_map = L.map('map-left', {
-    center: [47, 2],
-    zoomSnap: 0.1,
-    zoomDelta: 0.25,
-    zoom: 6.2,
-    // laoding control
-    loadingControl: true,
-    // Activer la rotation avec le plugin leaflet-rotate
-    rotate: true,
-    bearing: 0
-});
+// Variables globales pour les cartes (définies après chargement de Leaflet)
+var left_map, right_map, customMarker;
 
-var right_map = L.map('map-right', {
-    center: [47, 2],
-    zoomSnap: 0.1,
-    zoomDelta: 0.25,
-    zoom: 6.2,
-    // laoding control
-    loadingControl: true
-});
+/**
+ * Initialise les cartes et composants Leaflet
+ */
+function initializeMaps() {
+    console.log('🗺️ Initialisation des cartes Leaflet');
+    
+    left_map = L.map('map-left', {
+        center: [47, 2],
+        zoomSnap: 0.1,
+        zoomDelta: 0.25,
+        zoom: 6.2,
+        // laoding control
+        loadingControl: true,
+        // Activer la rotation avec le plugin leaflet-rotate
+        rotate: true,
+        bearing: 0
+    });
 
-var customMarker= L.Icon.extend({
-    options: {
-        shadowUrl: null,
-        iconAnchor: new L.Point(12, 12),
-        iconSize: new L.Point(24, 24),
-        iconUrl: "img/x.svg",
-    }
-});
+    right_map = L.map('map-right', {
+        center: [47, 2],
+        zoomSnap: 0.1,
+        zoomDelta: 0.25,
+        zoom: 6.2,
+        // laoding control
+        loadingControl: true
+    });
+
+    customMarker = L.Icon.extend({
+        options: {
+            shadowUrl: null,
+            iconAnchor: new L.Point(12, 12),
+            iconSize: new L.Point(24, 24),
+            iconUrl: "img/x.svg",
+        }
+    });
 
 // Contrôle rose des vents personnalisé utilisant leaflet-rotate
 L.Control.CompassRotation = L.Control.extend({
@@ -149,6 +158,11 @@ L.control.compassRotation = function(options) {
 var { points: layer_img_pts_left, emprise: layer_img_emprise_left } = add_neutral_control_layer(left_map);
 var layer_img_pts_right = add_wms_layers(right_map);
 
+// Exposer ces variables globalement pour les autres scripts
+window.layer_img_pts_left = layer_img_pts_left;
+window.layer_img_pts_right = layer_img_pts_right;
+window.layer_img_emprise_left = layer_img_emprise_left;
+
 // Ajouter le contrôle rose des vents uniquement à la carte gauche
 var compassControl = L.control.compassRotation({
     position: 'bottomright'
@@ -171,10 +185,15 @@ function add_neutral_control_layer(map) {
     var layerControl = L.control.layers({}, overlays, {collapsed:true, position: 'topleft'})
     layerControl.addTo(map);
 
-    var loadingControl = L.Control.loading({
-        separate: true
-    });
-    map.addControl(loadingControl);
+    // Vérifier si le plugin Loading est disponible
+    if (L.Control.loading) {
+        var loadingControl = L.Control.loading({
+            separate: true
+        });
+        map.addControl(loadingControl);
+    } else {
+        console.warn('⚠️ Plugin L.Control.loading non disponible');
+    }
 
     return { points: drawnItems, emprise: drawnItemsEmprise };
 }
@@ -309,13 +328,23 @@ function add_wms_layers(map) {
     var layerControl = L.control.layers(baseLayers, overlays, {collapsed:true, position: 'topright'})
     layerControl.addTo(map);
 
-    L.Control.geocoder().addTo(map);
+    // Vérifier si le plugin Geocoder est disponible
+    if (L.Control.geocoder) {
+        L.Control.geocoder().addTo(map);
+    } else {
+        console.warn('⚠️ Plugin L.Control.geocoder non disponible');
+    }
 
-    var loadingControl = L.Control.loading({
-        separate: true,
-        position: 'topright'
-    });
-    map.addControl(loadingControl);
+    // Vérifier si le plugin Loading est disponible
+    if (L.Control.loading) {
+        var loadingControl = L.Control.loading({
+            separate: true,
+            position: 'topright'
+        });
+        map.addControl(loadingControl);
+    } else {
+        console.warn('⚠️ Plugin L.Control.loading non disponible');
+    }
     
     return drawnItems;
 }
@@ -406,12 +435,19 @@ document.addEventListener('DOMContentLoaded', function() {
     function initMetadataControl() {
         if (typeof left_map !== 'undefined' && left_map && !window.metadataControl) {
             console.log('Initialisation du contrôle de métadonnées');
-            var metadataControl = new L.Control.MetadataInfo();
-            left_map.addControl(metadataControl);
             
-            // Rendre le contrôle disponible globalement
-            window.metadataControl = metadataControl;
-            return true;
+            // Vérifier que L.Control.MetadataInfo est défini
+            if (typeof L !== 'undefined' && L.Control && L.Control.MetadataInfo) {
+                var metadataControl = new L.Control.MetadataInfo();
+                left_map.addControl(metadataControl);
+                
+                // Rendre le contrôle disponible globalement
+                window.metadataControl = metadataControl;
+                return true;
+            } else {
+                console.warn('⚠️ L.Control.MetadataInfo non encore défini');
+                return false;
+            }
         }
         return false;
     }
@@ -434,14 +470,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 200); // Essayer toutes les 200ms
     }
     
-    // Initialiser le système de saisie avancé
-    setTimeout(function() {
-        if (typeof setupAdvancedInputSystem === 'function') {
-            setupAdvancedInputSystem();
-        } else {
-            console.warn('Système de saisie avancé non disponible. Vérifiez que advanced-input-system.js est chargé.');
-        }
-    }, 1000);
 });
 
 /**
@@ -485,3 +513,190 @@ window.ensureMetadataControlAvailable = function() {
         }, 200);
     });
 };
+
+// Fin de l'initialisation différée dans initializeMaps
+    // Initialiser les autres composants qui dépendent de Leaflet
+    console.log('🎯 Initialisation des composants additionnels');
+    
+    // Définir le contrôle de métadonnées maintenant que Leaflet est disponible
+    if (!L.Control.MetadataInfo) {
+        defineMetadataControl();
+    }
+    
+    // Ajouter les autres initialisations ici si nécessaire
+    document.dispatchEvent(new CustomEvent('mapsInitialized'));
+    
+    // Notifier aussi que les layers sont disponibles
+    document.dispatchEvent(new CustomEvent('layersInitialized', {
+        detail: { 
+            layer_img_pts_left, 
+            layer_img_pts_right, 
+            layer_img_emprise_left,
+            left_map,
+            right_map
+        }
+    }));
+    
+    // Initialiser le système de saisie avancé maintenant que tout est prêt
+    setTimeout(function() {
+        if (typeof setupAdvancedInputSystem === 'function') {
+            console.log('🎯 Initialisation du système de saisie avancé');
+            setupAdvancedInputSystem();
+        } else {
+            console.warn('Système de saisie avancé non disponible. Vérifiez que advanced-input-system.js est chargé.');
+        }
+    }, 100); // Délai réduit car les variables sont maintenant disponibles
+}
+
+/**
+ * Définit le contrôle de métadonnées Leaflet
+ */
+function defineMetadataControl() {
+    if (typeof L === 'undefined') {
+        console.warn('⚠️ Leaflet non disponible pour définir MetadataControl');
+        return;
+    }
+    
+    // Contrôle de métadonnées pour la carte gauche
+    L.Control.MetadataInfo = L.Control.extend({
+        options: {
+            position: 'bottomleft'
+        },
+
+        onAdd: function(map) {
+            var container = L.DomUtil.create('div', 'leaflet-control-metadata-info leaflet-bar leaflet-control');
+            
+            var button = L.DomUtil.create('a', 'leaflet-control-metadata-button', container);
+            button.href = '#';
+            button.title = 'Afficher les métadonnées Gallica';
+            button.innerHTML = '<span class="fr-icon-file-text-line" aria-hidden="true"></span>';
+            
+            L.DomEvent.on(button, 'click', this._onClick, this);
+            L.DomEvent.disableClickPropagation(button);
+            
+            this._button = button;
+            this._container = container;
+            
+            return container;
+        },
+
+        _onClick: function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            if (window.metadataDict && Object.keys(window.metadataDict).length > 0) {
+                this._showMetadata();
+            } else {
+                console.log('Aucune métadonnée disponible');
+                this._showNoMetadata();
+            }
+        },
+
+        _showMetadata: function() {
+            var metadata = window.metadataDict;
+            
+            var content = '<h3>Métadonnées Gallica</h3>';
+            
+            if (metadata.title) {
+                content += '<p><strong>Titre :</strong> ' + metadata.title + '</p>';
+            }
+            
+            if (metadata.creator) {
+                content += '<p><strong>Créateur :</strong> ' + metadata.creator + '</p>';
+            }
+            
+            if (metadata.date) {
+                content += '<p><strong>Date :</strong> ' + metadata.date + '</p>';
+            }
+            
+            if (metadata.description) {
+                content += '<p><strong>Description :</strong> ' + metadata.description + '</p>';
+            }
+            
+            if (metadata.source) {
+                content += '<p><strong>Source :</strong> <a href="' + metadata.source + '" target="_blank">Voir sur Gallica</a></p>';
+            }
+            
+            this._showModal('Métadonnées', content);
+        },
+
+        _showNoMetadata: function() {
+            this._showModal('Métadonnées', '<p>Aucune métadonnée disponible pour cette carte.</p>');
+        },
+
+        _showModal: function(title, content) {
+            // Créer une modale simple
+            var modalOverlay = L.DomUtil.create('div', 'metadata-modal-overlay');
+            modalOverlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.7);
+                z-index: 10000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            `;
+            
+            var modal = L.DomUtil.create('div', 'metadata-modal', modalOverlay);
+            modal.style.cssText = `
+                background: white;
+                border-radius: 8px;
+                padding: 20px;
+                max-width: 500px;
+                max-height: 70vh;
+                overflow-y: auto;
+                position: relative;
+            `;
+            
+            var closeButton = L.DomUtil.create('button', 'metadata-modal-close', modal);
+            closeButton.innerHTML = '×';
+            closeButton.style.cssText = `
+                position: absolute;
+                top: 10px;
+                right: 15px;
+                background: none;
+                border: none;
+                font-size: 24px;
+                cursor: pointer;
+                color: #666;
+            `;
+            
+            var modalContent = L.DomUtil.create('div', 'metadata-modal-content', modal);
+            modalContent.innerHTML = content;
+            
+            // Fermer la modale
+            var closeModal = function() {
+                document.body.removeChild(modalOverlay);
+            };
+            
+            L.DomEvent.on(closeButton, 'click', closeModal);
+            L.DomEvent.on(modalOverlay, 'click', function(e) {
+                if (e.target === modalOverlay) {
+                    closeModal();
+                }
+            });
+            
+            document.body.appendChild(modalOverlay);
+        }
+    });
+    
+    console.log('✅ L.Control.MetadataInfo défini');
+}
+
+// Enregistrer l'initialisation avec le nouveau système unifié
+if (typeof window.LeafletLoader !== 'undefined') {
+    window.LeafletLoader.whenReady(initializeMaps, 'map_interactions_init');
+} else if (typeof whenLeafletReady === 'function') {
+    // Compatibilité avec l'ancien système
+    whenLeafletReady(initializeMaps, 'map_interactions_init');
+} else {
+    console.warn('⚠️ Système de queue Leaflet non disponible - initialisation directe');
+    if (typeof L !== 'undefined') {
+        initializeMaps();
+    } else {
+        console.error('❌ Leaflet non disponible pour initialisation directe');
+    }
+}

@@ -54,21 +54,17 @@ function setupAdvancedInputSystem() {
 }
 
 function removeOldDrawControls() {
-    // Supprimer tous les contrôles de dessin existants
-    if (typeof left_map !== 'undefined') {
-        left_map.eachLayer(function(layer) {
-            if (layer instanceof L.Control.Draw) {
-                left_map.removeControl(layer);
-            }
-        });
+    // Cette application utilise son propre système de saisie
+    // Leaflet Draw n'est pas utilisé dans cette application
+    console.log('🗑️ Nettoyage des anciens contrôles (système de saisie personnalisé)');
+    
+    // Nettoyer les éventuels layers de dessin personnalisés
+    if (typeof left_map !== 'undefined' && left_map) {
+        // Pas de nettoyage nécessaire - système de saisie géré ailleurs
     }
     
-    if (typeof right_map !== 'undefined') {
-        right_map.eachLayer(function(layer) {
-            if (layer instanceof L.Control.Draw) {
-                right_map.removeControl(layer);
-            }
-        });
+    if (typeof right_map !== 'undefined' && right_map) {
+        // Pas de nettoyage nécessaire - système de saisie géré ailleurs
     }
 }
 
@@ -213,8 +209,14 @@ function handleMapClick(event, mapSide) {
         return;
     }
     
+    // Vérifier que les variables globales sont disponibles
+    if (!window.layer_img_pts_left || !window.layer_img_pts_right) {
+        console.warn('⚠️ Variables layer non disponibles, attente de l\'initialisation...');
+        return;
+    }
+    
     const map = mapSide === 'left' ? left_map : right_map;
-    const layer = mapSide === 'left' ? layer_img_pts_left : layer_img_pts_right;
+    const layer = mapSide === 'left' ? window.layer_img_pts_left : window.layer_img_pts_right;
     
     // En mode saisie de points, empêcher l'interaction avec l'emprise
     if (window.inputMode === 'points') {
@@ -845,10 +847,10 @@ function resetInputSystem() {
     // Supprimer tous les marqueurs
     window.pointPairs.forEach(pair => {
         if (pair.leftPoint && pair.leftPoint.marker) {
-            layer_img_pts_left.removeLayer(pair.leftPoint.marker);
+            window.layer_img_pts_left.removeLayer(pair.leftPoint.marker);
         }
         if (pair.rightPoint && pair.rightPoint.marker) {
-            layer_img_pts_right.removeLayer(pair.rightPoint.marker);
+            window.layer_img_pts_right.removeLayer(pair.rightPoint.marker);
         }
     });
     
@@ -914,13 +916,13 @@ function removeIndividualPoint(pointId, side) {
     if (side === 'left' && pair.leftPoint) {
         // Supprimer le marqueur de la carte
         if (pair.leftPoint.marker) {
-            layer_img_pts_left.removeLayer(pair.leftPoint.marker);
+            window.layer_img_pts_left.removeLayer(pair.leftPoint.marker);
         }
         pair.leftPoint = null;
     } else if (side === 'right' && pair.rightPoint) {
         // Supprimer le marqueur de la carte
         if (pair.rightPoint.marker) {
-            layer_img_pts_right.removeLayer(pair.rightPoint.marker);
+            window.layer_img_pts_right.removeLayer(pair.rightPoint.marker);
         }
         pair.rightPoint = null;
     }
@@ -958,10 +960,10 @@ function removeControlPoint(pointId) {
     
     // Supprimer les marqueurs des cartes
     if (pair.leftPoint && pair.leftPoint.marker) {
-        layer_img_pts_left.removeLayer(pair.leftPoint.marker);
+        window.layer_img_pts_left.removeLayer(pair.leftPoint.marker);
     }
     if (pair.rightPoint && pair.rightPoint.marker) {
-        layer_img_pts_right.removeLayer(pair.rightPoint.marker);
+        window.layer_img_pts_right.removeLayer(pair.rightPoint.marker);
     }
     
     // Supprimer la paire de la liste

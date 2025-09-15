@@ -1,0 +1,61 @@
+/* Fallback CSS pour Leaflet Control Geocoder */
+
+.leaflet-control-geocoder {
+    background: #fff;
+    border-radius: 5px;
+    box-shadow: 0 1px 5px rgba(0,0,0,0.4);
+}
+
+.leaflet-control-geocoder-form {
+    margin: 0;
+}
+
+.leaflet-control-geocoder-form input {
+    width: 200px;
+    padding: 4px 6px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    font-size: 12px;
+}
+
+.leaflet-control-geocoder-form button {
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    padding: 4px 8px;
+    cursor: pointer;
+}
+
+.leaflet-control-geocoder-form button:hover {
+    background: #f4f4f4;
+}
+
+.leaflet-control-geocoder-alternatives {
+    background: #fff;
+    border: 1px solid #ccc;
+    border-top: none;
+    border-radius: 0 0 5px 5px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.leaflet-control-geocoder-alternatives ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.leaflet-control-geocoder-alternatives li {
+    padding: 5px 10px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+}
+
+.leaflet-control-geocoder-alternatives li:hover,
+.leaflet-control-geocoder-alternatives li.leaflet-control-geocoder-selected {
+    background: #f0f0f0;
+}
+
+.leaflet-control-geocoder-alternatives li:last-child {
+    border-bottom: none;
+}

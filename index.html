@@ -17,12 +17,14 @@
     <link rel="icon" href="img/favicon.png" type="image/png">
     <title>Galligeo</title>
 
-    <!-- Imports -->
+    <!-- GESTIONNAIRE LEAFLET UNIFIÉ (remplace 6 anciens fichiers) -->
+    <script src="js/leaflet-loader.js"></script>
 
     <!-- css -->
     <!-- external -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI=" crossorigin=""/>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw-src.css" />
+    <!-- Leaflet Draw désactivé - non utilisé dans cette application -->
+    <!-- <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw-src.css" /> -->
     <!-- <link rel="stylesheet" href="https://unpkg.com/leaflet-geosearch@3.1.0/dist/geosearch.css"/> -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
     <link rel="stylesheet" href="https://rawgithub.com/ebrelsford/Leaflet.loading/master/src/Control.Loading.css" />
@@ -35,7 +37,8 @@
     <!-- external -->
     <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js" integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM=" crossorigin=""></script>
     <script src="https://unpkg.com/leaflet-geosearch@3.1.0/dist/bundle.min.js"></script>
-    <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw-src.js"></script>
+    <!-- Leaflet Draw désactivé - non utilisé dans cette application -->
+    <!-- <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw-src.js"></script> -->
     <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
     <script src="https://rawgithub.com/ebrelsford/Leaflet.loading/master/src/Control.Loading.js"></script>
     <!-- Leaflet Rotate Plugin -->
@@ -798,7 +801,6 @@
     <!--  -->
     <!-- Modal Login-->
     <!--  -->
-
     <!-- Change the link to the login page
     <dialog aria-labelledby="fr-modal-login" id="fr-modal-login" class="fr-modal" role="dialog" >
         <div class="fr-container fr-container--fluid fr-container-md">
