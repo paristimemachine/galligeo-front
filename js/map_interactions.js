@@ -13,6 +13,39 @@ var left_map, right_map, customMarker;
 function initializeMaps() {
     console.log('🗺️ Initialisation des cartes Leaflet');
     
+    // Protection double initialisation globale
+    if (window.maps_initialized) {
+        console.log('⚠️ Les cartes sont déjà initialisées (marqueur global)');
+        return;
+    }
+    
+    // Vérifier si les cartes sont déjà initialisées
+    if (typeof left_map !== 'undefined' && left_map !== null) {
+        console.log('⚠️ Cartes déjà initialisées, ignoré la double initialisation');
+        return;
+    }
+    
+    // Vérifier si les conteneurs existent
+    const leftContainer = document.getElementById('map-left');
+    const rightContainer = document.getElementById('map-right');
+    
+    if (!leftContainer || !rightContainer) {
+        console.error('❌ Conteneurs de cartes non trouvés');
+        return;
+    }
+    
+    // Vérifier si les conteneurs ont déjà une instance Leaflet
+    if (leftContainer._leaflet_id || rightContainer._leaflet_id) {
+        console.warn('⚠️ Conteneurs déjà utilisés par Leaflet, nettoyage nécessaire');
+        // Nettoyer les références existantes
+        if (leftContainer._leaflet_id) {
+            delete leftContainer._leaflet_id;
+        }
+        if (rightContainer._leaflet_id) {
+            delete rightContainer._leaflet_id;
+        }
+    }
+    
     left_map = L.map('map-left', {
         center: [47, 2],
         zoomSnap: 0.1,

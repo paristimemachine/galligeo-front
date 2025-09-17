@@ -1,6 +1,7 @@
 js/api_interactions.js
 georef/*
 doc/*
+backups/*
 node_modules/*
 node_modules/.package-lock.json
 node_modules/@googlemaps/js-api-loader/package.json

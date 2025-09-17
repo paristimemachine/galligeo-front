@@ -279,15 +279,27 @@
         },
         
         initializeMapsIfAvailable() {
+            // Vérifier que initializeMaps n'a pas déjà été appelée
+            if (window.maps_initialized) {
+                console.log('ℹ️ Les cartes sont déjà initialisées');
+                return;
+            }
+            
             // Tentative d'initialisation des cartes
-            LeafletQueue.add(() => {
-                if (typeof initializeMaps === 'function') {
-                    console.log('🗺️ Initialisation des cartes');
-                    initializeMaps();
-                } else {
-                    console.log('ℹ️ Fonction initializeMaps non encore disponible');
-                }
-            }, 'initializeMaps');
+            if (typeof initializeMaps === 'function') {
+                console.log('🗺️ Initialisation des cartes');
+                window.maps_initialized = true;
+                initializeMaps();
+            } else {
+                console.log('ℹ️ Fonction initializeMaps non encore disponible, ajout à la queue');
+                LeafletQueue.add(() => {
+                    if (!window.maps_initialized && typeof initializeMaps === 'function') {
+                        console.log('🗺️ Initialisation des cartes depuis la queue');
+                        window.maps_initialized = true;
+                        initializeMaps();
+                    }
+                }, 'initializeMaps');
+            }
         },
         
         exposeGlobalUtilities() {
