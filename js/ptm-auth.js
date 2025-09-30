@@ -406,6 +406,54 @@ class PTMAuth {
             throw error;
         }
     }
+
+    /**
+     * Récupère toutes les cartes géoréférencées de tous les utilisateurs
+     * Cette méthode utilise un endpoint public qui agrège les données
+     */
+    async getAllGeoreferencedMaps() {
+        try {
+            const response = await fetch(`${this.baseUrl}/public/galligeo/georeferenced-maps`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Erreur API: ${response.status}`);
+            }
+
+            const data = await response.json();
+            return data.maps || [];
+        } catch (error) {
+            console.error('Erreur lors de la récupération de toutes les cartes géoréférencées:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Récupère les statistiques publiques des cartes géoréférencées
+     */
+    async getGeoreferencedMapsStats() {
+        try {
+            const response = await fetch(`${this.baseUrl}/public/galligeo/georeferenced-stats`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Erreur API: ${response.status}`);
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Erreur lors de la récupération des statistiques:', error);
+            throw error;
+        }
+    }
 }
 
 // Instance globale

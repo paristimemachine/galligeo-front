@@ -6,6 +6,8 @@
     <link rel="stylesheet" href="node_modules/@gouvfr/dsfr/dist/dsfr.min.css">
     <link rel="stylesheet" href="node_modules/@gouvfr/dsfr/dist/component/form/form.min.css">
     <link rel="stylesheet" href="node_modules/@gouvfr/dsfr/dist/component/segmented/segmented.min.css">
+    <link href="node_modules/@gouvfr/dsfr/dist/core/core.min.css" rel="stylesheet">
+    <link href="node_modules/@gouvfr/dsfr/dist/component/link/link.min.css" rel="stylesheet">
 
     <link rel="stylesheet" href="node_modules/@gouvfr/dsfr/dist/utility/icons/icons.min.css">
 
@@ -79,6 +81,11 @@
                     <div class="fr-header__tools">
                         <div class="fr-header__tools-links">
                             <ul class="fr-btns-group">
+                                <li>
+                                    <a class="fr-btn fr-icon-map-2-line" href="cartes-georeferencees.html" style="color:#000091;" title="Découvrir les cartes géoréférencées">
+                                        Cartes géoréférencées
+                                    </a>
+                                </li>
                                 <!-- <li>
                                     <a class="fr-btn fr-icon-add-circle-line" href="#" style="color:#ff5555;">
                                         Créer un espace
@@ -120,7 +127,13 @@
                 <nav class="fr-nav" id="navigation-564" role="navigation" aria-label="Menu principal">
                     <ul class="fr-nav__list">
                         <li class="fr-nav__item">
-                            <a class="fr-nav__link" href="#" target="_self">accès direct</a>
+                            <a class="fr-nav__link" href="cartes-georeferencees.html" target="_self">
+                                <span class="fr-icon-map-2-fill fr-mr-1w" aria-hidden="true"></span>
+                                Cartes géoréférencées
+                            </a>
+                        </li>
+                        <li class="fr-nav__item">
+                            <a class="fr-nav__link" href="#" target="_self">Accès direct</a>
                         </li>
                     </ul>
                 </nav>
@@ -159,15 +172,18 @@
             <!-- search bar -->
             <div class="fr-col-5" id="nav-search-bar">
                     <div class="fr-search-bar autocomplete" id="header-search" role="search">
+                        <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                            <img src="img/favicon_gallica.png" alt="Gallica" onclick="window.open('https://gallica.bnf.fr/', '_blank')" style="width: 32px; height: 32px; cursor: pointer;" title="Aller sur Gallica">
+                        </div>
                         <table border=0>
                             <tr>
                             <td><label class="fr-label" for="search-784-input" onkeydown='load_ark_picture()'>
-                                (1) Ark : -> Gallica
+                                (1) Charger une image depuis Gallica
                             </label>
                             </td><td>
                                 <input class="fr-input" placeholder="Entrer une URL Gallica Ark de type : https://gallica.bnf.fr/ark:/12148/btv1b106799487" type="search" id="search-784-input" name="search-784-input"> <!--list="sites_list"> -->
                                     </td><td>
-                                <button class="fr-btn" title="Ark : -> Gallica" onclick='load_ark_picture()'>
+                                <button class="fr-btn" title="Charger une image depuis Gallica" onclick='load_ark_picture()'>
                                 </button>
                             </td></tr>
                         </table>
@@ -184,7 +200,7 @@
                     <div class="fr-messages-group" id="toggle-messages" aria-live="polite">
                     </div>
                 </div>
-                <fieldset class="fr-segmented fr-segmented--no-legend">
+                <fieldset class="fr-segmented fr-segmented--no-legend" title="Sasir des points de contrôle et l'emprise utile de la carte, la zone exclue sera découpée">
                     <legend class="fr-segmented__legend fr-segmented__legend--inline">
                         Saisir
                         <!-- <span class="fr-hint-text">Description additionnelle</span> -->
@@ -203,6 +219,7 @@
                             </label>
                         </div>
                     </div>
+                </fieldset>
                 </fieldset>
 
                 <button class="fr-btn fr-btn--secondary" id="btn_georef" disabled onclick="click_georef('', list_georef_points, list_points_polygon_crop, input_ark)"> 
@@ -760,7 +777,7 @@
     <!-- END Container principal -->
 
     <!--  -->
-    <!-- FOOTER -->
+    <!-- FOOTER  style="--icon-size:0;width:0;height:0;vertical-size:0" -->
     <!--  -->
     <footer class="footer">
         <p>Made with
@@ -768,12 +785,20 @@
                 <path fill="currentColor" d="M462.3 62.6C407.5 15.9 326 24.3 275.7 76.2L256 96.5l-19.7-20.3C186.1 24.3 104.5 15.9 49.7 62.6c-62.8 53.6-66.1 149.8-9.9 207.9l193.5 199.8c12.5 12.9 32.8 12.9 45.3 0l193.5-199.8c56.3-58.1 53-154.3-9.8-207.9z">
                 </path>
             </svg>
-            &nbsp by <img class="fr-responsive-img" style="width:auto; height:28px;" src="img/logo_ptm_small.png" alt="PTM" >
-           <a href="https://ptm.huma-num.fr/" target="_blank">PTM</a>
-           &nbsp + <a href="https://www.huma-num.fr/" target="_blank"><img class="fr-responsive-img" style="width:auto; height:16px;" src="img/logo_hn.png" alt="Huma-Num" ></a>
-           &nbsp + <a href="https://www.bnf.fr/fr/bnf-datalab" target="_blank"><img class="fr-responsive-img" style="width:auto; height:16px;" src="img/logo_bnf_datalab.png" alt="BnF / Datalab" ></a>
-           &nbsp;— <a href="https://github.com/paristimemachine/galligeo-front" target="_blank">Code &amp; Documentation</a>
+            &nbsp by <img class="fr-responsive-img footer-logo" style="width:auto; height:28px; cursor: pointer;" src="img/logo_ptm_small.png" alt="PTM" onclick="openExternalLink('https://ptm.huma-num.fr/')" title="Projets Time Machine">
+            
+           <img class="fr-responsive-img footer-logo" style="width:auto; height:16px; cursor: pointer;" src="img/logo_hn.png" alt="Huma-Num" onclick="openExternalLink('https://www.huma-num.fr/')" title="Huma-Num">
+           &nbsp;+&nbsp;
+           <img class="fr-responsive-img footer-logo" style="width:auto; height:16px; cursor: pointer;" src="img/logo_bnf_datalab.png" alt="BnF / Datalab" onclick="openExternalLink('https://www.bnf.fr/fr/bnf-datalab')" title="BnF / Datalab">
+           &nbsp;—&nbsp;
+           <span style="cursor: pointer; text-decoration: underline;" onclick="openExternalLink('https://github.com/paristimemachine/galligeo-front')" title="Code & Documentation">Code &amp; Documentation</span>
            &nbsp;—
+
+<script>
+function openExternalLink(url) {
+    window.open(url, '_blank', 'noopener,noreferrer');
+}
+</script>
            <span id="app-version-info" class="version-info" style="opacity: 0.7; font-size: 0.85em; color: #666;">
                <span id="version-display">Chargement...</span>
                <span id="version-details" style="display: none;">
@@ -938,6 +963,7 @@
     <!-- Script en version es6 module et nomodule pour les navigateurs le ne supportant pas -->
     <script type="module" src="node_modules/@gouvfr/dsfr/dist/dsfr.module.min.js"></script>
     <script type="text/javascript" nomodule src="node_modules/@gouvfr/dsfr/dist/dsfr.nomodule.min.js"></script>
+    <script type="module" src="node_modules/@gouvfr/dsfr/dist/core/core.module.min.js"></script>
     <!-- internal -->
     <script src="js/version.js"></script>
     <script src="js/clonelayers.js"></script>
@@ -958,6 +984,7 @@
     <script src="js/worked-maps-manager.js"></script>
     <script src="js/control-points-backup.js"></script>
     <script src="js/test-deposit-button.js"></script>
+    <script src="js/api_health.js"></script>
 
     <script>
     // Variable globale pour suivre l'état d'initialisation

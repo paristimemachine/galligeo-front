@@ -3,6 +3,12 @@ const bingAerial = new L.BingLayer('AtpNIxEZLSN40SwkHvqVlUMSwMExSusN9Ga7g3bkmFTe
   maxZoom: 19
 });
 
+const ESRIWorldImagery = new L.tileLayer('https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}.png', {
+  minZoom: 4,
+  maxZoom: 19,
+  attribution: '&copy; ESRI World Imagery'
+});
+
 const layerNames = [ "1895", "1892", "1845", "1838" ]
 const layerIds = [ "btv1b530761213", "btv1b8445742g", "btv1b84432387", "btv1b531027643" ]
 const URL_TILE_SERVER = "https://tile.ptm.huma-num.fr/tiles/ark/";
@@ -43,7 +49,8 @@ async function getLayerFromArk(ark, name) {
 }
 
 async function getOverlays() {
-  let overlayers = [ bingAerial ];
+//  let overlayers = [ bingAerial ];
+  let overlayers = [ ESRIWorldImagery ];
   for (let i = 0; i < layerNames.length; i++) {
     let l = await getLayerFromArk(layerIds[i], layerNames[i]);
     overlayers.push(l);

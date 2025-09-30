@@ -118,7 +118,7 @@ async function deposerSurNakala(apiKey_in, collection_id_in) {
         "La carte géoréférencée est visible à l'adresse suivante : " +  url_app_ptm + '\n\n' +
         "Le flux de tuile peut être utilisé dans un SIG, avec l'URL suivante : " + url_tile_ptm_sub + '\n\n' +
         "Les données sont disponibles sous la licence " + LICENSE + ", et peuvent être utilisées pour des projets de recherche ou d'enseignement."  + '\n\n' +
-        "Pour toute question, vous pouvez contacter l'équipe de GallicaGeo à l'adresse suivante : galligeo@ptm.huma-num.fr"
+        "Pour toute question, vous pouvez contacter l'équipe de GallicaGeo à l'adresse suivante : ptm-galligeo@listes.huma-num.fr"
 
     const metas = [];
 

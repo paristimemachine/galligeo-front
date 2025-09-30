@@ -1,0 +1,512 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="node_modules/@gouvfr/dsfr/dist/dsfr.min.css">
+    <link rel="stylesheet" href="node_modules/@gouvfr/dsfr/dist/component/form/form.min.css">
+    <link rel="stylesheet" href="node_modules/@gouvfr/dsfr/dist/component/table/table.min.css">
+    <link rel="stylesheet" href="node_modules/@gouvfr/dsfr/dist/component/segmented/segmented.min.css">
+    <link href="node_modules/@gouvfr/dsfr/dist/core/core.min.css" rel="stylesheet">
+    <link href="node_modules/@gouvfr/dsfr/dist/component/link/link.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="node_modules/@gouvfr/dsfr/dist/utility/icons/icons.min.css">
+
+    <meta name="theme-color" content="#000091">
+
+    <!-- Favicon -->
+    <link rel="apple-touch-icon" href="img/favicon.png">
+    <link rel="icon" href="img/favicon.png" type="image/png">
+    <title>Cartes géoréférencées - Galligeo</title>
+
+    <!-- CSS interne -->
+    <link rel="stylesheet" href="css/main.css"/>
+
+    <style>
+        .search-container {
+            margin-bottom: 2rem;
+        }
+        
+        .view-toggle-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        
+        .cards-container {
+            display: block;
+        }
+        
+        .table-container {
+            display: none;
+        }
+        
+        .card-image {
+            height: 200px;
+            object-fit: cover;
+        }
+        
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 300px;
+        }
+        
+        .error-message {
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .pagination-container {
+            margin-top: 2rem;
+            text-align: center;
+        }
+        
+        .stats-container {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: #f6f6f6;
+            border-radius: 4px;
+        }
+        
+        .filter-container {
+            margin-bottom: 2rem;
+        }
+        
+        .footer {
+            margin-top: 4rem;
+            padding: 2rem 0;
+            background: #f6f6f6;
+            text-align: center;
+        }
+        
+        .footer-logo {
+            margin: 0 0.5rem;
+        }
+        
+        .heart-icon {
+            width: 16px;
+            height: 16px;
+            color: #e74c3c;
+        }
+        
+        .version-info {
+            font-size: 0.85em;
+            color: #666;
+        }
+    </style>
+  </head>
+  <body>
+
+    <!--  -->
+    <!-- HEADER -->
+    <!--  -->
+    <header role="banner" class="fr-header">
+        <div class="fr-header__body">
+            <div class="fr-container--fluid">
+                <div class="fr-header__body-row">
+                    <div class="fr-header__brand fr-enlarge-link" style="margin-left: 24px;">
+                        <div class="fr-header__brand-top">
+                            <div class="fr-header__logo">
+                            </div>
+                            <div class="fr-header__operator">
+                                <a href="index.html" title="Retour à l'accueil - Galligeo">
+                                    <img class="fr-responsive-img" style="width:auto; height:70px; margin-left: -32px;" src="img/logo_galligeo.png" alt="Galligeo" >
+                                </a>
+                            </div>
+                            <div class="fr-header__navbar">
+                                <button class="fr-btn--search fr-btn" data-fr-opened="false" aria-controls="modal-575" id="button-576" title="Rechercher">
+                                    Rechercher
+                                </button>
+                                <button class="fr-btn--menu fr-btn" data-fr-opened="false" aria-controls="modal-577" aria-haspopup="menu" id="button-578" title="Menu">
+                                    Menu
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="fr-header__tools">
+                        <div class="fr-header__tools-links">
+                            <ul class="fr-btns-group">
+                                <li>
+                                    <a class="fr-btn fr-icon-home-4-line" href="index.html" style="color:#000091;">
+                                        Accueil
+                                    </a>
+                                </li>
+                                <li id="auth-button-container">
+                                    <button class="fr-btn fr-icon-lock-line" href="#" style="color:#ff5555;" onclick="window.location.href='https://api.ptm.huma-num.fr/auth/login?redirect_url=https://app.ptm.huma-num.fr/galligeo/cartes-georeferencees.html'">
+                                        Se connecter avec ORCID
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="fr-header__menu fr-modal" id="modal-560" aria-labelledby="button-561" style="display:none;visibility: hidden;">
+            <div class="fr-container">
+                <button class="fr-btn--close fr-btn" aria-controls="modal-560" title="Fermer">
+                    Fermer
+                </button>
+                <div class="fr-header__menu-links">
+                </div>
+                <nav class="fr-nav" id="navigation-564" role="navigation" aria-label="Menu principal">
+                    <ul class="fr-nav__list">
+                        <li class="fr-nav__item">
+                            <a class="fr-nav__link" href="index.html" target="_self">Galligeo</a>
+                        </li>
+                        <li class="fr-nav__item">
+                            <a class="fr-nav__link" href="cartes-georeferencees.html" target="_self">Cartes géoréférencées</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Container principal pour le contenu -->
+    <div class="fr-container fr-py-4w">
+
+        <!-- Titre de la page -->
+        <div class="fr-grid-row fr-grid-row--center">
+            <div class="fr-col-12">
+                <h1 class="fr-h1 fr-mb-4w">
+                    <span class="fr-icon-map-2-fill fr-mr-2w" aria-hidden="true"></span>
+                    Cartes géoréférencées par la communauté
+                </h1>
+                
+                <p class="fr-text--lg fr-mb-4w">
+                    Découvrez les cartes historiques géoréférencées par les utilisateurs de Galligeo. 
+                    Ces cartes proviennent des collections de <a href="https://gallica.bnf.fr" target="_blank" rel="noopener">Gallica (BnF)</a> 
+                    et ont été géolocalisées avec précision par notre communauté.
+                </p>
+            </div>
+        </div>
+
+        <!-- Statistiques -->
+        <div class="fr-grid-row fr-grid-row--center fr-mb-4w">
+            <div class="fr-col-12">
+                <div class="stats-container">
+                    <div class="fr-grid-row fr-grid-row--gutters">
+                        <div class="fr-col-md-4 fr-col-12">
+                            <div class="fr-card fr-card--no-border">
+                                <div class="fr-card__body">
+                                    <div class="fr-card__content">
+                                        <h3 class="fr-card__title" id="total-count">
+                                            <span class="fr-icon-loader-line" aria-hidden="true"></span>
+                                            Chargement...
+                                        </h3>
+                                        <p class="fr-card__desc">Cartes géoréférencées</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="fr-col-md-4 fr-col-12">
+                            <div class="fr-card fr-card--no-border">
+                                <div class="fr-card__body">
+                                    <div class="fr-card__content">
+                                        <h3 class="fr-card__title" id="contributors-count">
+                                            <span class="fr-icon-loader-line" aria-hidden="true"></span>
+                                            Chargement...
+                                        </h3>
+                                        <p class="fr-card__desc">Contributeurs</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="fr-col-md-4 fr-col-12">
+                            <div class="fr-card fr-card--no-border">
+                                <div class="fr-card__body">
+                                    <div class="fr-card__content">
+                                        <h3 class="fr-card__title" id="recent-count">
+                                            <span class="fr-icon-loader-line" aria-hidden="true"></span>
+                                            Chargement...
+                                        </h3>
+                                        <p class="fr-card__desc">Ce mois-ci</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Barre de recherche -->
+        <div class="fr-grid-row fr-grid-row--center">
+            <div class="fr-col-12 fr-col-lg-8">
+                <div class="search-container">
+                    <div class="fr-search-bar" id="search-bar">
+                        <label class="fr-label" for="search-input">
+                            Rechercher dans les cartes géoréférencées
+                        </label>
+                        <input class="fr-input" 
+                               placeholder="Entrez un titre, lieu, créateur, date..." 
+                               type="search" 
+                               id="search-input" 
+                               name="search-input">
+                        <button class="fr-btn" title="Rechercher" id="search-button">
+                            Rechercher
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filtres et options d'affichage -->
+        <div class="fr-grid-row fr-grid-row--center">
+            <div class="fr-col-12">
+                <div class="view-toggle-container">
+                    <div class="filter-container">
+                        <fieldset class="fr-fieldset fr-fieldset--inline">
+                            <legend class="fr-fieldset__legend">
+                                Filtrer par période :
+                            </legend>
+                            <div class="fr-fieldset__content">
+                                <div class="fr-select-group">
+                                    <label class="fr-label" for="period-filter">Période</label>
+                                    <select class="fr-select" id="period-filter" name="period-filter">
+                                        <option value="">Toutes les périodes</option>
+                                        <option value="moyen-age">Moyen Âge</option>
+                                        <option value="renaissance">Renaissance (XVe-XVIe s.)</option>
+                                        <option value="moderne">Époque moderne (XVIIe-XVIIIe s.)</option>
+                                        <option value="19e">XIXe siècle</option>
+                                        <option value="20e">XXe siècle</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </div>
+                    
+                    <div class="view-toggle">
+                        <fieldset class="fr-segmented fr-segmented--no-legend">
+                            <legend class="fr-segmented__legend fr-segmented__legend--inline">
+                                Affichage
+                            </legend>
+                            <div class="fr-segmented__elements">
+                                <div class="fr-segmented__element">
+                                    <input value="cards" checked type="radio" id="view-cards" name="view-mode">
+                                    <label class="fr-label" for="view-cards">
+                                        <span class="fr-icon-grid-fill" aria-hidden="true"></span>
+                                        Cartes
+                                    </label>
+                                </div>
+                                <div class="fr-segmented__element">
+                                    <input value="table" type="radio" id="view-table" name="view-mode">
+                                    <label class="fr-label" for="view-table">
+                                        <span class="fr-icon-table-line" aria-hidden="true"></span>
+                                        Tableau
+                                    </label>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Résultats -->
+        <div class="fr-grid-row fr-grid-row--center">
+            <div class="fr-col-12">
+                
+                <!-- Affichage en cartes -->
+                <div id="cards-container" class="cards-container">
+                    <div class="fr-grid-row fr-grid-row--gutters" id="cards-grid">
+                        <!-- Loading initial -->
+                        <div class="fr-col-12">
+                            <div class="loading-spinner">
+                                <div class="fr-card fr-card--no-border">
+                                    <div class="fr-card__body">
+                                        <div class="fr-card__content">
+                                            <p class="fr-text--lg">
+                                                <span class="fr-icon-loader-line fr-mr-2w" aria-hidden="true"></span>
+                                                Chargement des cartes géoréférencées...
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Affichage en tableau -->
+                <div id="table-container" class="table-container">
+                    <div class="fr-table fr-table--lg">
+                        <table id="maps-table">
+                            <caption>Liste des cartes géoréférencées</caption>
+                            <thead>
+                                <tr>
+                                    <th scope="col">Titre</th>
+                                    <th scope="col">Créateur</th>
+                                    <th scope="col">Date</th>
+                                    <th scope="col">Géoréférencé par</th>
+                                    <th scope="col">Géoréférencé le</th>
+                                    <th scope="col">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-body">
+                                <!-- Le contenu sera généré dynamiquement -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                <div class="pagination-container">
+                    <nav role="navigation" class="fr-pagination" aria-label="Pagination navigation" id="pagination-nav" style="display: none;">
+                        <ul class="fr-pagination__list">
+                            <!-- La pagination sera générée dynamiquement -->
+                        </ul>
+                    </nav>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+    <!-- END Container principal -->
+
+    <!--  -->
+    <!-- FOOTER -->
+    <!--  -->
+    <footer class="footer">
+        <p>Made with
+            <svg class="heart-icon" aria-hidden="true" focusable="false" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                <path fill="currentColor" d="M462.3 62.6C407.5 15.9 326 24.3 275.7 76.2L256 96.5l-19.7-20.3C186.1 24.3 104.5 15.9 49.7 62.6c-62.8 53.6-66.1 149.8-9.9 207.9l193.5 199.8c12.5 12.9 32.8 12.9 45.3 0l193.5-199.8c56.3-58.1 53-154.3-9.8-207.9z">
+                </path>
+            </svg>
+            &nbsp by <img class="fr-responsive-img footer-logo" style="width:auto; height:28px; cursor: pointer;" src="img/logo_ptm_small.png" alt="PTM" onclick="openExternalLink('https://ptm.huma-num.fr/')" title="Projets Time Machine">
+            
+           <img class="fr-responsive-img footer-logo" style="width:auto; height:16px; cursor: pointer;" src="img/logo_hn.png" alt="Huma-Num" onclick="openExternalLink('https://www.huma-num.fr/')" title="Huma-Num">
+           &nbsp;+&nbsp;
+           <img class="fr-responsive-img footer-logo" style="width:auto; height:16px; cursor: pointer;" src="img/logo_bnf_datalab.png" alt="BnF / Datalab" onclick="openExternalLink('https://www.bnf.fr/fr/bnf-datalab')" title="BnF / Datalab">
+           &nbsp;—&nbsp;
+           <span style="cursor: pointer; text-decoration: underline;" onclick="openExternalLink('https://github.com/paristimemachine/galligeo-front')" title="Code & Documentation">Code &amp; Documentation</span>
+           &nbsp;—
+           <span id="app-version-info" class="version-info" style="opacity: 0.7; font-size: 0.85em; color: #666;">
+               <span id="version-display">Chargement...</span>
+           </span>
+        </p>
+    </footer>
+    <!--  -->
+    <!-- END FOOTER -->
+    <!--  -->
+
+    <!-- Scripts DSFR -->
+    <script type="module" src="node_modules/@gouvfr/dsfr/dist/dsfr.module.min.js"></script>
+    <script type="text/javascript" nomodule src="node_modules/@gouvfr/dsfr/dist/dsfr.nomodule.min.js"></script>
+    <script type="module" src="node_modules/@gouvfr/dsfr/dist/core/core.module.min.js"></script>
+
+    <!-- Scripts de l'application -->
+    <script src="js/version.js"></script>
+    <script src="js/ptm-auth.js"></script>
+    <script src="js/cartes-georeferencees.js"></script>
+
+    <script>
+        function openExternalLink(url) {
+            window.open(url, '_blank', 'noopener,noreferrer');
+        }
+
+        // Initialisation de la page
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('Initialisation de la page des cartes géoréférencées');
+            
+            // Vérifier l'authentification au chargement
+            await checkAuthenticationStatus();
+            
+            // Initialiser le gestionnaire des cartes géoréférencées
+            if (window.cartesGeoreferencees) {
+                await window.cartesGeoreferencees.init();
+            }
+            
+            // Initialiser l'affichage de version
+            initializeVersionDisplay();
+        });
+
+        // Fonction pour vérifier l'état d'authentification
+        async function checkAuthenticationStatus() {
+            try {
+                // Vérifier si l'utilisateur revient d'une authentification (token dans l'URL)
+                const urlParams = new URLSearchParams(window.location.search);
+                const token = urlParams.get('token') || urlParams.get('access_token');
+                
+                if (token) {
+                    console.log('Token détecté dans l\'URL, configuration de l\'authentification...');
+                    window.ptmAuth.setToken(token);
+                    
+                    // Nettoyer l'URL
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
+                
+                const isAuthenticated = await window.ptmAuth.checkAuthStatus();
+                updateAuthenticationUI(isAuthenticated);
+                
+            } catch (error) {
+                console.error('Erreur lors de la vérification de l\'authentification:', error);
+                updateAuthenticationUI(false);
+            }
+        }
+
+        // Fonction pour mettre à jour l'interface utilisateur selon l'état d'authentification
+        function updateAuthenticationUI(isAuthenticated) {
+            const authContainer = document.getElementById('auth-button-container');
+            
+            if (isAuthenticated && authContainer) {
+                // Remplacer le bouton de connexion par les informations utilisateur
+                window.ptmAuth.getUserProfile().then(userProfile => {
+                    authContainer.innerHTML = `
+                        <div class="user-menu-container">
+                            <span class="fr-text--sm">
+                                <span class="fr-icon-account-circle-line fr-mr-1w" aria-hidden="true"></span>
+                                ${userProfile.first_name} ${userProfile.last_name}
+                            </span>
+                            <button class="fr-btn fr-btn--sm fr-btn--secondary fr-ml-2w" onclick="window.ptmAuth.logout()">
+                                Déconnexion
+                            </button>
+                        </div>
+                    `;
+                });
+            }
+        }
+
+        // Fonction pour initialiser l'affichage de version
+        function initializeVersionDisplay() {
+            const versionDisplay = document.getElementById('version-display');
+            
+            if (!versionDisplay) return;
+            
+            // Attendre que les informations de version soient disponibles
+            function updateVersionInfo() {
+                if (window.APP_VERSION) {
+                    const version = window.APP_VERSION;
+                    versionDisplay.textContent = version.shortDisplayVersion;
+                } else {
+                    // Réessayer dans 100ms si les informations ne sont pas encore disponibles
+                    setTimeout(updateVersionInfo, 100);
+                }
+            }
+            
+            updateVersionInfo();
+        }
+    </script>
+
+    <!-- Matomo -->
+    <script>
+    var _paq = window._paq = window._paq || [];
+    /* tracker methods like "setCustomDimension" should be called before "trackPageView" */
+    _paq.push(['trackPageView']);
+    _paq.push(['enableLinkTracking']);
+    (function() {
+        var u="//ptm.huma-num.fr/matomo/";
+        _paq.push(['setTrackerUrl', u+'matomo.php']);
+        _paq.push(['setSiteId', '23']);
+        var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+        g.async=true; g.src=u+'matomo.js'; s.parentNode.insertBefore(g,s);
+    })();
+    </script>
+    <!-- End Matomo Code -->
+
+  </body>
+</html>

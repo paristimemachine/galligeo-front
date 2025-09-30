@@ -11,10 +11,12 @@ class APIHealthMonitor {
         this.timeoutDuration = 10000; // Timeout de 10 secondes
         
         // URLs à tester
-        this.gallicaTestUrl = 'https://gallica.bnf.fr/api/iiif/ark:/12148/btv1b53060669r/f1/info.json';
-        this.ptmTileTestUrl = 'https://ptm.huma-num.fr/tiles/health';
+        // TEMPORAIRE: URL de test IIIF - à remplacer par un endpoint health dédié
+        this.gallicaTestUrl = 'https://gallica.bnf.fr/iiif/ark:/12148/btv1b90017179/f15/info.json';
+        // TEMPORAIRE: URL de test pour le serveur de tuiles PTM - à remplacer par un endpoint health dédié
+        this.ptmTileTestUrl = 'https://tile.ptm.huma-num.fr/tiles/ark/info_tiles/12148/btv1b53121232b';
         
-        // Fallback si l'endpoint health n'existe pas
+        // Fallback si l'endpoint temporaire n'existe pas
         this.ptmTileFallbackUrl = 'https://ptm.huma-num.fr/tiles/osm/{z}/{x}/{y}.png';
         
         this.intervalId = null;
@@ -36,9 +38,9 @@ class APIHealthMonitor {
     }
     
     addHealthIndicators() {
-        const versionInfo = document.getElementById('app-version-info');
-        if (!versionInfo) {
-            console.warn('Élément version non trouvé, impossible d\'ajouter les indicateurs de santé');
+        const footerParagraph = document.querySelector('.footer p');
+        if (!footerParagraph) {
+            console.warn('Élément footer non trouvé, impossible d\'ajouter les indicateurs de santé');
             return;
         }
         
@@ -46,10 +48,11 @@ class APIHealthMonitor {
         const healthContainer = document.createElement('span');
         healthContainer.id = 'api-health-indicators';
         healthContainer.style.cssText = `
-            margin-left: 10px;
+            margin-left: auto;
             display: inline-flex;
             gap: 8px;
             align-items: center;
+            margin-right: 10px;
         `;
         
         // Indicateur Gallica
@@ -61,11 +64,8 @@ class APIHealthMonitor {
         healthContainer.appendChild(gallicaIndicator);
         healthContainer.appendChild(ptmIndicator);
         
-        // Insérer après le span version-display
-        const versionDisplay = document.getElementById('version-display');
-        if (versionDisplay && versionDisplay.parentNode) {
-            versionDisplay.parentNode.insertBefore(healthContainer, versionDisplay.nextSibling);
-        }
+        // Ajouter à la fin du paragraphe du footer
+        footerParagraph.appendChild(healthContainer);
     }
     
     createIndicator(type, label) {
@@ -150,13 +150,14 @@ class APIHealthMonitor {
     
     async checkGallicaHealth() {
         try {
-            console.log('Vérification de l\'état de l\'API Gallica...');
+            console.log('Vérification de l\'état de l\'API Gallica IIIF...');
             
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), this.timeoutDuration);
             
+            // Test avec l'endpoint IIIF info.json (temporaire - en attendant un endpoint health)
             const response = await fetch(this.gallicaTestUrl, {
-                method: 'HEAD', // Utiliser HEAD pour éviter de télécharger le contenu
+                method: 'GET', // Utiliser GET pour récupérer le JSON d'info IIIF
                 signal: controller.signal,
                 mode: 'cors'
             });
@@ -164,13 +165,28 @@ class APIHealthMonitor {
             clearTimeout(timeoutId);
             
             if (response.ok) {
-                this.gallicaStatus = 'healthy';
-                this.updateIndicator('gallica', 'healthy');
-                console.log('API Gallica: OK');
+                // Vérifier en plus que le contenu JSON est valide pour l'API IIIF
+                try {
+                    const data = await response.json();
+                    // Vérifier que c'est bien un document IIIF valide
+                    if (data && (data['@context'] || data.protocol)) {
+                        this.gallicaStatus = 'healthy';
+                        this.updateIndicator('gallica', 'healthy');
+                        console.log('API Gallica IIIF: OK');
+                    } else {
+                        this.gallicaStatus = 'warning';
+                        this.updateIndicator('gallica', 'warning', 'Réponse inattendue');
+                        console.warn('API Gallica IIIF: Réponse JSON invalide');
+                    }
+                } catch (jsonError) {
+                    this.gallicaStatus = 'warning';
+                    this.updateIndicator('gallica', 'warning', 'JSON invalide');
+                    console.warn('API Gallica IIIF: Erreur parsing JSON');
+                }
             } else {
                 this.gallicaStatus = 'error';
                 this.updateIndicator('gallica', 'error', `HTTP ${response.status}`);
-                console.warn(`API Gallica: Erreur HTTP ${response.status}`);
+                console.warn(`API Gallica IIIF: Erreur HTTP ${response.status}`);
             }
             
         } catch (error) {
@@ -178,10 +194,10 @@ class APIHealthMonitor {
             
             if (error.name === 'AbortError') {
                 this.updateIndicator('gallica', 'error', 'Timeout');
-                console.warn('API Gallica: Timeout');
+                console.warn('API Gallica IIIF: Timeout');
             } else {
                 this.updateIndicator('gallica', 'error', error.message);
-                console.warn('API Gallica: Erreur', error);
+                console.warn('API Gallica IIIF: Erreur', error);
             }
         }
     }
@@ -195,31 +211,72 @@ class APIHealthMonitor {
             
             let response;
             
-            // Essayer d'abord l'endpoint dédié à la santé
+            // Essayer d'abord l'endpoint temporaire info_tiles
             try {
                 response = await fetch(this.ptmTileTestUrl, {
                     method: 'GET',
                     signal: controller.signal
                 });
-            } catch (healthError) {
-                // Si l'endpoint health n'existe pas, tester avec une tuile OSM
-                console.log('Endpoint health non disponible, test avec une tuile...');
+                
+                clearTimeout(timeoutId);
+                
+                if (response.ok) {
+                    // Vérifier que la réponse contient des informations sur les tuiles
+                    try {
+                        const data = await response.json();
+                        // Vérifier que c'est bien une réponse d'info tuiles valide
+                        // L'endpoint info_tiles PTM renvoie un objet avec des propriétés comme name, type, bounds, etc.
+                        if (data && typeof data === 'object' && 
+                            (data.name || data.type || data.bounds || data.maxzoom || data.tiles || data.tileInfo || data.layers || data.status)) {
+                            this.ptmTileStatus = 'healthy';
+                            this.updateIndicator('ptm', 'healthy');
+                            console.log('Serveur PTM (info_tiles): OK');
+                        } else {
+                            this.ptmTileStatus = 'warning';
+                            this.updateIndicator('ptm', 'warning', 'Réponse inattendue');
+                            console.warn('Serveur PTM: Réponse JSON inattendue', data);
+                        }
+                    } catch (jsonError) {
+                        // Si ce n'est pas du JSON, mais que le statut HTTP est OK
+                        if (response.status === 200) {
+                            this.ptmTileStatus = 'healthy';
+                            this.updateIndicator('ptm', 'healthy');
+                            console.log('Serveur PTM: OK (réponse non-JSON)');
+                        } else {
+                            this.ptmTileStatus = 'warning';
+                            this.updateIndicator('ptm', 'warning', 'Format inattendu');
+                            console.warn('Serveur PTM: Réponse dans un format inattendu');
+                        }
+                    }
+                } else {
+                    this.ptmTileStatus = 'warning';
+                    this.updateIndicator('ptm', 'warning', `HTTP ${response.status}`);
+                    console.warn(`Serveur PTM: Réponse HTTP ${response.status}`);
+                }
+                
+            } catch (infoTilesError) {
+                // Si l'endpoint info_tiles n'existe pas, essayer le fallback avec une tuile OSM
+                console.log('Endpoint info_tiles non disponible, test avec une tuile OSM...');
+                
+                const fallbackController = new AbortController();
+                const fallbackTimeoutId = setTimeout(() => fallbackController.abort(), this.timeoutDuration);
+                
                 response = await fetch(this.ptmTileFallbackUrl.replace('{z}', '0').replace('{x}', '0').replace('{y}', '0'), {
                     method: 'HEAD',
-                    signal: controller.signal
+                    signal: fallbackController.signal
                 });
-            }
-            
-            clearTimeout(timeoutId);
-            
-            if (response.ok) {
-                this.ptmTileStatus = 'healthy';
-                this.updateIndicator('ptm', 'healthy');
-                console.log('Serveur PTM: OK');
-            } else {
-                this.ptmTileStatus = 'warning';
-                this.updateIndicator('ptm', 'warning', `HTTP ${response.status}`);
-                console.warn(`Serveur PTM: Réponse HTTP ${response.status}`);
+                
+                clearTimeout(fallbackTimeoutId);
+                
+                if (response.ok) {
+                    this.ptmTileStatus = 'healthy';
+                    this.updateIndicator('ptm', 'healthy');
+                    console.log('Serveur PTM (fallback): OK');
+                } else {
+                    this.ptmTileStatus = 'warning';
+                    this.updateIndicator('ptm', 'warning', `HTTP ${response.status}`);
+                    console.warn(`Serveur PTM (fallback): Réponse HTTP ${response.status}`);
+                }
             }
             
         } catch (error) {

@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test - Cartes Géoréférencées</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .warning { background-color: #fff3cd; border-color: #ffeaa7; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        #results {
+            margin-top: 20px;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 3px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Tests - Fonctionnalité Cartes Géoréférencées</h1>
+    
+    <div class="test-section">
+        <h2>1. Test des fichiers essentiels</h2>
+        <p>Vérification de la présence des fichiers requis :</p>
+        <div id="file-tests">
+            <div id="html-test">❓ cartes-georeferencees.html</div>
+            <div id="js-test">❓ js/cartes-georeferencees.js</div>
+            <div id="auth-test">❓ js/ptm-auth.js</div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. Test de l'API Mock</h2>
+        <p>Tests de connectivité avec le serveur API mock :</p>
+        <button class="test-button" onclick="testMockAPI()">Tester l'API Mock</button>
+        <button class="test-button" onclick="testGeoreferencedMaps()">Tester les cartes</button>
+        <button class="test-button" onclick="testStatistics()">Tester les statistiques</button>
+        <div id="api-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. Test de l'API Gallica</h2>
+        <p>Test de récupération des métadonnées Gallica :</p>
+        <button class="test-button" onclick="testGallicaAPI()">Tester Gallica IIIF</button>
+        <div id="gallica-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>4. Test de navigation</h2>
+        <p>Liens vers la fonctionnalité :</p>
+        <a href="cartes-georeferencees.html" target="_blank" class="test-button" style="text-decoration: none; display: inline-block;">
+            Ouvrir la page des cartes géoréférencées
+        </a>
+        <a href="index.html" target="_blank" class="test-button" style="text-decoration: none; display: inline-block;">
+            Vérifier l'intégration dans l'accueil
+        </a>
+    </div>
+
+    <div id="results"></div>
+
+    <script>
+        // Test de présence des fichiers (simulation côté client)
+        async function testFiles() {
+            const files = [
+                { id: 'html-test', url: 'cartes-georeferencees.html', name: 'cartes-georeferencees.html' },
+                { id: 'js-test', url: 'js/cartes-georeferencees.js', name: 'js/cartes-georeferencees.js' },
+                { id: 'auth-test', url: 'js/ptm-auth.js', name: 'js/ptm-auth.js' }
+            ];
+
+            for (const file of files) {
+                try {
+                    const response = await fetch(file.url, { method: 'HEAD' });
+                    const element = document.getElementById(file.id);
+                    if (response.ok) {
+                        element.innerHTML = `✅ ${file.name} - OK`;
+                        element.className = 'success';
+                    } else {
+                        element.innerHTML = `❌ ${file.name} - Non trouvé (${response.status})`;
+                        element.className = 'error';
+                    }
+                } catch (error) {
+                    const element = document.getElementById(file.id);
+                    element.innerHTML = `❌ ${file.name} - Erreur: ${error.message}`;
+                    element.className = 'error';
+                }
+            }
+        }
+
+        // Test de l'API Mock
+        async function testMockAPI() {
+            const resultsDiv = document.getElementById('api-results');
+            resultsDiv.innerHTML = '<p>🔄 Test en cours...</p>';
+
+            try {
+                const response = await fetch('http://localhost:3001/test');
+                if (response.ok) {
+                    const data = await response.json();
+                    resultsDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ API Mock accessible</h4>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ API Mock non accessible</h4>
+                        <p>Erreur: ${error.message}</p>
+                        <p><strong>Solution :</strong> Lancez <code>npm run mock-api</code> dans un terminal</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Test des cartes géoréférencées
+        async function testGeoreferencedMaps() {
+            const resultsDiv = document.getElementById('api-results');
+            resultsDiv.innerHTML = '<p>🔄 Test des cartes en cours...</p>';
+
+            try {
+                const response = await fetch('http://localhost:3001/public/galligeo/georeferenced-maps');
+                if (response.ok) {
+                    const data = await response.json();
+                    resultsDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Cartes géoréférencées récupérées</h4>
+                            <p><strong>Nombre total :</strong> ${data.total}</p>
+                            <p><strong>Exemple de carte :</strong></p>
+                            <pre>${JSON.stringify(data.maps[0], null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Erreur lors de la récupération des cartes</h4>
+                        <p>Erreur: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Test des statistiques
+        async function testStatistics() {
+            const resultsDiv = document.getElementById('api-results');
+            resultsDiv.innerHTML = '<p>🔄 Test des statistiques en cours...</p>';
+
+            try {
+                const response = await fetch('http://localhost:3001/public/galligeo/georeferenced-stats');
+                if (response.ok) {
+                    const data = await response.json();
+                    resultsDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Statistiques récupérées</h4>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Erreur lors de la récupération des statistiques</h4>
+                        <p>Erreur: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Test de l'API Gallica
+        async function testGallicaAPI() {
+            const resultsDiv = document.getElementById('gallica-results');
+            resultsDiv.innerHTML = '<p>🔄 Test de Gallica en cours...</p>';
+
+            try {
+                const arkId = 'btv1b53121232b'; // Paris 1944
+                const manifestUrl = `https://gallica.bnf.fr/iiif/ark:/12148/${arkId}/manifest.json`;
+                
+                const response = await fetch(manifestUrl);
+                if (response.ok) {
+                    const data = await response.json();
+                    const title = data.metadata.find(m => m.label === 'Title')?.value || 'Titre non trouvé';
+                    
+                    resultsDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ API Gallica accessible</h4>
+                            <p><strong>ARK testé :</strong> ${arkId}</p>
+                            <p><strong>Titre :</strong> ${title}</p>
+                            <p><strong>Vignette :</strong></p>
+                            <img src="https://gallica.bnf.fr/iiif/ark:/12148/${arkId}/f1/full/200,/0/native.jpg" 
+                                 alt="Vignette test" style="max-width: 200px; border: 1px solid #ddd;">
+                        </div>
+                    `;
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="warning">
+                        <h4>⚠️ Problème avec l'API Gallica</h4>
+                        <p>Erreur: ${error.message}</p>
+                        <p>Cela peut être dû à des restrictions CORS ou à un problème réseau temporaire.</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Lancer les tests automatiquement
+        document.addEventListener('DOMContentLoaded', () => {
+            testFiles();
+        });
+    </script>
+</body>
+</html>

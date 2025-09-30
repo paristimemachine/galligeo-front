@@ -2,7 +2,7 @@
 
 **Interface de géoréférencement pour cartes historiques avec intégration Gallica**
 
-Galligeo est une application web développée par [Paris Time Machine](https://ptm.huma-num.fr/) qui permet de géoréférencer des cartes historiques issues de la bibliothèque numérique Gallica (BnF). L'outil offre une interface intuitive pour créer des points de contrôle et transformer des cartes anciennes en couches géographiques modernes utilisables dans des systèmes d'information géographique.
+Galligeo est une application web développée par [Projets Time Machine](https://ptm.huma-num.fr/) qui permet de géoréférencer des cartes historiques issues de la bibliothèque numérique Gallica (BnF). L'outil offre une interface intuitive pour créer des points de contrôle et transformer des cartes anciennes en couches géographiques modernes utilisables dans des systèmes d'information géographique.
 
 ## 🎯 Contexte et objectifs
 

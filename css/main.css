@@ -469,6 +469,7 @@ nav.fr-nav .fr-grid-row {
     align-items: center;
     justify-content: center;
     gap: 4px;
+    flex-wrap: wrap;
 }
 
 .footer a {
@@ -492,6 +493,30 @@ nav.fr-nav .fr-grid-row {
     font-family: 'Courier New', monospace;
     transition: all 0.3s ease;
     user-select: none;
+}
+
+/* Styles pour les indicateurs de santé API */
+#api-health-indicators {
+    margin-left: auto !important;
+}
+
+.api-health-indicator {
+    font-size: 0.7em !important;
+    padding: 1px 4px !important;
+    border-radius: 3px !important;
+    background-color: #f0f0f0 !important;
+    border: 1px solid #ddd !important;
+    transition: all 0.3s ease !important;
+}
+
+.api-health-indicator .status-dot {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
 }
 
 .version-info:hover {

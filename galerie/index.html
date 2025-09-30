@@ -1,0 +1,2034 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="../node_modules/@gouvfr/dsfr/dist/dsfr.min.css">
+    <link rel="stylesheet" href="../node_modules/@gouvfr/dsfr/dist/component/form/form.min.css">
+    <link rel="stylesheet" href="../node_modules/@gouvfr/dsfr/dist/component/table/table.min.css">
+    <link rel="stylesheet" href="../node_modules/@gouvfr/dsfr/dist/component/segmented/segmented.min.css">
+    <link href="../node_modules/@gouvfr/dsfr/dist/core/core.min.css" rel="stylesheet">
+    <link href="../node_modules/@gouvfr/dsfr/dist/component/link/link.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../node_modules/@gouvfr/dsfr/dist/utility/icons/icons.min.css">
+
+    <meta name="theme-color" content="#000091">
+
+    <!-- Favicon -->
+    <link rel="apple-touch-icon" href="../img/favicon.png">
+    <link rel="icon" href="../img/favicon.png" type="image/png">
+    <title>Cartes géoréférencées - Galligeo</title>
+
+    <!-- CSS interne -->
+    <link rel="stylesheet" href="../css/main.css"/>
+
+    <style>
+        /* Layout avec header et footer fixes */
+        html {
+            height: 100%;
+        }
+        
+        body {
+            margin: 0;
+            height: 100vh;
+            overflow: hidden; /* Pas de scroll sur le body */
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Header fixe */
+        .fr-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        /* Barre de sélection sticky sous le header */
+        .selection-toolbar {
+            position: fixed;
+            top: 80px; /* Hauteur approximative du header */
+            left: 0;
+            right: 0;
+            background: #000091;
+            color: white;
+            padding: 1rem 0;
+            z-index: 999;
+            border-bottom: 2px solid #e5e5e5;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        /* Zone de contenu scrollable */
+        .main-content-wrapper {
+            flex: 1;
+            overflow-y: auto;
+            padding-top: 80px; /* Espace pour le header fixe */
+            padding-bottom: 120px; /* Espace pour le footer fixe */
+        }
+        
+        /* Ajustement quand la barre de sélection est visible */
+        .main-content-wrapper.with-selection-toolbar {
+            padding-top: 140px; /* Header + barre de sélection */
+        }
+        
+        /* Scrollbar personnalisée */
+        .main-content-wrapper::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .main-content-wrapper::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        .main-content-wrapper::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        
+        .main-content-wrapper::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* Système de sélection */
+        .selection-bar {
+            background: #f6f6f6;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            display: none; /* Masqué par défaut */
+        }
+
+        .selection-bar.active {
+            display: block;
+        }
+
+        .selection-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .selection-count {
+            font-weight: bold;
+            color: #000091;
+        }
+
+        .selection-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .atlas-button {
+            background: #000091;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.3s ease;
+        }
+
+        .atlas-button:hover:not(:disabled) {
+            background: #1212ff;
+        }
+
+        .atlas-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        /* Cartes sélectionnables */
+        .map-card {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .map-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .map-card.selected {
+            border: 2px solid #000091;
+            box-shadow: 0 0 0 2px rgba(0, 0, 145, 0.2);
+        }
+
+        .map-card .selection-checkbox {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 2;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 4px;
+            padding: 4px;
+        }
+
+        /* Lignes de tableau sélectionnables */
+        .table-row {
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .table-row:hover {
+            background-color: rgba(0, 0, 145, 0.1);
+        }
+
+        .table-row.selected {
+            background-color: rgba(0, 0, 145, 0.2);
+        }
+        
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            width: 100%;
+            padding: 2rem 0;
+            background: #f6f6f6;
+            text-align: center;
+            z-index: 998;
+            box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .search-container {
+            margin-bottom: 2rem;
+        }
+        
+        .view-toggle-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        
+        .cards-container {
+            padding-right: 10px; /* Espace pour éviter le débordement */
+            padding: 1rem;
+        }
+        
+        .cards-container.hidden {
+            display: none !important;
+        }
+        
+        .table-container {
+            padding: 1rem;
+        }
+        
+        .table-container.hidden {
+            display: none !important;
+        }
+        
+        /* Style de la scrollbar principale */
+        body::-webkit-scrollbar {
+            width: 10px;
+        }
+        
+        body::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        body::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 5px;
+        }
+        
+        body::-webkit-scrollbar-thumb:hover {
+            background: #a1a1a1;
+        }
+        
+        .card-image {
+            height: 200px;
+            object-fit: cover;
+        }
+        
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 300px;
+        }
+        
+        .error-message {
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .pagination-container {
+            margin-top: 2rem;
+            text-align: center;
+        }
+        
+        .stats-container {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: #f6f6f6;
+            border-radius: 4px;
+        }
+        
+        .filter-container {
+            margin-bottom: 2rem;
+        }
+        
+        .footer-logo {
+            margin: 0 0.5rem;
+        }
+        
+        .heart-icon {
+            width: 16px;
+            height: 16px;
+            color: #e74c3c;
+        }
+        
+        .version-info {
+            font-size: 0.85em;
+            color: #666;
+        }
+        
+        /* Système de sélection */
+        .selection-toolbar {
+            position: sticky;
+            top: 0;
+            background: #000091;
+            color: white;
+            padding: 1rem 0;
+            z-index: 1000;
+            border-bottom: 2px solid #e5e5e5;
+        }
+        
+        .toolbar-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .selection-count {
+            font-weight: bold;
+        }
+        
+        .toolbar-actions {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .selectable-card {
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        
+        .selectable-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .selectable-card.selected {
+            border: 3px solid #000091;
+            background: #f5f5fe;
+        }
+        
+        .selectable-card.selected::after {
+            content: "✓";
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #000091;
+            color: white;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .selectable-item.selected {
+            background: #f5f5fe;
+        }
+    </style>
+  </head>
+  <body>
+
+    <!--  -->
+    <!-- HEADER -->
+    <!--  -->
+    <header role="banner" class="fr-header">
+        <div class="fr-header__body">
+            <div class="fr-container--fluid">
+                <div class="fr-header__body-row">
+                    <div class="fr-header__brand fr-enlarge-link" style="margin-left: 24px;">
+                        <div class="fr-header__brand-top">
+                            <div class="fr-header__logo">
+                            </div>
+                            <div class="fr-header__operator">
+                                <a href="../index.html" title="Retour à l'accueil - Galligeo">
+                                    <img class="fr-responsive-img" style="width:auto; height:70px; margin-left: -32px;" src="../img/logo_galligeo.png" alt="Galligeo" >
+                                </a>
+                            </div>
+                            <div class="fr-header__navbar">
+                                <button class="fr-btn--search fr-btn" data-fr-opened="false" aria-controls="modal-575" id="button-576" title="Rechercher">
+                                    Rechercher
+                                </button>
+                                <button class="fr-btn--menu fr-btn" data-fr-opened="false" aria-controls="modal-577" aria-haspopup="menu" id="button-578" title="Menu">
+                                    Menu
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="fr-header__tools">
+                        <div class="fr-header__tools-links">
+                            <ul class="fr-btns-group">
+                                <li>
+                                    <a class="fr-btn fr-icon-home-4-line" href="../index.html" style="color:#000091;">
+                                        Accueil
+                                    </a>
+                                </li>
+                                <li id="auth-button-container">
+                                    <button class="fr-btn fr-icon-lock-line" href="#" style="color:#ff5555;" onclick="window.location.href='https://api.ptm.huma-num.fr/auth/login?redirect_url=https://app.ptm.huma-num.fr/galligeo/galerie/'">
+                                        Se connecter avec ORCID
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="fr-header__menu fr-modal" id="modal-560" aria-labelledby="button-561" style="display:none;visibility: hidden;">
+            <div class="fr-container">
+                <button class="fr-btn--close fr-btn" aria-controls="modal-560" title="Fermer">
+                    Fermer
+                </button>
+                <div class="fr-header__menu-links">
+                </div>
+                <nav class="fr-nav" id="navigation-564" role="navigation" aria-label="Menu principal">
+                    <ul class="fr-nav__list">
+                        <li class="fr-nav__item">
+                            <a class="fr-nav__link" href="../index.html" target="_self">Galligeo</a>
+                        </li>
+                        <li class="fr-nav__item">
+                            <a class="fr-nav__link" href="../cartes-georeferencees.html" target="_self">Cartes géoréférencées</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Barre de sélection sticky -->
+    <div id="selection-toolbar" class="selection-toolbar" style="display: none;">
+        <div class="fr-container">
+            <div class="toolbar-content">
+                <span class="selection-count">
+                    <span id="selected-count">0</span> carte(s) sélectionnée(s)
+                </span>
+                <div class="toolbar-actions">
+                    <button class="fr-btn fr-btn--sm fr-btn--secondary" onclick="clearSelection()">
+                        Tout désélectionner
+                    </button>
+                    <button class="fr-btn fr-btn--sm" onclick="createAtlas()">
+                        <span class="fr-icon-map-2-line fr-mr-1w" aria-hidden="true"></span>
+                        Créer un atlas
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Zone de contenu scrollable englobante -->
+    <div class="main-content-wrapper" id="mainContentWrapper">
+        <!-- Container principal pour le contenu -->
+        <div class="fr-container fr-py-4w main-content">
+
+            <!-- Titre de la page -->
+            <div class="fr-grid-row fr-grid-row--center">
+                <div class="fr-col-12">
+                    <h1 class="fr-h1 fr-mb-4w">
+                        <span class="fr-icon-map-2-fill fr-mr-2w" aria-hidden="true"></span>
+                        Cartes géoréférencées par la communauté
+                    </h1>
+                    
+                    <p class="fr-text--lg fr-mb-4w">
+                        Découvrez les cartes historiques géoréférencées par les utilisateurs de Galligeo. 
+                        Ces cartes proviennent des collections de <a href="https://gallica.bnf.fr" target="_blank" rel="noopener">Gallica (BnF)</a> 
+                        et ont été géolocalisées avec précision par notre communauté.
+                    </p>
+                </div>
+            </div>
+
+        <!-- Statistiques -->
+        <div class="fr-grid-row fr-grid-row--center fr-mb-4w">
+            <div class="fr-col-12">
+                <div class="stats-container">
+                    <div class="fr-grid-row fr-grid-row--gutters">
+                        <div class="fr-col-md-4 fr-col-12">
+                            <div class="fr-card fr-card--no-border">
+                                <div class="fr-card__body">
+                                    <div class="fr-card__content">
+                                        <h3 class="fr-card__title" id="total-count">
+                                            <span class="fr-icon-loader-line" aria-hidden="true"></span>
+                                            Chargement...
+                                        </h3>
+                                        <p class="fr-card__desc">Cartes géoréférencées</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="fr-col-md-4 fr-col-12">
+                            <div class="fr-card fr-card--no-border">
+                                <div class="fr-card__body">
+                                    <div class="fr-card__content">
+                                        <h3 class="fr-card__title" id="contributors-count">
+                                            <span class="fr-icon-loader-line" aria-hidden="true"></span>
+                                            Chargement...
+                                        </h3>
+                                        <p class="fr-card__desc">Contributeurs</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="fr-col-md-4 fr-col-12">
+                            <div class="fr-card fr-card--no-border">
+                                <div class="fr-card__body">
+                                    <div class="fr-card__content">
+                                        <h3 class="fr-card__title" id="recent-count">
+                                            <span class="fr-icon-loader-line" aria-hidden="true"></span>
+                                            Chargement...
+                                        </h3>
+                                        <p class="fr-card__desc">Ce mois-ci</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Barre de recherche -->
+        <div class="fr-grid-row fr-grid-row--center">
+            <div class="fr-col-12 fr-col-lg-8">
+                <div class="search-container">
+                    <div class="fr-search-bar" id="search-bar">
+                        <label class="fr-label" for="search-input">
+                            Rechercher dans les cartes géoréférencées
+                        </label>
+                        <input class="fr-input" 
+                               placeholder="Entrez un titre, lieu, créateur, date..." 
+                               type="search" 
+                               id="search-input" 
+                               name="search-input">
+                        <button class="fr-btn" title="Rechercher" id="search-button">
+                            Rechercher
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Zone de sélection et création d'atlas -->
+        <div class="fr-grid-row fr-grid-row--center">
+            <div class="fr-col-12">
+                <div class="selection-bar" id="selection-bar">
+                    <div class="selection-info">
+                        <div>
+                            <span class="selection-count" id="selection-count">0 carte(s) sélectionnée(s)</span>
+                            <span class="fr-text--sm fr-ml-2w">Sélectionnez au moins 2 cartes pour créer un atlas</span>
+                        </div>
+                        <div class="selection-actions">
+                            <button type="button" class="fr-btn fr-btn--secondary fr-btn--sm" onclick="clearAllSelections()">
+                                <span class="fr-icon-close-line fr-mr-1w" aria-hidden="true"></span>
+                                Tout désélectionner
+                            </button>
+                            <button type="button" class="atlas-button" id="atlas-button" onclick="createAtlas()" disabled>
+                                <span class="fr-icon-map-2-line fr-mr-1w" aria-hidden="true"></span>
+                                Créer un atlas
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filtres et options d'affichage -->
+        <div class="fr-grid-row fr-grid-row--center">
+            <div class="fr-col-12">
+                <div class="view-toggle-container">
+                    <div class="filter-container">
+                        <fieldset class="fr-fieldset fr-fieldset--inline">
+                            <legend class="fr-fieldset__legend">
+                                Filtrer par période :
+                            </legend>
+                            <div class="fr-fieldset__content">
+                                <div class="fr-select-group">
+                                    <label class="fr-label" for="period-filter">Période</label>
+                                    <select class="fr-select" id="period-filter" name="period-filter">
+                                        <option value="">Toutes les périodes</option>
+                                        <option value="moyen-age">Moyen Âge</option>
+                                        <option value="renaissance">Renaissance (XVe-XVIe s.)</option>
+                                        <option value="moderne">Époque moderne (XVIIe-XVIIIe s.)</option>
+                                        <option value="19e">XIXe siècle</option>
+                                        <option value="20e">XXe siècle</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </div>
+                    
+                    <div class="view-toggle">
+                        <fieldset class="fr-segmented fr-segmented--no-legend">
+                            <legend class="fr-segmented__legend fr-segmented__legend--inline">
+                                Affichage
+                            </legend>
+                            <div class="fr-segmented__elements">
+                                <div class="fr-segmented__element">
+                                    <input value="cards" checked type="radio" id="view-cards" name="view-mode">
+                                    <label class="fr-label" for="view-cards">
+                                        <span class="fr-icon-grid-fill" aria-hidden="true"></span>
+                                        Cartes
+                                    </label>
+                                </div>
+                                <div class="fr-segmented__element">
+                                    <input value="table" type="radio" id="view-table" name="view-mode">
+                                    <label class="fr-label" for="view-table">
+                                        <span class="fr-icon-table-line" aria-hidden="true"></span>
+                                        Tableau
+                                    </label>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Résultats -->
+        <div class="fr-grid-row fr-grid-row--center">
+            <div class="fr-col-12">
+                
+                <!-- Affichage en cartes -->
+                <div id="cards-container" class="cards-container">
+                    <div class="fr-grid-row fr-grid-row--gutters" id="cards-grid">
+                        <!-- Loading initial -->
+                        <div class="fr-col-12">
+                            <div class="loading-spinner">
+                                <div class="fr-card fr-card--no-border">
+                                    <div class="fr-card__body">
+                                        <div class="fr-card__content">
+                                            <p class="fr-text--lg">
+                                                <span class="fr-icon-loader-line fr-mr-2w" aria-hidden="true"></span>
+                                                Chargement des cartes géoréférencées...
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Affichage en tableau -->
+                <div id="table-container" class="table-container hidden">
+                    <div class="fr-table fr-table--lg">
+                        <table id="maps-table">
+                            <caption>Liste des cartes géoréférencées</caption>
+                            <thead>
+                                <tr>
+                                    <th scope="col">
+                                        <input type="checkbox" id="select-all" class="fr-checkbox-input" onchange="toggleSelectAll(this)">
+                                        <label for="select-all" class="fr-checkbox-label">Titre</label>
+                                    </th>
+                                    <th scope="col">Attribution</th>
+                                    <th scope="col">Identifiant</th>
+                                    <th scope="col">Géoréférencé par</th>
+                                    <th scope="col">Géoréférencé le</th>
+                                    <th scope="col">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-body">
+                                <!-- Le contenu sera généré dynamiquement -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                <div class="pagination-container">
+                    <nav role="navigation" class="fr-pagination" aria-label="Pagination navigation" id="pagination-nav" style="display: none;">
+                        <ul class="fr-pagination__list">
+                            <!-- La pagination sera générée dynamiquement -->
+                        </ul>
+                    </nav>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+    <!-- END Container principal -->
+    
+    </div>
+    <!-- END Zone de contenu scrollable -->
+
+    <!--  -->
+    <!-- FOOTER -->
+    <!--  -->
+    <footer class="footer">
+        <p>Made with
+            <svg class="heart-icon" aria-hidden="true" focusable="false" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                <path fill="currentColor" d="M462.3 62.6C407.5 15.9 326 24.3 275.7 76.2L256 96.5l-19.7-20.3C186.1 24.3 104.5 15.9 49.7 62.6c-62.8 53.6-66.1 149.8-9.9 207.9l193.5 199.8c12.5 12.9 32.8 12.9 45.3 0l193.5-199.8c56.3-58.1 53-154.3-9.8-207.9z">
+                </path>
+            </svg>
+            &nbsp by <img class="fr-responsive-img footer-logo" style="width:auto; height:28px; cursor: pointer;" src="../img/logo_ptm_small.png" alt="PTM" onclick="openExternalLink('https://ptm.huma-num.fr/')" title="Projets Time Machine">
+            
+           <img class="fr-responsive-img footer-logo" style="width:auto; height:16px; cursor: pointer;" src="../img/logo_hn.png" alt="Huma-Num" onclick="openExternalLink('https://www.huma-num.fr/')" title="Huma-Num">
+           &nbsp;+&nbsp;
+           <img class="fr-responsive-img footer-logo" style="width:auto; height:16px; cursor: pointer;" src="../img/logo_bnf_datalab.png" alt="BnF / Datalab" onclick="openExternalLink('https://www.bnf.fr/fr/bnf-datalab')" title="BnF / Datalab">
+           &nbsp;—&nbsp;
+           <span style="cursor: pointer; text-decoration: underline;" onclick="openExternalLink('https://github.com/paristimemachine/galligeo-front')" title="Code & Documentation">Code &amp; Documentation</span>
+           &nbsp;—
+           <span id="app-version-info" class="version-info" style="opacity: 0.7; font-size: 0.85em; color: #666;">
+               <span id="version-display">Chargement...</span>
+           </span>
+        </p>
+    </footer>
+    <!--  -->
+    <!-- END FOOTER -->
+    <!--  -->
+
+    <!-- Scripts DSFR -->
+    <script type="module" src="../node_modules/@gouvfr/dsfr/dist/dsfr.module.min.js"></script>
+    <script type="text/javascript" nomodule src="../node_modules/@gouvfr/dsfr/dist/dsfr.nomodule.min.js"></script>
+    <script type="module" src="../node_modules/@gouvfr/dsfr/dist/core/core.module.min.js"></script>
+
+    <!-- Scripts de l'application -->
+    <script src="../js/version.js"></script>
+    <script src="../js/ptm-auth.js"></script>
+    <script src="../js/cartes-georeferencees.js"></script>
+
+    <script>
+        function openExternalLink(url) {
+            window.open(url, '_blank', 'noopener,noreferrer');
+        }
+
+        // Variables globales pour la sélection
+        let selectedMaps = new Set();
+
+        // Fonctions de sélection
+        function toggleMapSelection(arkId, element) {
+            if (selectedMaps.has(arkId)) {
+                selectedMaps.delete(arkId);
+                element.classList.remove('selected');
+            } else {
+                selectedMaps.add(arkId);
+                element.classList.add('selected');
+            }
+            updateSelectionUI();
+        }
+
+        function toggleSelectAll(checkbox) {
+            const allCheckboxes = document.querySelectorAll('.selectable-item input[type="checkbox"]');
+            const allCards = document.querySelectorAll('.selectable-card');
+            
+            if (checkbox.checked) {
+                // Sélectionner tout
+                allCheckboxes.forEach(cb => {
+                    cb.checked = true;
+                    const arkId = cb.dataset.arkId;
+                    if (arkId) selectedMaps.add(arkId);
+                });
+                allCards.forEach(card => {
+                    const arkId = card.dataset.arkId;
+                    if (arkId) {
+                        selectedMaps.add(arkId);
+                        card.classList.add('selected');
+                    }
+                });
+            } else {
+                // Désélectionner tout
+                clearSelection();
+            }
+            updateSelectionUI();
+        }
+
+        function clearSelection() {
+            selectedMaps.clear();
+            document.querySelectorAll('.selectable-item input[type="checkbox"]').forEach(cb => cb.checked = false);
+            document.querySelectorAll('.selectable-card.selected').forEach(card => card.classList.remove('selected'));
+            document.getElementById('select-all').checked = false;
+            updateSelectionUI();
+        }
+
+        function updateSelectionUI() {
+            const count = selectedMaps.size;
+            const toolbar = document.getElementById('selection-toolbar');
+            const countElement = document.getElementById('selected-count');
+            const mainWrapper = document.getElementById('mainContentWrapper');
+            
+            if (count > 0) {
+                toolbar.style.display = 'block';
+                countElement.textContent = count;
+                mainWrapper.classList.add('with-selection-toolbar');
+            } else {
+                toolbar.style.display = 'none';
+                mainWrapper.classList.remove('with-selection-toolbar');
+            }
+        }
+
+        function createAtlas() {
+            if (selectedMaps.size === 0) {
+                alert('Veuillez sélectionner au moins une carte.');
+                return;
+            }
+            
+            const selectedArray = Array.from(selectedMaps);
+            console.log('Création d\'un atlas avec les cartes:', selectedArray);
+            
+            // TODO: Implémenter la création d'atlas
+            alert(`Atlas créé avec ${selectedArray.length} carte(s). Cette fonctionnalité sera bientôt disponible !`);
+        }
+
+        // Initialisation de la page
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('Initialisation de la page des cartes géoréférencées');
+            
+            // Vérifier l'authentification au chargement
+            await checkAuthenticationStatus();
+            
+            // Charger le contenu réel depuis l'API
+            await loadRealContent();
+            
+            // Attendre que le contenu soit bien inséré, puis initialiser les vues
+            setTimeout(() => {
+                // Initialiser le basculement de vue
+                initializeViewToggle();
+                
+                // Initialiser la recherche et le filtrage
+                initializeSearchAndFilter();
+                console.log('🔧 initializeSearchAndFilter() appelée');
+                
+                // S'assurer que la vue cartes est visible par défaut
+                const cardsContainer = document.getElementById('cards-container');
+                const tableContainer = document.getElementById('table-container');
+                if (cardsContainer && tableContainer) {
+                    cardsContainer.classList.remove('hidden');
+                    tableContainer.classList.add('hidden');
+                    
+                    // Vérifier que le contenu est bien présent
+                    const cardsContent = cardsContainer.innerHTML;
+                    const tableContent = tableContainer.querySelector('tbody')?.innerHTML;
+                    console.log('Initialisation finale - Cards:', cardsContent.length > 100 ? 'OK' : 'VIDE');
+                    console.log('Initialisation finale - Table:', tableContent?.length > 100 ? 'OK' : 'VIDE');
+                }
+            }, 1000);
+            
+            // Initialiser l'affichage de version
+            initializeVersionDisplay();
+        });
+
+        // === SYSTÈME DE SÉLECTION ===
+        
+        // Fonction pour basculer la sélection d'une carte
+        function toggleMapSelection(arkId, element) {
+            if (selectedMaps.has(arkId)) {
+                selectedMaps.delete(arkId);
+                element.classList.remove('selected');
+                // Décocher la checkbox correspondante si elle existe
+                const checkbox = document.querySelector(`input[data-ark-id="${arkId}"]`);
+                if (checkbox) checkbox.checked = false;
+            } else {
+                selectedMaps.add(arkId);
+                element.classList.add('selected');
+                // Cocher la checkbox correspondante si elle existe
+                const checkbox = document.querySelector(`input[data-ark-id="${arkId}"]`);
+                if (checkbox) checkbox.checked = true;
+            }
+            updateSelectionUI();
+        }
+
+        // Fonction pour tout sélectionner/désélectionner (checkbox "select-all")
+        function toggleSelectAll(selectAllCheckbox) {
+            const allCheckboxes = document.querySelectorAll('input[data-ark-id]');
+            const allCards = document.querySelectorAll('[data-ark-id].map-card');
+            const allRows = document.querySelectorAll('[data-ark-id].table-row');
+            
+            if (selectAllCheckbox.checked) {
+                // Sélectionner tout
+                allCheckboxes.forEach(cb => {
+                    cb.checked = true;
+                    const arkId = cb.dataset.arkId;
+                    if (arkId) selectedMaps.add(arkId);
+                });
+                allCards.forEach(card => {
+                    const arkId = card.dataset.arkId;
+                    if (arkId) {
+                        selectedMaps.add(arkId);
+                        card.classList.add('selected');
+                    }
+                });
+                allRows.forEach(row => {
+                    const arkId = row.dataset.arkId;
+                    if (arkId) {
+                        selectedMaps.add(arkId);
+                        row.classList.add('selected');
+                    }
+                });
+            } else {
+                // Désélectionner tout
+                clearAllSelections();
+            }
+            updateSelectionUI();
+        }
+
+        function clearAllSelections() {
+            selectedMaps.clear();
+            // Décocher toutes les checkboxes
+            document.querySelectorAll('input[data-ark-id]').forEach(cb => cb.checked = false);
+            document.getElementById('select-all').checked = false;
+            // Retirer la classe selected de tous les éléments
+            document.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
+            updateSelectionUI();
+        }
+
+        function updateSelectionUI() {
+            const count = selectedMaps.size;
+            const selectionBar = document.getElementById('selection-bar');
+            const selectionCount = document.getElementById('selection-count');
+            const atlasButton = document.getElementById('atlas-button');
+            
+            // Mettre à jour le texte de comptage
+            selectionCount.textContent = `${count} carte(s) sélectionnée(s)`;
+            
+            // Afficher/masquer la barre de sélection
+            if (count > 0) {
+                selectionBar.classList.add('active');
+            } else {
+                selectionBar.classList.remove('active');
+            }
+            
+            // Activer/désactiver le bouton atlas (minimum 2 cartes)
+            if (count >= 2) {
+                atlasButton.disabled = false;
+                atlasButton.textContent = 'Créer un atlas';
+            } else {
+                atlasButton.disabled = true;
+                atlasButton.textContent = count === 0 ? 'Créer un atlas' : 'Sélectionnez au moins 2 cartes';
+            }
+        }
+
+        function createAtlas() {
+            if (selectedMaps.size < 2) {
+                alert('Veuillez sélectionner au moins 2 cartes pour créer un atlas.');
+                return;
+            }
+            
+            const selectedArray = Array.from(selectedMaps);
+            console.log('Création d\'un atlas avec les cartes:', selectedArray);
+            
+            // Récupérer les données des cartes sélectionnées
+            const selectedMapsData = realMapsData.filter(map => selectedArray.includes(map.ark));
+            
+            console.log('Données des cartes sélectionnées:', selectedMapsData);
+            
+            // TODO: Implémenter la logique de création d'atlas
+            const mapsList = selectedMapsData.map(map => 
+                `• ${map.ark} (géoréférencé par ${map.georeferenced_by})`
+            ).join('\n');
+            
+            alert(`Atlas à créer avec ${selectedArray.length} cartes :\n\n${mapsList}\n\nFonctionnalité en cours de développement...`);
+        }
+
+        // Gestionnaire pour les clics sur les cartes
+        function handleCardClick(event, arkId) {
+            // Éviter le comportement par défaut si c'est une checkbox
+            if (event.target.type === 'checkbox') {
+                const card = event.target.closest('.map-card');
+                if (card) {
+                    toggleMapSelection(arkId, card);
+                }
+                return;
+            }
+            
+            // Clic sur la carte elle-même
+            const card = event.currentTarget;
+            toggleMapSelection(arkId, card);
+        }
+
+        // Gestionnaire pour les clics sur les lignes du tableau
+        function handleRowClick(event, arkId) {
+            // Éviter le comportement par défaut si c'est une checkbox
+            if (event.target.type === 'checkbox') {
+                const row = event.target.closest('.table-row');
+                if (row) {
+                    toggleMapSelection(arkId, row);
+                }
+                return;
+            }
+            
+            // Clic sur la ligne elle-même
+            const row = event.currentTarget;
+            toggleMapSelection(arkId, row);
+        }
+
+        // === FIN SYSTÈME DE SÉLECTION ===
+
+        // === GÉNÉRATION DE CONTENU RÉEL ===
+        
+        // Variable pour stocker les données de l'API
+        let realMapsData = [];
+        
+        // Fonction pour récupérer les cartes géoréférencées depuis l'API PTM
+        async function fetchGeoreferencedMaps() {
+            try {
+                console.log('Récupération des cartes géoréférencées...');
+                const response = await fetch('https://api.ptm.huma-num.fr/auth/admin/galligeo/georeferenced-maps-by-users');
+                
+                if (!response.ok) {
+                    throw new Error(`Erreur HTTP: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('Données reçues de l\'API:', data);
+                
+                if (data.status === 'ok' && data.users) {
+                    // Transformer les données pour notre format
+                    realMapsData = [];
+                    
+                    data.users.forEach(user => {
+                        user.georeferenced_maps.forEach(map => {
+                            realMapsData.push({
+                                ark: map.ark,
+                                status: map.status,
+                                firstWorked: map.firstWorked,
+                                lastUpdated: map.lastUpdated,
+                                georeferenced_by: user.full_name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Utilisateur anonyme',
+                                georeferenced_date: map.lastUpdated,
+                                orcid_id: user.orcid_id
+                            });
+                        });
+                    });
+                    
+                    console.log('Cartes transformées:', realMapsData.length);
+                    return { success: true, data: realMapsData, stats: data };
+                } else {
+                    throw new Error('Format de données invalide');
+                }
+                
+            } catch (error) {
+                console.error('Erreur lors de la récupération des cartes géoréférencées:', error);
+                return { success: false, error: error.message };
+            }
+        }
+        
+        // Fonction pour générer l'URL de la vignette Gallica IIIF
+        function generateGallicaThumbnail(arkId) {
+            return `https://gallica.bnf.fr/iiif/ark:/12148/${arkId}/f1/full/300,/0/native.jpg`;
+        }
+        
+        // Fonction pour générer l'URL Gallica (fallback si pas dans manifest)
+        function generateGallicaUrl(arkId) {
+            return `https://gallica.bnf.fr/ark:/12148/${arkId}`;
+        }
+        
+        // Fonction pour générer l'URL de géoréférencement
+        function generateGeoreferenceUrl(arkId) {
+            return `https://app.ptm.huma-num.fr/galligeo/georef/?ark=${arkId}`;
+        }
+        
+        // Fonction pour récupérer les métadonnées Gallica via l'API IIIF Manifest
+        async function fetchGallicaMetadata(arkId) {
+            try {
+                const manifestUrl = `https://gallica.bnf.fr/iiif/ark:/12148/${arkId}/manifest.json`;
+                console.log(`Récupération des métadonnées pour ${arkId}...`);
+                
+                const response = await fetch(manifestUrl);
+                
+                if (!response.ok) {
+                    throw new Error(`Erreur Gallica Manifest: ${response.status}`);
+                }
+                
+                const manifest = await response.json();
+                
+                // Extraction des métadonnées du manifest IIIF
+                const title = manifest.description || manifest.label || 'Titre non disponible';
+                const gallicaUrl = manifest.related || `https://gallica.bnf.fr/ark:/12148/${arkId}`;
+                const attribution = manifest.attribution || '';
+                
+                // Rechercher la date dans les métadonnées
+                let date = '';
+                if (manifest.metadata && Array.isArray(manifest.metadata)) {
+                    const dateMetadata = manifest.metadata.find(item => 
+                        item.label && item.label.toLowerCase().includes('date')
+                    );
+                    if (dateMetadata && dateMetadata.value) {
+                        date = dateMetadata.value;
+                    }
+                }
+                
+                console.log(`Métadonnées récupérées pour ${arkId}:`, { title, gallicaUrl, date });
+                
+                return {
+                    title: title,
+                    attribution: attribution,
+                    gallicaUrl: gallicaUrl,
+                    date: date,
+                    manifestUrl: manifestUrl
+                };
+                
+            } catch (error) {
+                console.warn(`Impossible de récupérer les métadonnées pour ${arkId}:`, error);
+                return {
+                    title: `Carte ${arkId}`,
+                    attribution: 'Bibliothèque nationale de France',
+                    gallicaUrl: `https://gallica.bnf.fr/ark:/12148/${arkId}`,
+                    date: '',
+                    manifestUrl: null
+                };
+            }
+        }
+        
+        // Fonction pour générer une carte avec les vraies données
+        async function generateRealMapCard(mapData) {
+            const metadata = await fetchGallicaMetadata(mapData.ark);
+            const thumbnailUrl = generateGallicaThumbnail(mapData.ark);
+            const gallicaUrl = metadata.gallicaUrl || generateGallicaUrl(mapData.ark);
+            const georefUrl = generateGeoreferenceUrl(mapData.ark);
+            
+            return `
+                <div class="fr-col-md-4 fr-col">
+                    <div class="fr-card map-card" data-ark-id="${mapData.ark}" data-date="${metadata.date}" onclick="handleCardClick(event, '${mapData.ark}')">
+                        <div class="selection-checkbox">
+                            <input type="checkbox" 
+                                   id="card-${mapData.ark}" 
+                                   class="fr-checkbox-input" 
+                                   data-ark-id="${mapData.ark}"
+                                   onchange="toggleMapSelection('${mapData.ark}', this.closest('.map-card'))">
+                            <label for="card-${mapData.ark}" class="fr-checkbox-label"></label>
+                        </div>
+                        <div class="fr-card__body">
+                            <div class="fr-card__content">
+                                <h4 class="fr-card__title">
+                                    <a href="${gallicaUrl}" target="_blank" rel="noopener">${metadata.title}</a>
+                                </h4>
+                                <p class="fr-card__desc">${metadata.attribution}${metadata.date ? ` - ${metadata.date}` : ''}</p>
+                                <p class="fr-card__desc">
+                                    <a href="${gallicaUrl}" target="_blank" rel="noopener">Voir la notice Gallica</a>
+                                </p>
+                                <p class="fr-card__desc">
+                                    <a href="${georefUrl}" target="_blank" rel="noopener">Voir le géoréférencement</a>
+                                </p>
+                                <div class="fr-card__start">
+                                    <ul class="fr-tags-group">
+                                        <li><p class="fr-tag fr-tag--green-emeraude">Géoréférencée</p></li>
+                                        <li><p class="fr-tag fr-tag--blue-france">Galligeo</p></li>
+                                        ${metadata.date ? `<li><p class="fr-tag fr-tag--yellow-tournesol">${metadata.date}</p></li>` : ''}
+                                    </ul>
+                                    <p class="fr-card__detail fr-icon-map-pin-2-fill">Géoréférencé par ${mapData.georeferenced_by}</p>
+                                    <p class="fr-card__detail fr-icon-calendar-line">${new Date(mapData.georeferenced_date).toLocaleDateString('fr-FR')}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="fr-card__header">
+                            <div class="fr-card__img">
+                                <img class="fr-responsive-img" 
+                                     src="${thumbnailUrl}" 
+                                     alt="${metadata.title}"
+                                     onerror="this.parentElement.style.display='none';" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Fonction pour générer une ligne de tableau avec les vraies données
+        async function generateRealTableRow(mapData) {
+            const metadata = await fetchGallicaMetadata(mapData.ark);
+            const gallicaUrl = metadata.gallicaUrl || generateGallicaUrl(mapData.ark);
+            const georefUrl = generateGeoreferenceUrl(mapData.ark);
+            
+            return `
+                <tr class="table-row" data-ark-id="${mapData.ark}" data-date="${metadata.date}" onclick="handleRowClick(event, '${mapData.ark}')">
+                    <td>
+                        <input type="checkbox" 
+                               id="table-${mapData.ark}" 
+                               class="fr-checkbox-input" 
+                               data-ark-id="${mapData.ark}"
+                               onchange="toggleMapSelection('${mapData.ark}', this.closest('.table-row'))">
+                        <label for="table-${mapData.ark}" class="fr-checkbox-label">${metadata.title}</label>
+                    </td>
+                    <td>${metadata.attribution}</td>
+                    <td>${metadata.date || 'Non renseignée'}</td>
+                    <td>${mapData.georeferenced_by}</td>
+                    <td>${new Date(mapData.georeferenced_date).toLocaleDateString('fr-FR')}</td>
+                    <td>
+                        <a href="${gallicaUrl}" target="_blank" rel="noopener" class="fr-btn fr-btn--sm fr-btn--secondary fr-mr-1w">
+                            Gallica
+                        </a>
+                        <a href="${georefUrl}" target="_blank" rel="noopener" class="fr-btn fr-btn--sm fr-btn--primary">
+                            Géoréf
+                        </a>
+                    </td>
+                </tr>
+            `;
+        }
+        
+        // Fonction pour charger le contenu réel depuis l'API
+        async function loadRealContent() {
+            console.log('Chargement du contenu réel...');
+            
+            try {
+                // Afficher un indicateur de chargement
+                const cardsGrid = document.getElementById('cards-grid');
+                const tableBody = document.getElementById('table-body');
+                
+                if (cardsGrid) {
+                    cardsGrid.innerHTML = `
+                        <div class="fr-col-12">
+                            <div class="fr-card fr-card--no-border">
+                                <div class="fr-card__body">
+                                    <div class="fr-card__content">
+                                        <p class="fr-text--lg">
+                                            <span class="fr-icon-loader-line fr-mr-2w" aria-hidden="true"></span>
+                                            Chargement des cartes géoréférencées...
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                // Récupérer les données de l'API
+                const apiResult = await fetchGeoreferencedMaps();
+                
+                if (!apiResult.success) {
+                    throw new Error(apiResult.error);
+                }
+                
+                // Générer les cartes et lignes de tableau
+                console.log('Génération du contenu pour', realMapsData.length, 'cartes...');
+                
+                const cardsPromises = realMapsData.map(mapData => generateRealMapCard(mapData));
+                const rowsPromises = realMapsData.map(mapData => generateRealTableRow(mapData));
+                
+                console.log('Attente de la génération des cartes et lignes...');
+                const [cardsHTML, rowsHTML] = await Promise.all([
+                    Promise.all(cardsPromises),
+                    Promise.all(rowsPromises)
+                ]);
+                
+                console.log('HTML généré - Cartes:', cardsHTML.length, 'Lignes:', rowsHTML.length);
+                
+                // Mettre à jour l'affichage
+                if (cardsGrid) {
+                    cardsGrid.innerHTML = cardsHTML.join('');
+                    console.log('Cartes insérées dans le DOM. Contenu:', cardsGrid.innerHTML.length > 100 ? 'OK' : 'VIDE');
+                    
+                    // Sauvegarder immédiatement le contenu des cartes
+                    cardsHTMLContent = cardsGrid.innerHTML;
+                    console.log('Contenu cartes sauvegardé automatiquement');
+                } else {
+                    console.error('cards-grid non trouvé');
+                }
+                
+                if (tableBody) {
+                    tableBody.innerHTML = rowsHTML.join('');
+                    console.log('Lignes insérées dans le DOM. Contenu:', tableBody.innerHTML.length > 100 ? 'OK' : 'VIDE');
+                    
+                    // Sauvegarder immédiatement le contenu du tableau
+                    tableHTMLContent = tableBody.innerHTML;
+                    console.log('Contenu tableau sauvegardé automatiquement');
+                } else {
+                    console.error('table-body non trouvé');
+                }
+                
+                // Mettre à jour les statistiques avec les vraies données
+                const stats = apiResult.stats;
+                const totalCount = document.getElementById('total-count');
+                if (totalCount) {
+                    totalCount.innerHTML = `
+                        <span class="fr-icon-map-2-fill" aria-hidden="true"></span>
+                        ${stats.total_georeferenced_maps}
+                    `;
+                }
+                
+                const contributorsCount = document.getElementById('contributors-count');
+                if (contributorsCount) {
+                    contributorsCount.innerHTML = `
+                        <span class="fr-icon-account-circle-fill" aria-hidden="true"></span>
+                        ${stats.total_users_with_georeferenced_maps}
+                    `;
+                }
+                
+                const recentCount = document.getElementById('recent-count');
+                if (recentCount) {
+                    const oneMonthAgo = new Date(Date.now() - 30*24*60*60*1000);
+                    const recentMaps = realMapsData.filter(m => new Date(m.georeferenced_date) > oneMonthAgo);
+                    recentCount.innerHTML = `
+                        <span class="fr-icon-calendar-fill" aria-hidden="true"></span>
+                        ${recentMaps.length}
+                    `;
+                }
+                
+                console.log('Contenu réel chargé avec succès');
+                
+                // Vérifier le contenu généré
+                console.log('=== VÉRIFICATION DU CONTENU ===');
+                console.log('Cartes dans le DOM:', document.querySelectorAll('.map-card').length);
+                console.log('Lignes dans le DOM:', document.querySelectorAll('#table-body tr').length);
+                
+                // Réinitialiser la recherche et le filtrage après chargement du contenu
+                setTimeout(() => {
+                    resetElementsCache();  // Réinitialiser les caches
+                    updateFilterableElements();
+                    console.log('Éléments filtrables mis à jour après chargement');
+                }, 100);
+                
+                // Ne plus appeler initializeViewToggle ici pour éviter la double initialisation
+                // L'initialisation est déjà faite dans DOMContentLoaded
+                
+            } catch (error) {
+                console.error('Erreur lors du chargement du contenu réel:', error);
+                
+                // Afficher un message d'erreur
+                const cardsGrid = document.getElementById('cards-grid');
+                if (cardsGrid) {
+                    cardsGrid.innerHTML = `
+                        <div class="fr-col-12">
+                            <div class="fr-alert fr-alert--error">
+                                <p><strong>Erreur de chargement</strong></p>
+                                <p>Impossible de charger les cartes géoréférencées. Veuillez réessayer plus tard.</p>
+                                <p class="fr-text--xs">Détail : ${error.message}</p>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        // === FIN GÉNÉRATION DE CONTENU RÉEL ===
+
+        // === GESTION DES VUES - VERSION SIMPLIFIÉE ===
+        
+        // Variables globales pour stocker le contenu
+        let cardsHTMLContent = '';
+        let tableHTMLContent = '';
+        let currentView = 'cards';
+        
+        // Fonction pour forcer la sauvegarde (debug uniquement)
+        function forceSaveContent() {
+            const cardsGrid = document.getElementById('cards-grid');
+            const tableBody = document.getElementById('table-body');
+            
+            if (cardsGrid && cardsGrid.innerHTML.length > 1000) {
+                cardsHTMLContent = cardsGrid.innerHTML;
+                console.log('Contenu cartes forcé sauvegardé:', cardsHTMLContent.length, 'caractères');
+            }
+            
+            if (tableBody && tableBody.innerHTML.length > 100) {
+                tableHTMLContent = tableBody.innerHTML;
+                console.log('Contenu tableau forcé sauvegardé:', tableHTMLContent.length, 'caractères');
+            }
+        }
+        
+        // Fonction simplifiée pour basculer entre vue cartes et tableau
+        function switchView(viewMode) {
+            console.log('=== SWITCH VIEW ===', viewMode);
+            
+            const cardsContainer = document.getElementById('cards-container');
+            const tableContainer = document.getElementById('table-container');
+            const cardsRadio = document.getElementById('view-cards');
+            const tableRadio = document.getElementById('view-table');
+            
+            if (!cardsContainer || !tableContainer) {
+                console.error('Conteneurs non trouvés');
+                return;
+            }
+            
+            // Ne PAS sauvegarder ici - utiliser uniquement le contenu sauvegardé au chargement
+            console.log('Utilisation du contenu sauvegardé - Cartes:', cardsHTMLContent.length, 'caractères');
+            console.log('Utilisation du contenu sauvegardé - Tableau:', tableHTMLContent.length, 'caractères');
+            
+            // Basculer l'affichage
+            if (viewMode === 'cards') {
+                cardsContainer.classList.remove('hidden');
+                tableContainer.classList.add('hidden');
+                if (cardsRadio) cardsRadio.checked = true;
+                currentView = 'cards';
+                console.log('Vue cartes activée');
+                
+                // Restaurer le contenu des cartes
+                const cardsGrid = document.getElementById('cards-grid');
+                if (cardsGrid && cardsHTMLContent) {
+                    cardsGrid.innerHTML = cardsHTMLContent;
+                    console.log('Contenu cartes restauré depuis la sauvegarde');
+                }
+                
+            } else if (viewMode === 'table') {
+                cardsContainer.classList.add('hidden');
+                tableContainer.classList.remove('hidden');
+                if (tableRadio) tableRadio.checked = true;
+                currentView = 'table';
+                console.log('Vue tableau activée');
+                
+                // Restaurer le contenu du tableau
+                const tableBody = document.getElementById('table-body');
+                if (tableBody && tableHTMLContent) {
+                    tableBody.innerHTML = tableHTMLContent;
+                    console.log('Contenu tableau restauré depuis la sauvegarde');
+                }
+            }
+            
+            // Vérifier le contenu final
+            setTimeout(() => {
+                const cardsGrid = document.getElementById('cards-grid');
+                const tableBody = document.getElementById('table-body');
+                console.log('Final - Cartes:', cardsGrid?.innerHTML.length > 1000 ? 'OK' : 'PROBLÈME');
+                console.log('Final - Tableau:', tableBody?.innerHTML.length > 200 ? 'OK' : 'PROBLÈME');
+            }, 10);
+        }
+
+        // Variable pour éviter la double initialisation
+        let viewToggleInitialized = false;
+
+        // Écouteurs pour les boutons radio de vue
+        function initializeViewToggle() {
+            if (viewToggleInitialized) {
+                console.log('Basculement de vue déjà initialisé, ignoré');
+                return;
+            }
+            
+            console.log('Initialisation du basculement de vue...');
+            
+            const cardsRadio = document.getElementById('view-cards');
+            const tableRadio = document.getElementById('view-table');
+            
+            if (!cardsRadio || !tableRadio) {
+                console.error('Boutons radio de vue non trouvés:', { cardsRadio, tableRadio });
+                return;
+            }
+            
+            // Supprimer les anciens événements s'ils existent
+            cardsRadio.removeEventListener('change', handleCardsChange);
+            tableRadio.removeEventListener('change', handleTableChange);
+            
+            // Ajouter les nouveaux événements
+            cardsRadio.addEventListener('change', handleCardsChange);
+            tableRadio.addEventListener('change', handleTableChange);
+            
+            // Marquer comme initialisé
+            viewToggleInitialized = true;
+            
+            console.log('Basculement de vue initialisé');
+        }
+
+        // Gestionnaires d'événements séparés pour éviter les fuites
+        function handleCardsChange(event) {
+            if (event.target.checked) {
+                console.log('Clic sur vue cartes');
+                switchView('cards');
+            }
+        }
+
+        function handleTableChange(event) {
+            if (event.target.checked) {
+                console.log('Clic sur vue tableau');
+                switchView('table');
+            }
+        }
+
+        // Fonction globale pour basculer manuellement (debug)
+        window.switchToCards = () => switchView('cards');
+        window.switchToTable = () => switchView('table');
+        
+        // Fonctions de debug améliorées
+        window.forceSaveContent = forceSaveContent;
+        window.forceRestoreCards = function() {
+            const cardsGrid = document.getElementById('cards-grid');
+            if (cardsGrid && cardsHTMLContent) {
+                cardsGrid.innerHTML = cardsHTMLContent;
+                console.log('Contenu cartes forcé:', cardsHTMLContent.length, 'caractères');
+            } else {
+                console.log('Pas de contenu cartes sauvegardé ou cardsGrid manquant');
+            }
+        };
+        window.forceRestoreTable = function() {
+            const tableBody = document.getElementById('table-body');
+            if (tableBody && tableHTMLContent) {
+                tableBody.innerHTML = tableHTMLContent;
+                console.log('Contenu tableau forcé:', tableHTMLContent.length, 'caractères');
+            } else {
+                console.log('Pas de contenu tableau sauvegardé ou tableBody manquant');
+            }
+        };
+        
+        // Fonction de diagnostic
+        window.debugViews = function() {
+            console.log('=== DIAGNOSTIC DES VUES ===');
+            const cardsContainer = document.getElementById('cards-container');
+            const tableContainer = document.getElementById('table-container');
+            const cardsGrid = document.getElementById('cards-grid');
+            const tableBody = document.getElementById('table-body');
+            
+            console.log('Cards container:', cardsContainer ? 'OK' : 'MANQUANT');
+            console.log('Table container:', tableContainer ? 'OK' : 'MANQUANT');
+            console.log('Cards grid:', cardsGrid ? 'OK' : 'MANQUANT');
+            console.log('Table body:', tableBody ? 'OK' : 'MANQUANT');
+            
+            if (cardsContainer) {
+                console.log('Cards visible:', !cardsContainer.classList.contains('hidden'));
+                console.log('Cards contenu DOM:', cardsContainer.innerHTML.length > 100 ? 'OK' : 'VIDE');
+            }
+            
+            if (tableContainer) {
+                console.log('Table visible:', !tableContainer.classList.contains('hidden'));
+                console.log('Table contenu DOM:', tableContainer.innerHTML.length > 100 ? 'OK' : 'VIDE');
+            }
+            
+            console.log('Cartes dans DOM:', document.querySelectorAll('.map-card').length);
+            console.log('Lignes dans DOM:', document.querySelectorAll('#table-body tr').length);
+            console.log('Données réelles:', window.realMapsData ? window.realMapsData.length : 'NON CHARGÉES');
+            console.log('Contenu sauvegardé - Cartes:', cardsHTMLContent.length, 'caractères');
+            console.log('Contenu sauvegardé - Tableau:', tableHTMLContent.length, 'caractères');
+            console.log('Vue actuelle:', currentView);
+        };
+        
+        // Exposer les données pour debug
+        window.realMapsData = realMapsData;
+        window.cardsHTMLContent = () => cardsHTMLContent;
+        window.tableHTMLContent = () => tableHTMLContent;
+
+        // === FIN GESTION DES VUES ===
+
+        // === FONCTIONS DE RECHERCHE ET FILTRAGE ===
+
+        // Variable pour stocker tous les éléments filtrables
+        let allFilterableElements = [];
+        let allCardsElements = [];  // Cache permanent pour les cartes
+        let allTableRowsElements = [];  // Cache permanent pour les lignes
+
+        // Fonction pour réinitialiser les caches d'éléments
+        function resetElementsCache() {
+            console.log('🔄 Réinitialisation des caches d\'éléments');
+            allCardsElements = [];
+            allTableRowsElements = [];
+            allFilterableElements = [];
+        }
+        function initializeSearchAndFilter() {
+            console.log('🔍 === INITIALISATION RECHERCHE ET FILTRAGE ===');
+            
+            // Initialiser les événements
+            const searchInput = document.getElementById('search-input');
+            const periodFilter = document.getElementById('period-filter');
+            
+            console.log('Elements trouvés:');
+            console.log('- searchInput:', searchInput ? 'OK' : 'MANQUANT');
+            console.log('- periodFilter:', periodFilter ? 'OK' : 'MANQUANT');
+            
+            if (searchInput) {
+                console.log('Ajout des événements sur searchInput');
+                searchInput.addEventListener('input', function(e) {
+                    console.log('🔍 Événement input déclenché, valeur:', e.target.value);
+                    applySearchAndFilter();
+                });
+                searchInput.addEventListener('keypress', function(e) {
+                    console.log('🔍 Événement keypress déclenché, key:', e.key);
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        applySearchAndFilter();
+                    }
+                });
+                console.log('Événements search ajoutés avec succès');
+            } else {
+                console.error('❌ search-input non trouvé dans le DOM');
+            }
+            
+            if (periodFilter) {
+                console.log('Ajout des événements sur periodFilter');
+                periodFilter.addEventListener('change', function(e) {
+                    console.log('📅 Événement change déclenché, valeur:', e.target.value);
+                    applySearchAndFilter();
+                });
+                console.log('Événements filter ajoutés avec succès');
+            } else {
+                console.error('❌ period-filter non trouvé dans le DOM');
+            }
+
+            // Mettre à jour la liste des éléments filtrables
+            updateFilterableElements();
+            console.log('🔍 Initialisation terminée');
+        }
+
+        // Fonction pour mettre à jour la liste des éléments filtrables
+        function updateFilterableElements() {
+            console.log('📋 === MISE À JOUR ÉLÉMENTS FILTRABLES ===');
+            console.log('Vue actuelle:', currentView);
+            
+            // Toujours récupérer les éléments depuis le DOM (pas de cache)
+            if (currentView === 'cards') {
+                allFilterableElements = Array.from(document.querySelectorAll('.map-card'));
+                console.log('Mode cartes - Éléments trouvés dans DOM:', allFilterableElements.length);
+            } else {
+                allFilterableElements = Array.from(document.querySelectorAll('#table-body tr.table-row'));
+                console.log('Mode tableau - Éléments trouvés dans DOM:', allFilterableElements.length);
+            }
+            
+            console.log('Éléments filtrables mis à jour:', allFilterableElements.length);
+            
+            // Vérifier quelques éléments
+            if (allFilterableElements.length > 0) {
+                console.log('Premier élément:', allFilterableElements[0]);
+                console.log('data-date du premier:', allFilterableElements[0].getAttribute('data-date'));
+            } else {
+                console.warn('⚠️ Aucun élément filtrable trouvé !');
+                
+                // Debug : vérifier ce qui existe dans le DOM
+                const allCards = document.querySelectorAll('.map-card');
+                const allRows = document.querySelectorAll('#table-body tr.table-row');
+                const allTableRows = document.querySelectorAll('#table-body tr');
+                
+                console.log('Debug DOM:');
+                console.log('- .map-card:', allCards.length);
+                console.log('- #table-body tr.table-row:', allRows.length);
+                console.log('- #table-body tr (tous):', allTableRows.length);
+            }
+        }
+
+        // Fonction de recherche
+        function performSearch() {
+            const searchTerm = document.getElementById('search-input').value.toLowerCase().trim();
+            console.log('Recherche pour:', searchTerm);
+
+            updateFilterableElements();
+
+            allFilterableElements.forEach(element => {
+                let searchableText = '';
+                
+                if (currentView === 'cards') {
+                    // Pour les cartes, chercher dans le titre et la description
+                    const title = element.querySelector('.fr-card__title')?.textContent || '';
+                    const desc = element.querySelector('.fr-card__desc')?.textContent || '';
+                    searchableText = (title + ' ' + desc).toLowerCase();
+                } else {
+                    // Pour le tableau, chercher dans toutes les cellules
+                    const cells = element.querySelectorAll('td');
+                    searchableText = Array.from(cells).map(cell => cell.textContent || '').join(' ').toLowerCase();
+                }
+
+                if (searchTerm === '' || searchableText.includes(searchTerm)) {
+                    element.style.display = '';
+                } else {
+                    element.style.display = 'none';
+                }
+            });
+
+            updateVisibleCount();
+        }
+
+        // Fonction de filtrage par période
+        function performFilter() {
+            const selectedPeriod = document.getElementById('period-filter').value;
+            console.log('Filtrage par période:', selectedPeriod);
+
+            updateFilterableElements();
+
+            allFilterableElements.forEach(element => {
+                const dateStr = element.getAttribute('data-date');
+                let showElement = true;
+
+                if (selectedPeriod !== 'all' && dateStr && dateStr !== '' && dateStr !== 'undefined') {
+                    const year = parseInt(dateStr);
+                    
+                    switch(selectedPeriod) {
+                        case 'before-1800':
+                            showElement = year < 1800;
+                            break;
+                        case '1800-1850':
+                            showElement = year >= 1800 && year <= 1850;
+                            break;
+                        case '1850-1900':
+                            showElement = year >= 1850 && year <= 1900;
+                            break;
+                        case '1900-1950':
+                            showElement = year >= 1900 && year <= 1950;
+                            break;
+                        case 'after-1950':
+                            showElement = year > 1950;
+                            break;
+                        default:
+                            showElement = true;
+                    }
+                }
+
+                if (showElement) {
+                    element.style.display = '';
+                } else {
+                    element.style.display = 'none';
+                }
+            });
+
+            updateVisibleCount();
+        }
+
+        // Fonction pour combiner recherche et filtrage
+        function applySearchAndFilter() {
+            console.log('🎯 === APPLICATION RECHERCHE ET FILTRAGE ===');
+            
+            const searchInput = document.getElementById('search-input');
+            const periodFilter = document.getElementById('period-filter');
+            
+            const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+            const selectedPeriod = periodFilter ? periodFilter.value : 'all';
+            
+            console.log('Paramètres:');
+            console.log('- Terme recherche:', `"${searchTerm}"`);
+            console.log('- Période sélectionnée:', selectedPeriod);
+
+            // FORCER LA RÉAFFICHAGE DE TOUS LES ÉLÉMENTS EN PREMIER
+            console.log('🔄 RÉAFFICHAGE FORCÉ DE TOUS LES ÉLÉMENTS');
+            const allCardsInDOM = document.querySelectorAll('.map-card');
+            const allRowsInDOM = document.querySelectorAll('#table-body tr.table-row');
+            
+            // Forcer l'affichage de TOUS les éléments
+            allCardsInDOM.forEach((card, i) => {
+                card.style.display = '';
+                console.log(`Carte ${i} réaffichée`);
+            });
+            allRowsInDOM.forEach((row, i) => {
+                row.style.display = '';
+                console.log(`Ligne ${i} réaffichée`);
+            });
+            
+            console.log(`Total réaffichés: ${allCardsInDOM.length} cartes, ${allRowsInDOM.length} lignes`);
+
+            // Maintenant mettre à jour les éléments filtrables avec les éléments fraîchement réaffichés
+            if (currentView === 'cards') {
+                allFilterableElements = Array.from(allCardsInDOM);
+            } else {
+                allFilterableElements = Array.from(allRowsInDOM);
+            }
+            
+            console.log('Éléments filtrables actualisés:', allFilterableElements.length);
+
+            let visibleCount = 0;
+            let hiddenCount = 0;
+
+            // Appliquer les filtres
+            allFilterableElements.forEach((element, index) => {
+                let searchableText = '';
+                let showElement = true;
+
+                // Test de recherche textuelle
+                if (searchTerm !== '') {
+                    if (currentView === 'cards') {
+                        const title = element.querySelector('.fr-card__title')?.textContent || '';
+                        const desc = element.querySelector('.fr-card__desc')?.textContent || '';
+                        searchableText = (title + ' ' + desc).toLowerCase();
+                    } else {
+                        const cells = element.querySelectorAll('td');
+                        searchableText = Array.from(cells).map(cell => cell.textContent || '').join(' ').toLowerCase();
+                    }
+                    
+                    if (!searchableText.includes(searchTerm)) {
+                        showElement = false;
+                        if (index < 3) console.log(`Élément ${index} masqué par recherche:`, searchableText.substring(0, 50));
+                    }
+                }
+
+                // Test de filtrage par période
+                if (showElement && selectedPeriod !== 'all') {
+                    const dateStr = element.getAttribute('data-date');
+                    if (index < 3) console.log(`Élément ${index} - data-date:`, dateStr);
+                    
+                    if (dateStr && dateStr !== '' && dateStr !== 'undefined') {
+                        const year = parseInt(dateStr);
+                        if (index < 3) console.log(`Année parsée: ${year} pour période ${selectedPeriod}`);
+                        
+                        switch(selectedPeriod) {
+                            case 'before-1800':
+                                showElement = year < 1800;
+                                break;
+                            case '1800-1850':
+                                showElement = year >= 1800 && year <= 1850;
+                                break;
+                            case '1850-1900':
+                                showElement = year >= 1850 && year <= 1900;
+                                break;
+                            case '1900-1950':
+                                showElement = year >= 1900 && year <= 1950;
+                                break;
+                            case 'after-1950':
+                                showElement = year > 1950;
+                                break;
+                        }
+                        
+                        if (!showElement && index < 3) {
+                            console.log(`Élément ${index} masqué par période: ${year} ne correspond pas à ${selectedPeriod}`);
+                        }
+                    } else {
+                        if (index < 3) console.log(`Élément ${index} - pas de date valide:`, dateStr);
+                    }
+                }
+
+                // Appliquer l'affichage final
+                if (showElement) {
+                    element.style.display = '';
+                    visibleCount++;
+                } else {
+                    element.style.display = 'none';
+                    hiddenCount++;
+                }
+            });
+
+            console.log(`Résultats finaux: ${visibleCount} visibles, ${hiddenCount} masqués`);
+            updateVisibleCount();
+        }
+
+        // Fonction pour mettre à jour le compteur d'éléments visibles
+        function updateVisibleCount() {
+            updateFilterableElements();
+            const visibleElements = allFilterableElements.filter(el => el.style.display !== 'none');
+            console.log('Éléments visibles:', visibleElements.length, 'sur', allFilterableElements.length);
+        }
+
+        // Modifier les fonctions de changement de vue pour réinitialiser les filtres
+        const originalSwitchView = switchView;
+        switchView = function(view) {
+            console.log('🔄 switchView appelée avec vue:', view);
+            originalSwitchView(view);
+            
+            // Réappliquer les filtres après changement de vue
+            setTimeout(() => {
+                console.log('🔄 Réapplication des filtres après changement de vue');
+                
+                // Forcer le réaffichage de tous les éléments dans toutes les vues
+                const allCards = document.querySelectorAll('.map-card');
+                const allRows = document.querySelectorAll('#table-body tr.table-row');
+                allCards.forEach(card => card.style.display = '');
+                allRows.forEach(row => row.style.display = '');
+                console.log('🔄 Tous les éléments réaffichés avant réapplication');
+                
+                applySearchAndFilter();
+            }, 200);  // Délai plus long pour s'assurer que le DOM est stable
+        };
+
+        // === FIN FONCTIONS DE RECHERCHE ET FILTRAGE ===
+
+        // === FONCTIONS DE DEBUG ===
+        
+        // Fonction de test pour vérifier la recherche et le filtrage
+        window.testSearchAndFilter = function() {
+            console.log('🧪 === TEST RECHERCHE ET FILTRAGE ===');
+            
+            // Vérifier les éléments DOM
+            const searchInput = document.getElementById('search-input');
+            const periodFilter = document.getElementById('period-filter');
+            
+            console.log('Éléments DOM:');
+            console.log('- search-input:', searchInput);
+            console.log('- period-filter:', periodFilter);
+            
+            if (searchInput) {
+                console.log('- search-input value:', searchInput.value);
+                console.log('- search-input listeners:', getEventListeners ? getEventListeners(searchInput) : 'N/A');
+            }
+            
+            if (periodFilter) {
+                console.log('- period-filter value:', periodFilter.value);
+                console.log('- period-filter options:', Array.from(periodFilter.options).map(o => o.value));
+            }
+            
+            // Vérifier les éléments filtrables
+            updateFilterableElements();
+            
+            // Test de recherche manuel
+            console.log('Test de recherche avec "paris":');
+            if (searchInput) {
+                searchInput.value = 'paris';
+                applySearchAndFilter();
+            }
+        };
+        
+        // Fonction pour forcer la réinitialisation
+        window.forceReinitializeSearch = function() {
+            console.log('🔧 === RÉINITIALISATION FORCÉE ===');
+            resetElementsCache();
+            initializeSearchAndFilter();
+        };
+        
+        // Fonction pour réinitialiser l'affichage (montrer tous les éléments)
+        window.resetDisplay = function() {
+            console.log('🔄 === RÉINITIALISATION AFFICHAGE ===');
+            
+            // Remettre à vide les champs
+            const searchInput = document.getElementById('search-input');
+            const periodFilter = document.getElementById('period-filter');
+            
+            if (searchInput) searchInput.value = '';
+            if (periodFilter) periodFilter.value = 'all';
+            
+            // Afficher tous les éléments
+            const allCards = document.querySelectorAll('.map-card');
+            const allRows = document.querySelectorAll('#table-body tr.table-row');
+            
+            allCards.forEach(card => card.style.display = '');
+            allRows.forEach(row => row.style.display = '');
+            
+            console.log('Affichage réinitialisé - Cartes:', allCards.length, 'Lignes:', allRows.length);
+        };
+        
+        // Fonction pour débugger l'état de l'affichage
+        window.debugDisplay = function() {
+            console.log('🔍 === DEBUG AFFICHAGE ===');
+            
+            const allCards = document.querySelectorAll('.map-card');
+            const allRows = document.querySelectorAll('#table-body tr.table-row');
+            
+            console.log('Vue actuelle:', currentView);
+            console.log('Total cartes dans DOM:', allCards.length);
+            console.log('Total lignes dans DOM:', allRows.length);
+            
+            let visibleCards = 0, hiddenCards = 0;
+            let visibleRows = 0, hiddenRows = 0;
+            
+            allCards.forEach(card => {
+                if (card.style.display === 'none') hiddenCards++;
+                else visibleCards++;
+            });
+            
+            allRows.forEach(row => {
+                if (row.style.display === 'none') hiddenRows++;
+                else visibleRows++;
+            });
+            
+            console.log('Cartes - Visibles:', visibleCards, 'Masquées:', hiddenCards);
+            console.log('Lignes - Visibles:', visibleRows, 'Masquées:', hiddenRows);
+            
+            // État des champs
+            const searchInput = document.getElementById('search-input');
+            const periodFilter = document.getElementById('period-filter');
+            console.log('Recherche:', searchInput ? searchInput.value : 'N/A');
+            console.log('Période:', periodFilter ? periodFilter.value : 'N/A');
+        };
+        
+        // Fonction pour forcer l'affichage de tous les éléments
+        window.forceShowAll = function() {
+            console.log('💪 === FORÇAGE AFFICHAGE TOUS LES ÉLÉMENTS ===');
+            
+            const allCards = document.querySelectorAll('.map-card');
+            const allRows = document.querySelectorAll('#table-body tr.table-row');
+            
+            allCards.forEach((card, i) => {
+                card.style.display = '';
+                card.style.visibility = 'visible';
+                card.style.opacity = '1';
+                console.log(`Carte ${i} forcée visible`);
+            });
+            
+            allRows.forEach((row, i) => {
+                row.style.display = '';
+                row.style.visibility = 'visible';
+                row.style.opacity = '1';
+                console.log(`Ligne ${i} forcée visible`);
+            });
+            
+            console.log(`Tous les éléments forcés visibles: ${allCards.length} cartes, ${allRows.length} lignes`);
+        };
+        
+        // === FIN FONCTIONS DE DEBUG ===
+
+        // Fonction pour vérifier l'état d'authentification
+        async function checkAuthenticationStatus() {
+            try {
+                // Vérifier si l'utilisateur revient d'une authentification (token dans l'URL)
+                const urlParams = new URLSearchParams(window.location.search);
+                const token = urlParams.get('token') || urlParams.get('access_token');
+                
+                if (token) {
+                    console.log('Token détecté dans l\'URL, configuration de l\'authentification...');
+                    window.ptmAuth.setToken(token);
+                    
+                    // Nettoyer l'URL
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
+                
+                const isAuthenticated = await window.ptmAuth.checkAuthStatus();
+                updateAuthenticationUI(isAuthenticated);
+                
+            } catch (error) {
+                console.error('Erreur lors de la vérification de l\'authentification:', error);
+                updateAuthenticationUI(false);
+            }
+        }
+
+        // Fonction pour mettre à jour l'interface utilisateur selon l'état d'authentification
+        function updateAuthenticationUI(isAuthenticated) {
+            const authContainer = document.getElementById('auth-button-container');
+            
+            if (isAuthenticated && authContainer) {
+                // Remplacer le bouton de connexion par les informations utilisateur
+                window.ptmAuth.getUserProfile().then(userProfile => {
+                    authContainer.innerHTML = `
+                        <div class="user-menu-container">
+                            <span class="fr-text--sm">
+                                <span class="fr-icon-account-circle-line fr-mr-1w" aria-hidden="true"></span>
+                                ${userProfile.first_name} ${userProfile.last_name}
+                            </span>
+                            <button class="fr-btn fr-btn--sm fr-btn--secondary fr-ml-2w" onclick="window.ptmAuth.logout()">
+                                Déconnexion
+                            </button>
+                        </div>
+                    `;
+                });
+            }
+        }
+
+        // Fonction pour initialiser l'affichage de version
+        function initializeVersionDisplay() {
+            const versionDisplay = document.getElementById('version-display');
+            
+            if (!versionDisplay) return;
+            
+            // Attendre que les informations de version soient disponibles
+            function updateVersionInfo() {
+                if (window.APP_VERSION) {
+                    const version = window.APP_VERSION;
+                    versionDisplay.textContent = version.shortDisplayVersion;
+                } else {
+                    // Réessayer dans 100ms si les informations ne sont pas encore disponibles
+                    setTimeout(updateVersionInfo, 100);
+                }
+            }
+            
+            updateVersionInfo();
+        }
+    </script>
+
+    <!-- Matomo -->
+    <script>
+    var _paq = window._paq = window._paq || [];
+    /* tracker methods like "setCustomDimension" should be called before "trackPageView" */
+    _paq.push(['trackPageView']);
+    _paq.push(['enableLinkTracking']);
+    (function() {
+        var u="//ptm.huma-num.fr/matomo/";
+        _paq.push(['setTrackerUrl', u+'matomo.php']);
+        _paq.push(['setSiteId', '23']);
+        var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+        g.async=true; g.src=u+'matomo.js'; s.parentNode.insertBefore(g,s);
+    })();
+    </script>
+    <!-- End Matomo Code -->
+
+  </body>
+</html>
