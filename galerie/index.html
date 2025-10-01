@@ -1057,24 +1057,51 @@
                 }
                 
                 const manifest = await response.json();
+                console.log(`Manifest récupéré pour ${arkId}:`, manifest);
                 
                 // Extraction des métadonnées du manifest IIIF
                 const title = manifest.description || manifest.label || 'Titre non disponible';
                 const gallicaUrl = manifest.related || `https://gallica.bnf.fr/ark:/12148/${arkId}`;
                 const attribution = manifest.attribution || '';
                 
-                // Rechercher la date dans les métadonnées
+                // Rechercher la date dans les métadonnées avec logs détaillés
                 let date = '';
+                console.log(`Métadonnées disponibles pour ${arkId}:`, manifest.metadata);
+                
                 if (manifest.metadata && Array.isArray(manifest.metadata)) {
-                    const dateMetadata = manifest.metadata.find(item => 
-                        item.label && item.label.toLowerCase().includes('date')
-                    );
-                    if (dateMetadata && dateMetadata.value) {
-                        date = dateMetadata.value;
+                    console.log(`Recherche de date dans ${manifest.metadata.length} éléments de métadonnées`);
+                    
+                    manifest.metadata.forEach((item, index) => {
+                        console.log(`Métadonnée ${index}:`, item);
+                        if (item.label && item.label.toLowerCase().includes('date')) {
+                            console.log(`Date trouvée dans métadonnée ${index}:`, item.value);
+                            date = item.value;
+                        }
+                    });
+                    
+                    if (!date) {
+                        console.log(`Aucune date trouvée dans les métadonnées pour ${arkId}`);
+                        // Essayer d'autres champs
+                        const altDateFields = ['created', 'issued', 'published', 'navDate'];
+                        for (const field of altDateFields) {
+                            if (manifest[field]) {
+                                console.log(`Date alternative trouvée dans ${field}:`, manifest[field]);
+                                date = manifest[field];
+                                break;
+                            }
+                        }
                     }
+                } else {
+                    console.log(`Pas de métadonnées ou métadonnées invalides pour ${arkId}`);
                 }
                 
-                console.log(`Métadonnées récupérées pour ${arkId}:`, { title, gallicaUrl, date });
+                // Si toujours pas de date, essayer la navDate
+                if (!date && manifest.navDate) {
+                    date = manifest.navDate;
+                    console.log(`Date récupérée depuis navDate:`, date);
+                }
+                
+                console.log(`Métadonnées finales pour ${arkId}:`, { title, gallicaUrl, date, attribution });
                 
                 return {
                     title: title,
@@ -1731,17 +1758,31 @@
                 // Test de recherche textuelle
                 if (searchTerm !== '') {
                     if (currentView === 'cards') {
-                        const title = element.querySelector('.fr-card__title')?.textContent || '';
-                        const desc = element.querySelector('.fr-card__desc')?.textContent || '';
+                        const titleEl = element.querySelector('.fr-card__title');
+                        const descEl = element.querySelector('.fr-card__desc');
+                        const title = titleEl ? titleEl.textContent || '' : '';
+                        const desc = descEl ? descEl.textContent || '' : '';
                         searchableText = (title + ' ' + desc).toLowerCase();
+                        
+                        if (index < 3) {
+                            console.log(`Carte ${index} - Titre:`, title);
+                            console.log(`Carte ${index} - Desc:`, desc);
+                            console.log(`Carte ${index} - Texte recherchable:`, searchableText);
+                        }
                     } else {
                         const cells = element.querySelectorAll('td');
                         searchableText = Array.from(cells).map(cell => cell.textContent || '').join(' ').toLowerCase();
+                        
+                        if (index < 3) {
+                            console.log(`Ligne ${index} - Texte recherchable:`, searchableText);
+                        }
                     }
                     
                     if (!searchableText.includes(searchTerm)) {
                         showElement = false;
-                        if (index < 3) console.log(`Élément ${index} masqué par recherche:`, searchableText.substring(0, 50));
+                        if (index < 3) console.log(`Élément ${index} masqué par recherche - recherché: "${searchTerm}", trouvé: "${searchableText.substring(0, 100)}"`);
+                    } else {
+                        if (index < 3) console.log(`Élément ${index} CORRESPOND à la recherche "${searchTerm}"`);
                     }
                 }
 

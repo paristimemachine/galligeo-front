@@ -295,11 +295,25 @@ async function deposerSurNakala(apiKey_in, collection_id_in) {
         console.log(result);
         
         // Mettre à jour le statut de la carte vers "déposée" avec le DOI
+        console.log('Tentative de mise à jour du statut après dépôt sur Nakala:');
+        console.log('- window.workedMapsManager:', !!window.workedMapsManager);
+        console.log('- window.input_ark:', window.input_ark);
+        console.log('- result.doi:', result.doi);
+        
         if (window.workedMapsManager && window.input_ark && result.doi) {
+            console.log(`Mise à jour du statut de ${window.input_ark} vers 'deposee' avec DOI ${result.doi}`);
             window.workedMapsManager.updateMapStatus(window.input_ark, 'deposee', { 
                 doi: result.doi 
+            }).then(updateResult => {
+                console.log('Mise à jour du statut de dépôt réussie:', updateResult);
             }).catch(error => {
                 console.error('Erreur lors de la mise à jour du statut de la carte après dépôt:', error);
+            });
+        } else {
+            console.warn('Impossible de mettre à jour le statut après dépôt:', {
+                workedMapsManager: !!window.workedMapsManager,
+                input_ark: !!window.input_ark,
+                doi: !!result.doi
             });
         }
 

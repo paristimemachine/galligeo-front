@@ -379,22 +379,19 @@ class WorkedMapsManager {
      */
     async updateMapStatus(arkId, status, additionalData = {}) {
         try {
-            console.log(`Mise à jour du statut de la carte ${arkId} vers ${status}`);
-            
             if (!window.ptmAuth || !window.ptmAuth.isAuthenticated()) {
                 console.log('Utilisateur non authentifié, impossible de mettre à jour la carte');
                 return false;
             }
 
-            await window.ptmAuth.updateMapStatus(arkId, status, additionalData);
-            console.log(`Statut de la carte ${arkId} mis à jour avec succès`);
+            const result = await window.ptmAuth.updateMapStatus(arkId, status, additionalData);
             
             // Recharger l'affichage si nous sommes sur la page "Mes cartes"
             if (document.getElementById('worked-maps-container')) {
                 await this.displayWorkedMaps();
             }
             
-            return true;
+            return result;
         } catch (error) {
             console.error('Erreur lors de la mise à jour du statut de la carte:', error);
             return false;

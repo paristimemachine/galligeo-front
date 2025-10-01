@@ -82,7 +82,7 @@
                         <div class="fr-header__tools-links">
                             <ul class="fr-btns-group">
                                 <li>
-                                    <a class="fr-btn fr-icon-map-2-line" href="cartes-georeferencees.html" style="color:#000091;" title="Découvrir les cartes géoréférencées">
+                                    <a class="fr-btn fr-icon-map-2-line" href="galerie/index.html" style="color:#000091;" title="Découvrir les cartes géoréférencées">
                                         Cartes géoréférencées
                                     </a>
                                 </li>
@@ -938,7 +938,7 @@ function openExternalLink(url) {
                             </h1>
                             <p>Choisissez une sauvegarde à restaurer :</p>
                             <div id="backup-list-container">
-                                <!-- Le contenu sera généré dynamiquement -->
+                                <!-- contenu généré dynamiquement par JavaScript -->
                             </div>
                         </div>
                         <div class="fr-modal__footer">
@@ -985,6 +985,9 @@ function openExternalLink(url) {
     <script src="js/control-points-backup.js"></script>
     <script src="js/test-deposit-button.js"></script>
     <script src="js/api_health.js"></script>
+    <script src="js/auto-status-correction.js"></script>
+    <script src="js/status-monitor.js"></script>
+    <!-- Scripts de debug disponibles si nécessaires: debug-status-update.js, status-fixer.js -->
 
     <script>
     // Variable globale pour suivre l'état d'initialisation
@@ -1452,16 +1455,19 @@ function openExternalLink(url) {
         const loginButton = document.querySelector('button[onclick*="auth/login"]');
         if (loginButton) {
             const userMenuHtml = `
-                <div class="user-menu-container">
-                    <button class="fr-btn fr-icon-account-circle-line user-menu-toggle" 
-                            data-fr-opened="false" 
-                            aria-controls="fr-modal-settings"
-                            onclick="document.getElementById('fr-modal-settings').showModal()">
-                        ${userProfile.first_name} ${userProfile.last_name}
-                    </button>
-                </div>
+                <button class="fr-btn fr-icon-account-circle-line user-menu-toggle" 
+                        data-fr-opened="false" 
+                        aria-controls="fr-modal-settings"
+                        onclick="document.getElementById('fr-modal-settings').showModal()">
+                    ${userProfile.first_name} ${userProfile.last_name}
+                </button>
             `;
             loginButton.parentElement.innerHTML = userMenuHtml;
+        }
+        
+        // S'assurer que le bouton "Cartes géoréférencées" est toujours présent
+        if (typeof ensureCartesGeoreferenceesBoutonPresent === 'function') {
+            ensureCartesGeoreferenceesBoutonPresent();
         }
     }
 

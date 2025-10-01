@@ -11,6 +11,17 @@ if(ark) {
     // S'assurer que le contrôle de métadonnées est disponible avant de charger l'image
     console.log('Chargement d\'une carte via l\'URL avec ARK:', ark);
     
+    // Ajouter la carte à la liste des cartes travaillées si l'utilisateur est connecté
+    window.addEventListener('load', () => {
+        setTimeout(() => {
+            if (window.ptmAuth && window.ptmAuth.isAuthenticated() && window.workedMapsManager && ark) {
+                window.workedMapsManager.addWorkedMap(ark).catch(error => {
+                    // Erreur silencieuse
+                });
+            }
+        }, 3000); // Attendre que tout soit bien initialisé
+    });
+    
     if (window.ensureMetadataControlAvailable) {
         window.ensureMetadataControlAvailable()
             .then(() => {
