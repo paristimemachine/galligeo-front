@@ -1105,10 +1105,25 @@
                 const manifest = await response.json();
                 console.log(`Manifest récupéré pour ${arkId}:`, manifest);
                 
-                // Extraction des métadonnées du manifest IIIF
-                const title = manifest.description || manifest.label || 'Titre non disponible';
-                const gallicaUrl = manifest.related || `https://gallica.bnf.fr/ark:/12148/${arkId}`;
-                const attribution = manifest.attribution || '';
+                // Extraction des métadonnées du manifest IIIF v3
+                // Le titre peut être dans label.none, label.fr, etc.
+                let title = 'Titre non disponible';
+                if (manifest.label) {
+                    if (typeof manifest.label === 'object') {
+                        title = manifest.label.none?.[0] || manifest.label.fr?.[0] || manifest.label.en?.[0] || title;
+                    } else {
+                        title = manifest.label;
+                    }
+                }
+                
+                const gallicaUrl = manifest.homepage?.[0]?.id || `https://gallica.bnf.fr/ark:/12148/${arkId}`;
+                
+                // Attribution depuis requiredStatement (IIIF v3)
+                let attribution = '';
+                if (manifest.requiredStatement && manifest.requiredStatement.value) {
+                    const attrValue = manifest.requiredStatement.value;
+                    attribution = attrValue.none?.[0] || attrValue.fr?.[0] || attrValue.en?.[0] || '';
+                }
                 
                 // Rechercher la date dans les métadonnées avec logs détaillés
                 let date = '';
@@ -1119,32 +1134,36 @@
                     
                     manifest.metadata.forEach((item, index) => {
                         console.log(`Métadonnée ${index}:`, item);
-                        if (item.label && item.label.toLowerCase().includes('date')) {
+                        
+                        // Extraire le label (format IIIF v3)
+                        let label = '';
+                        if (item.label) {
+                            if (typeof item.label === 'object') {
+                                label = item.label.fr?.[0] || item.label.en?.[0] || item.label.none?.[0] || '';
+                            } else {
+                                label = item.label;
+                            }
+                        }
+                        
+                        if (label && label.toLowerCase().includes('date')) {
                             console.log(`Date trouvée dans métadonnée ${index}:`, item.value);
-                            date = item.value;
+                            
+                            // Extraire la valeur (format IIIF v3)
+                            if (item.value) {
+                                if (typeof item.value === 'object') {
+                                    date = item.value.none?.[0] || item.value.fr?.[0] || item.value.en?.[0] || '';
+                                } else {
+                                    date = item.value;
+                                }
+                            }
                         }
                     });
                     
                     if (!date) {
                         console.log(`Aucune date trouvée dans les métadonnées pour ${arkId}`);
-                        // Essayer d'autres champs
-                        const altDateFields = ['created', 'issued', 'published', 'navDate'];
-                        for (const field of altDateFields) {
-                            if (manifest[field]) {
-                                console.log(`Date alternative trouvée dans ${field}:`, manifest[field]);
-                                date = manifest[field];
-                                break;
-                            }
-                        }
                     }
                 } else {
                     console.log(`Pas de métadonnées ou métadonnées invalides pour ${arkId}`);
-                }
-                
-                // Si toujours pas de date, essayer la navDate
-                if (!date && manifest.navDate) {
-                    date = manifest.navDate;
-                    console.log(`Date récupérée depuis navDate:`, date);
                 }
                 
                 console.log(`Métadonnées finales pour ${arkId}:`, { title, gallicaUrl, date, attribution });

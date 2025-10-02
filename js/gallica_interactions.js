@@ -186,25 +186,57 @@ async function load_oai_metada(input_ark) {
             // Utiliser la variable globale
             window.metadataDict = window.metadataDict || {};
 
-            const canvas = data.sequences[0].canvases[0];
-            data.metadata.push(
-                { label: 'Height', value: canvas.height },
-                { label: 'Width',  value: canvas.width  }
-            );
-            document.height_image = canvas.height;
-            document.width_image  = canvas.width;
+            // Récupérer le canvas (items[0] dans IIIF v3)
+            const canvas = data.items && data.items[0];
+            
+            // Ajouter les dimensions si disponibles
+            if (canvas && canvas.height && canvas.width) {
+                if (!data.metadata) data.metadata = [];
+                data.metadata.push(
+                    { label: { fr: ['Hauteur'], en: ['Height'] }, value: { none: [canvas.height] } },
+                    { label: { fr: ['Largeur'], en: ['Width'] }, value: { none: [canvas.width] } }
+                );
+                document.height_image = canvas.height;
+                document.width_image  = canvas.width;
+            }
 
             const metadataOrder = [
-                'Title','Creator','Publisher','Date','Format',
-                'Language','Type','Height','Width','Source',
-                'Subject','Description','Relation','Coverage',
-                'Rights','Identifier','Shelfmark','Repository',
-                'Digitised by','Source Images','Metadata Source'
+                'Title','Titre','Creator','Créateur','Publisher','Éditeur','Date','Format',
+                'Language','Langue','Type','Height','Hauteur','Width','Largeur','Source',
+                'Subject','Sujet','Description','Relation','Coverage','Couverture',
+                'Rights','Droits','Identifier','Identifiant','Shelfmark','Cote','Repository','Référentiel',
+                'Digitised by','Numérisé par','Source Images','Images Source','Metadata Source','Source meta-données'
             ];
+            
+            // Normaliser les métadonnées IIIF v3
+            const normalizedMetadata = (data.metadata || []).map(element => {
+                // Extraire le label
+                let label = '';
+                if (element.label) {
+                    if (typeof element.label === 'object') {
+                        label = element.label.en?.[0] || element.label.fr?.[0] || element.label.none?.[0] || '';
+                    } else {
+                        label = element.label;
+                    }
+                }
+                
+                // Extraire la valeur
+                let value = '';
+                if (element.value) {
+                    if (typeof element.value === 'object') {
+                        value = element.value.en?.[0] || element.value.fr?.[0] || element.value.none?.[0] || '';
+                    } else {
+                        value = element.value;
+                    }
+                }
+                
+                return { label, value };
+            });
+            
             const ordered = metadataOrder
-                .map(lbl => data.metadata.find(el => el.label === lbl))
+                .map(lbl => normalizedMetadata.find(el => el.label === lbl))
                 .filter(Boolean);
-            const remaining = data.metadata.filter(el => !metadataOrder.includes(el.label));
+            const remaining = normalizedMetadata.filter(el => !metadataOrder.includes(el.label));
             const sortedMetadata = ordered.concat(remaining);
 
             sortedMetadata.forEach(element => {

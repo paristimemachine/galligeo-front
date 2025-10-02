@@ -80,15 +80,20 @@ class CartoqueteManager {
             
             const data = await response.json();
             
-            // Extraire les métadonnées utiles
+            // Extraire les métadonnées utiles (format IIIF v3)
             const metadata = {};
-            const canvas = data.sequences[0].canvases[0];
             
-            // Ajouter les dimensions
-            data.metadata.push(
-                { label: 'Height', value: canvas.height },
-                { label: 'Width', value: canvas.width }
-            );
+            // Récupérer le canvas (items[0] dans IIIF v3)
+            const canvas = data.items && data.items[0];
+            
+            // Ajouter les dimensions si disponibles
+            if (canvas && canvas.height && canvas.width) {
+                if (!data.metadata) data.metadata = [];
+                data.metadata.push(
+                    { label: { fr: ['Hauteur'], en: ['Height'] }, value: { none: [canvas.height] } },
+                    { label: { fr: ['Largeur'], en: ['Width'] }, value: { none: [canvas.width] } }
+                );
+            }
 
             // Traduction des labels
             const labelMapping = {
@@ -114,16 +119,30 @@ class CartoqueteManager {
                 'Digitised by': 'Numérisé par',
             };
 
-            // Construire le dictionnaire de métadonnées
-            data.metadata.forEach(element => {
-                const frenchLabel = labelMapping[element.label] || element.label;
-                
-                if (Array.isArray(element.value)) {
-                    metadata[frenchLabel] = element.value.map(item => item['@value'] || item).join(', ');
-                } else {
-                    metadata[frenchLabel] = element.value;
-                }
-            });
+            // Construire le dictionnaire de métadonnées (format IIIF v3)
+            if (data.metadata) {
+                data.metadata.forEach(element => {
+                    // Extraire le label (peut être dans différentes langues)
+                    let label = element.label;
+                    if (typeof label === 'object') {
+                        label = label.fr?.[0] || label.en?.[0] || label.none?.[0] || '';
+                    }
+                    
+                    const frenchLabel = labelMapping[label] || label;
+                    
+                    // Extraire la valeur (peut être dans différentes langues)
+                    let value = element.value;
+                    if (typeof value === 'object') {
+                        value = value.fr?.[0] || value.en?.[0] || value.none?.[0] || '';
+                    }
+                    
+                    if (Array.isArray(value)) {
+                        metadata[frenchLabel] = value.join(', ');
+                    } else {
+                        metadata[frenchLabel] = value;
+                    }
+                });
+            }
 
             // Générer l'URL de la vignette
             const thumbnailUrl = this.generateThumbnailUrl(arkId);
