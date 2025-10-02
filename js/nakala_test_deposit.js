@@ -58,7 +58,7 @@ async function deposerSurNakala(apiKey_in, collection_id_in) {
     
     // Générer le contenu du fichier points de contrôle
     let coordsContent = "# Points de contrôle générés par GallicaGeo\n";
-    coordsContent += "id, lat_image, lng_image, lat_geo, lng_geo\n";
+    coordsContent += "id,lat_image,lng_image,lat_geo,lng_geo\n";
     
     const completePairs = window.pointPairs.filter(pair => pair.isComplete());
     if (completePairs.length === 0) {
