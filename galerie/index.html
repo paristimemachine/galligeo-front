@@ -354,6 +354,11 @@
         .selectable-item.selected {
             background: #f5f5fe;
         }
+        
+        /* Classe pour forcer le repaint */
+        .force-repaint {
+            transform: translateZ(0);
+        }
     </style>
   </head>
   <body>
@@ -814,7 +819,6 @@
                 
                 // Initialiser la recherche et le filtrage
                 initializeSearchAndFilter();
-                console.log('🔧 initializeSearchAndFilter() appelée');
                 
                 // S'assurer que la vue cartes est visible par défaut
                 const cardsContainer = document.getElementById('cards-container');
@@ -826,8 +830,6 @@
                     // Vérifier que le contenu est bien présent
                     const cardsContent = cardsContainer.innerHTML;
                     const tableContent = tableContainer.querySelector('tbody')?.innerHTML;
-                    console.log('Initialisation finale - Cards:', cardsContent.length > 100 ? 'OK' : 'VIDE');
-                    console.log('Initialisation finale - Table:', tableContent?.length > 100 ? 'OK' : 'VIDE');
                 }
             }, 1000);
             
@@ -837,21 +839,55 @@
 
         // === SYSTÈME DE SÉLECTION ===
         
-        // Fonction pour basculer la sélection d'une carte
-        function toggleMapSelection(arkId, element) {
-            if (selectedMaps.has(arkId)) {
-                selectedMaps.delete(arkId);
-                element.classList.remove('selected');
-                // Décocher la checkbox correspondante si elle existe
-                const checkbox = document.querySelector(`input[data-ark-id="${arkId}"]`);
-                if (checkbox) checkbox.checked = false;
-            } else {
-                selectedMaps.add(arkId);
-                element.classList.add('selected');
-                // Cocher la checkbox correspondante si elle existe
-                const checkbox = document.querySelector(`input[data-ark-id="${arkId}"]`);
-                if (checkbox) checkbox.checked = true;
+        // Fonction pour synchroniser les sélections entre les vues
+        function syncSelectionBetweenViews(arkId, isSelected) {
+            // Synchroniser la checkbox du tableau
+            const tableCheckbox = document.querySelector(`#table-body input[data-ark-id="${arkId}"]`);
+            if (tableCheckbox) {
+                tableCheckbox.checked = isSelected;
             }
+            
+            // Synchroniser la checkbox des cartes
+            const cardCheckbox = document.querySelector(`#cards-grid input[data-ark-id="${arkId}"]`);
+            if (cardCheckbox) {
+                cardCheckbox.checked = isSelected;
+            }
+            
+            // Synchroniser la classe selected sur la carte
+            const mapCard = document.querySelector(`.map-card[data-ark-id="${arkId}"]`);
+            if (mapCard) {
+                if (isSelected) {
+                    mapCard.classList.add('selected');
+                } else {
+                    mapCard.classList.remove('selected');
+                }
+            }
+            
+            // Synchroniser la classe selected sur la ligne
+            const tableRow = document.querySelector(`#table-body .table-row[data-ark-id="${arkId}"]`);
+            if (tableRow) {
+                if (isSelected) {
+                    tableRow.classList.add('selected');
+                } else {
+                    tableRow.classList.remove('selected');
+                }
+            }
+        }
+
+        // Fonction améliorée pour basculer la sélection d'une carte
+        function toggleMapSelection(arkId, element) {
+            const isCurrentlySelected = selectedMaps.has(arkId);
+            const newSelectionState = !isCurrentlySelected;
+            
+            if (newSelectionState) {
+                selectedMaps.add(arkId);
+            } else {
+                selectedMaps.delete(arkId);
+            }
+            
+            // Synchroniser dans toutes les vues
+            syncSelectionBetweenViews(arkId, newSelectionState);
+            
             updateSelectionUI();
         }
 
@@ -890,12 +926,21 @@
         }
 
         function clearAllSelections() {
+            // Vider le Set de sélections
+            const previouslySelected = Array.from(selectedMaps);
             selectedMaps.clear();
-            // Décocher toutes les checkboxes
-            document.querySelectorAll('input[data-ark-id]').forEach(cb => cb.checked = false);
-            document.getElementById('select-all').checked = false;
-            // Retirer la classe selected de tous les éléments
-            document.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
+            
+            // Synchroniser chaque élément précédemment sélectionné
+            previouslySelected.forEach(arkId => {
+                syncSelectionBetweenViews(arkId, false);
+            });
+            
+            // Décocher le select-all
+            const selectAllCheckbox = document.getElementById('select-all');
+            if (selectAllCheckbox) {
+                selectAllCheckbox.checked = false;
+            }
+            
             updateSelectionUI();
         }
 
@@ -1416,13 +1461,30 @@
                 }
             }
             
+            // Réappliquer immédiatement les filtres de recherche sauvegardés
+            setTimeout(() => {
+                // Restaurer les valeurs de recherche dans les champs
+                const searchInput = document.getElementById('search-input');
+                const periodFilter = document.getElementById('period-filter');
+                
+                if (searchInput && lastSearchTerm) {
+                    searchInput.value = lastSearchTerm;
+                }
+                if (periodFilter && lastPeriodFilter) {
+                    periodFilter.value = lastPeriodFilter;
+                }
+                
+                // Réappliquer les filtres
+                applySearchAndFilter();
+            }, 100);
+            
             // Vérifier le contenu final
             setTimeout(() => {
                 const cardsGrid = document.getElementById('cards-grid');
                 const tableBody = document.getElementById('table-body');
                 console.log('Final - Cartes:', cardsGrid?.innerHTML.length > 1000 ? 'OK' : 'PROBLÈME');
                 console.log('Final - Tableau:', tableBody?.innerHTML.length > 200 ? 'OK' : 'PROBLÈME');
-            }, 10);
+            }, 200);
         }
 
         // Variable pour éviter la double initialisation
@@ -1552,89 +1614,163 @@
             allFilterableElements = [];
         }
         function initializeSearchAndFilter() {
-            console.log('🔍 === INITIALISATION RECHERCHE ET FILTRAGE ===');
-            
-            // Initialiser les événements
+            // Initialiser les événements avec nouvelle stratégie
             const searchInput = document.getElementById('search-input');
             const periodFilter = document.getElementById('period-filter');
             
-            console.log('Elements trouvés:');
-            console.log('- searchInput:', searchInput ? 'OK' : 'MANQUANT');
-            console.log('- periodFilter:', periodFilter ? 'OK' : 'MANQUANT');
-            
             if (searchInput) {
-                console.log('Ajout des événements sur searchInput');
-                searchInput.addEventListener('input', function(e) {
-                    console.log('🔍 Événement input déclenché, valeur:', e.target.value);
-                    applySearchAndFilter();
-                });
-                searchInput.addEventListener('keypress', function(e) {
-                    console.log('🔍 Événement keypress déclenché, key:', e.key);
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        applySearchAndFilter();
-                    }
-                });
-                console.log('Événements search ajoutés avec succès');
+                // Supprimer tous les anciens événements
+                searchInput.removeEventListener('input', handleSearchInput);
+                searchInput.removeEventListener('keypress', handleSearchKeypress);
+                
+                // Ajouter les nouveaux événements avec forçage immédiat
+                searchInput.addEventListener('input', handleSearchInput);
+                searchInput.addEventListener('keypress', handleSearchKeypress);
+                
             } else {
                 console.error('❌ search-input non trouvé dans le DOM');
             }
             
             if (periodFilter) {
-                console.log('Ajout des événements sur periodFilter');
-                periodFilter.addEventListener('change', function(e) {
-                    console.log('📅 Événement change déclenché, valeur:', e.target.value);
-                    applySearchAndFilter();
-                });
-                console.log('Événements filter ajoutés avec succès');
+                // Supprimer les anciens événements
+                periodFilter.removeEventListener('change', handlePeriodChange);
+                
+                // Ajouter le nouvel événement avec forçage immédiat
+                periodFilter.addEventListener('change', handlePeriodChange);
+                
             } else {
                 console.error('❌ period-filter non trouvé dans le DOM');
             }
 
             // Mettre à jour la liste des éléments filtrables
             updateFilterableElements();
-            console.log('🔍 Initialisation terminée');
+        }
+
+        // Version alternative ultra-agressive : recréation DOM complète
+        function forceCompleteRecreation() {
+            const cardsGrid = document.getElementById('cards-grid');
+            const tableBody = document.getElementById('table-body');
+            const cardsContainer = document.getElementById('cards-container');
+            const tableContainer = document.getElementById('table-container');
+            
+            if (!cardsGrid || !tableBody) {
+                return;
+            }
+            
+            // Sauvegarder la vue actuelle
+            const currentlyCardsVisible = !cardsContainer.classList.contains('hidden');
+            
+            // ÉTAPE 1: Supprimer complètement le contenu existant
+            cardsGrid.innerHTML = '';
+            tableBody.innerHTML = '';
+            
+            // ÉTAPE 2: Forcer un repaint vide
+            requestAnimationFrame(() => {
+                // ÉTAPE 3: Restaurer le contenu depuis les sauvegardes
+                if (cardsHTMLContent && cardsHTMLContent.length > 100) {
+                    cardsGrid.innerHTML = cardsHTMLContent;
+                }
+                
+                if (tableHTMLContent && tableHTMLContent.length > 100) {
+                    tableBody.innerHTML = tableHTMLContent;
+                }
+                
+                // ÉTAPE 4: Forcer un autre repaint après restauration
+                requestAnimationFrame(() => {
+                    // ÉTAPE 5: Appliquer immédiatement les filtres
+                    applySearchAndFilter();
+                    
+                    // ÉTAPE 6: Forcer le redessin
+                    setTimeout(() => {
+                        forceUIRedraw();
+                    }, 50);
+                });
+            });
+        }
+
+        // Modifier les gestionnaires pour utiliser la recréation complète
+        function handleSearchInput(e) {
+            clearTimeout(window.searchTimeout);
+            window.searchTimeout = setTimeout(() => {
+                // Utiliser la recréation complète pour être sûr
+                forceCompleteRecreation();
+            }, 500); // Délai plus long pour éviter trop de recréations
+        }
+
+        function handleSearchKeypress(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                clearTimeout(window.searchTimeout);
+                
+                // Utiliser la recréation complète
+                forceCompleteRecreation();
+            }
+        }
+
+        function handlePeriodChange(e) {
+            
+            // Utiliser la recréation complète
+            forceCompleteRecreation();
+        }
+
+        // Exposer les nouvelles fonctions pour debug
+        window.forceUIRedraw = forceUIRedraw;
+        window.forceCompleteRecreation = forceCompleteRecreation;
+
+        // Nouvelle fonction pour forcer la mise à jour de la vue active
+        function forceViewRefresh() {
+            console.log('💪 === FORÇAGE MISE À JOUR VUE ACTIVE ===');
+            
+            const cardsContainer = document.getElementById('cards-container');
+            const tableContainer = document.getElementById('table-container');
+            
+            if (!cardsContainer || !tableContainer) {
+                console.error('Conteneurs non trouvés');
+                return;
+            }
+            
+            const currentlyCardsVisible = !cardsContainer.classList.contains('hidden');
+            
+            if (currentlyCardsVisible) {
+                console.log('Forçage rafraîchissement vue cartes');
+                // Forcer la re-génération de la vue cartes
+                cardsContainer.style.display = 'none';
+                setTimeout(() => {
+                    cardsContainer.style.display = 'block';
+                    
+                    // Réappliquer les filtres après le rafraîchissement
+                    setTimeout(() => {
+                        applySearchAndFilter();
+                    }, 10);
+                }, 10);
+            } else {
+                console.log('Forçage rafraîchissement vue tableau');
+                // Forcer la re-génération de la vue tableau
+                tableContainer.style.display = 'none';
+                setTimeout(() => {
+                    tableContainer.style.display = 'block';
+                    
+                    // Réappliquer les filtres après le rafraîchissement
+                    setTimeout(() => {
+                        applySearchAndFilter();
+                    }, 10);
+                }, 10);
+            }
         }
 
         // Fonction pour mettre à jour la liste des éléments filtrables
         function updateFilterableElements() {
-            console.log('📋 === MISE À JOUR ÉLÉMENTS FILTRABLES ===');
-            console.log('Vue actuelle:', currentView);
-            
             // Toujours récupérer les éléments depuis le DOM (pas de cache)
             if (currentView === 'cards') {
                 allFilterableElements = Array.from(document.querySelectorAll('.map-card'));
-                console.log('Mode cartes - Éléments trouvés dans DOM:', allFilterableElements.length);
             } else {
                 allFilterableElements = Array.from(document.querySelectorAll('#table-body tr.table-row'));
-                console.log('Mode tableau - Éléments trouvés dans DOM:', allFilterableElements.length);
-            }
-            
-            console.log('Éléments filtrables mis à jour:', allFilterableElements.length);
-            
-            // Vérifier quelques éléments
-            if (allFilterableElements.length > 0) {
-                console.log('Premier élément:', allFilterableElements[0]);
-                console.log('data-date du premier:', allFilterableElements[0].getAttribute('data-date'));
-            } else {
-                console.warn('⚠️ Aucun élément filtrable trouvé !');
-                
-                // Debug : vérifier ce qui existe dans le DOM
-                const allCards = document.querySelectorAll('.map-card');
-                const allRows = document.querySelectorAll('#table-body tr.table-row');
-                const allTableRows = document.querySelectorAll('#table-body tr');
-                
-                console.log('Debug DOM:');
-                console.log('- .map-card:', allCards.length);
-                console.log('- #table-body tr.table-row:', allRows.length);
-                console.log('- #table-body tr (tous):', allTableRows.length);
             }
         }
 
         // Fonction de recherche
         function performSearch() {
             const searchTerm = document.getElementById('search-input').value.toLowerCase().trim();
-            console.log('Recherche pour:', searchTerm);
 
             updateFilterableElements();
 
@@ -1707,161 +1843,319 @@
             updateVisibleCount();
         }
 
-        // Fonction pour combiner recherche et filtrage
-        function applySearchAndFilter() {
-            console.log('🎯 === APPLICATION RECHERCHE ET FILTRAGE ===');
+        // Variables pour sauvegarder l'état de la recherche
+        let lastSearchTerm = '';
+        let lastPeriodFilter = 'all';
+        let isRefreshing = false; // Flag pour éviter les boucles infinies
+
+        // Fonction pour forcer le rafraîchissement de l'affichage en simulant un changement de vue
+        function forceRefreshDisplay() {
+            // Éviter les boucles infinies
+            if (isRefreshing) {
+                console.log('⚠️ Rafraîchissement déjà en cours, ignoré');
+                return;
+            }
             
+            console.log('🔄 === FORÇAGE RAFRAÎCHISSEMENT VIA SIMULATION CLICS ===');
+            isRefreshing = true;
+            
+            const cardsRadio = document.getElementById('view-cards');
+            const tableRadio = document.getElementById('view-table');
+            
+            if (!cardsRadio || !tableRadio) {
+                console.warn('Boutons radio de vue non trouvés');
+                isRefreshing = false;
+                return;
+            }
+            
+            const currentlyCards = cardsRadio.checked;
+            
+            // Simuler un SEUL changement de vue pour forcer le rafraîchissement
+            if (currentlyCards) {
+                console.log('Simulation: cartes -> tableau');
+                tableRadio.click();
+                
+                setTimeout(() => {
+                    console.log('Simulation: tableau -> cartes');
+                    cardsRadio.click();
+                    
+                    setTimeout(() => {
+                        isRefreshing = false;
+                        console.log('Rafraîchissement terminé');
+                    }, 100);
+                }, 100);
+                
+            } else {
+                console.log('Simulation: tableau -> cartes');
+                cardsRadio.click();
+                
+                setTimeout(() => {
+                    console.log('Simulation: cartes -> tableau');
+                    tableRadio.click();
+                    
+                    setTimeout(() => {
+                        isRefreshing = false;
+                        console.log('Rafraîchissement terminé');
+                    }, 100);
+                }, 100);
+            }
+        }
+
+        // Fonction pour réinitialiser la recherche
+        function resetSearch() {
+            const searchInput = document.getElementById('search-input');
+            const periodFilter = document.getElementById('period-filter');
+            
+            if (searchInput) searchInput.value = '';
+            if (periodFilter) periodFilter.value = 'all';
+            
+            lastSearchTerm = '';
+            lastPeriodFilter = 'all';
+            
+            applySearchAndFilter();
+        }
+
+        // Fonction pour diagnostiquer les différences entre les vues
+        function diagnoseViewDifferences() {
+            console.log('🔍 === DIAGNOSTIC DES DIFFÉRENCES ENTRE VUES ===');
+            
+            const allCards = document.querySelectorAll('.map-card[data-ark-id]');
+            const allRows = document.querySelectorAll('#table-body tr.table-row[data-ark-id]');
+            
+            console.log(`Cartes trouvées: ${allCards.length}`);
+            console.log(`Lignes trouvées: ${allRows.length}`);
+            
+            // Récupérer les ARK IDs de chaque vue
+            const cardsArkIds = Array.from(allCards).map(card => card.getAttribute('data-ark-id')).sort();
+            const rowsArkIds = Array.from(allRows).map(row => row.getAttribute('data-ark-id')).sort();
+            
+            console.log('ARK IDs des cartes:', cardsArkIds);
+            console.log('ARK IDs des lignes:', rowsArkIds);
+            
+            // Trouver les différences
+            const cardsOnly = cardsArkIds.filter(id => !rowsArkIds.includes(id));
+            const rowsOnly = rowsArkIds.filter(id => !cardsArkIds.includes(id));
+            
+            if (cardsOnly.length > 0) {
+                console.warn('❌ ARK IDs présents uniquement dans les cartes:', cardsOnly);
+            }
+            if (rowsOnly.length > 0) {
+                console.warn('❌ ARK IDs présents uniquement dans les lignes:', rowsOnly);
+            }
+            
+            if (cardsOnly.length === 0 && rowsOnly.length === 0) {
+                console.log('✅ Les ARK IDs sont identiques dans les deux vues');
+            }
+            
+            return {
+                cardsCount: allCards.length,
+                rowsCount: allRows.length,
+                cardsArkIds,
+                rowsArkIds,
+                cardsOnly,
+                rowsOnly
+            };
+        }
+
+        // Fonction pour combiner recherche et filtrage
+        // Fonction unifiée pour déterminer si un élément correspond à la recherche
+        function elementMatchesSearch(element, arkId, searchTerm, selectedPeriod) {
+            let searchMatch = true;
+            let periodMatch = true;
+            
+            // Test de recherche textuelle unifié
+            if (searchTerm !== '') {
+                let searchableText = '';
+                
+                // Pour les cartes : TOUT LE CONTENU TEXTUEL
+                if (element.classList.contains('map-card')) {
+                    const titleEl = element.querySelector('.fr-card__title');
+                    const descEls = element.querySelectorAll('.fr-card__desc');
+                    const detailEls = element.querySelectorAll('.fr-card__detail');
+                    
+                    const title = titleEl ? titleEl.textContent || '' : '';
+                    const descs = Array.from(descEls).map(el => el.textContent || '').join(' ');
+                    const details = Array.from(detailEls).map(el => el.textContent || '').join(' ');
+                    
+                    searchableText = (title + ' ' + descs + ' ' + details).toLowerCase();
+                }
+                // Pour les lignes : TOUTES LES CELLULES
+                else if (element.classList.contains('table-row')) {
+                    const cells = element.querySelectorAll('td');
+                    searchableText = Array.from(cells).map(cell => cell.textContent || '').join(' ').toLowerCase();
+                }
+                
+                // Ajouter l'ARK ID au texte recherchable pour les deux types
+                searchableText += ' ' + arkId.toLowerCase();
+                
+                searchMatch = searchableText.includes(searchTerm);
+            }
+            
+            // Test de filtrage par période unifié
+            if (selectedPeriod !== 'all' && selectedPeriod !== '') {
+                const dateStr = element.getAttribute('data-date');
+                if (dateStr && dateStr !== '' && dateStr !== 'undefined') {
+                    const year = parseInt(dateStr);
+                    if (!isNaN(year)) {
+                        switch(selectedPeriod) {
+                            case 'before-1800':
+                                periodMatch = year < 1800;
+                                break;
+                            case '1800-1850':
+                                periodMatch = year >= 1800 && year <= 1850;
+                                break;
+                            case '1850-1900':
+                                periodMatch = year >= 1850 && year <= 1900;
+                                break;
+                            case '1900-1950':
+                                periodMatch = year >= 1900 && year <= 1950;
+                                break;
+                            case 'after-1950':
+                                periodMatch = year > 1950;
+                                break;
+                            default:
+                                periodMatch = true;
+                        }
+                    }
+                }
+            }
+            
+            return searchMatch && periodMatch;
+        }
+
+        function applySearchAndFilter() {
             const searchInput = document.getElementById('search-input');
             const periodFilter = document.getElementById('period-filter');
             
             const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
             const selectedPeriod = periodFilter ? periodFilter.value : 'all';
             
-            console.log('Paramètres:');
-            console.log('- Terme recherche:', `"${searchTerm}"`);
-            console.log('- Période sélectionnée:', selectedPeriod);
+            // Sauvegarder l'état de la recherche
+            lastSearchTerm = searchTerm;
+            lastPeriodFilter = selectedPeriod;
 
-            // FORCER LA RÉAFFICHAGE DE TOUS LES ÉLÉMENTS EN PREMIER
-            console.log('🔄 RÉAFFICHAGE FORCÉ DE TOUS LES ÉLÉMENTS');
-            const allCardsInDOM = document.querySelectorAll('.map-card');
-            const allRowsInDOM = document.querySelectorAll('#table-body tr.table-row');
-            
-            // Forcer l'affichage de TOUS les éléments
-            allCardsInDOM.forEach((card, i) => {
-                card.style.display = '';
-                console.log(`Carte ${i} réaffichée`);
-            });
-            allRowsInDOM.forEach((row, i) => {
-                row.style.display = '';
-                console.log(`Ligne ${i} réaffichée`);
-            });
-            
-            console.log(`Total réaffichés: ${allCardsInDOM.length} cartes, ${allRowsInDOM.length} lignes`);
+            // RÉCUPÉRER TOUS LES ÉLÉMENTS DES DEUX VUES AVEC SÉLECTEURS PRÉCIS
+            const allCards = document.querySelectorAll('.map-card[data-ark-id]');
+            const allRows = document.querySelectorAll('#table-body tr.table-row[data-ark-id]');
 
-            // Maintenant mettre à jour les éléments filtrables avec les éléments fraîchement réaffichés
-            if (currentView === 'cards') {
-                allFilterableElements = Array.from(allCardsInDOM);
-            } else {
-                allFilterableElements = Array.from(allRowsInDOM);
+            // TRAITER LES CARTES avec la fonction unifiée
+            let visibleCardsCount = 0;
+            allCards.forEach((card, index) => {
+                const arkId = card.getAttribute('data-ark-id');
+                const shouldShow = elementMatchesSearch(card, arkId, searchTerm, selectedPeriod);
+                
+                if (shouldShow) {
+                    card.style.display = '';
+                    visibleCardsCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            // TRAITER LES LIGNES DU TABLEAU avec la même fonction unifiée
+            let visibleRowsCount = 0;
+            allRows.forEach((row, index) => {
+                const arkId = row.getAttribute('data-ark-id');
+                const shouldShow = elementMatchesSearch(row, arkId, searchTerm, selectedPeriod);
+                
+                if (shouldShow) {
+                    row.style.display = '';
+                    visibleRowsCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            
+            // Vérifier la cohérence et corriger si nécessaire
+            if (visibleCardsCount !== visibleRowsCount) {
+                // Forcer l'harmonisation en cas d'incohérence
+                allCards.forEach((card, i) => {
+                    const arkId = card.getAttribute('data-ark-id');
+                    const correspondingRow = document.querySelector(`#table-body tr.table-row[data-ark-id="${arkId}"]`);
+                    
+                    if (correspondingRow) {
+                        const shouldShow = elementMatchesSearch(card, arkId, searchTerm, selectedPeriod);
+                        card.style.display = shouldShow ? '' : 'none';
+                        correspondingRow.style.display = shouldShow ? '' : 'none';
+                    }
+                });
             }
             
-            console.log('Éléments filtrables actualisés:', allFilterableElements.length);
-
-            let visibleCount = 0;
-            let hiddenCount = 0;
-
-            // Appliquer les filtres
-            allFilterableElements.forEach((element, index) => {
-                let searchableText = '';
-                let showElement = true;
-
-                // Test de recherche textuelle
-                if (searchTerm !== '') {
-                    if (currentView === 'cards') {
-                        const titleEl = element.querySelector('.fr-card__title');
-                        const descEl = element.querySelector('.fr-card__desc');
-                        const title = titleEl ? titleEl.textContent || '' : '';
-                        const desc = descEl ? descEl.textContent || '' : '';
-                        searchableText = (title + ' ' + desc).toLowerCase();
-                        
-                        if (index < 3) {
-                            console.log(`Carte ${index} - Titre:`, title);
-                            console.log(`Carte ${index} - Desc:`, desc);
-                            console.log(`Carte ${index} - Texte recherchable:`, searchableText);
-                        }
-                    } else {
-                        const cells = element.querySelectorAll('td');
-                        searchableText = Array.from(cells).map(cell => cell.textContent || '').join(' ').toLowerCase();
-                        
-                        if (index < 3) {
-                            console.log(`Ligne ${index} - Texte recherchable:`, searchableText);
-                        }
-                    }
-                    
-                    if (!searchableText.includes(searchTerm)) {
-                        showElement = false;
-                        if (index < 3) console.log(`Élément ${index} masqué par recherche - recherché: "${searchTerm}", trouvé: "${searchableText.substring(0, 100)}"`);
-                    } else {
-                        if (index < 3) console.log(`Élément ${index} CORRESPOND à la recherche "${searchTerm}"`);
-                    }
-                }
-
-                // Test de filtrage par période
-                if (showElement && selectedPeriod !== 'all') {
-                    const dateStr = element.getAttribute('data-date');
-                    if (index < 3) console.log(`Élément ${index} - data-date:`, dateStr);
-                    
-                    if (dateStr && dateStr !== '' && dateStr !== 'undefined') {
-                        const year = parseInt(dateStr);
-                        if (index < 3) console.log(`Année parsée: ${year} pour période ${selectedPeriod}`);
-                        
-                        switch(selectedPeriod) {
-                            case 'before-1800':
-                                showElement = year < 1800;
-                                break;
-                            case '1800-1850':
-                                showElement = year >= 1800 && year <= 1850;
-                                break;
-                            case '1850-1900':
-                                showElement = year >= 1850 && year <= 1900;
-                                break;
-                            case '1900-1950':
-                                showElement = year >= 1900 && year <= 1950;
-                                break;
-                            case 'after-1950':
-                                showElement = year > 1950;
-                                break;
-                        }
-                        
-                        if (!showElement && index < 3) {
-                            console.log(`Élément ${index} masqué par période: ${year} ne correspond pas à ${selectedPeriod}`);
-                        }
-                    } else {
-                        if (index < 3) console.log(`Élément ${index} - pas de date valide:`, dateStr);
-                    }
-                }
-
-                // Appliquer l'affichage final
-                if (showElement) {
-                    element.style.display = '';
-                    visibleCount++;
-                } else {
-                    element.style.display = 'none';
-                    hiddenCount++;
-                }
-            });
-
-            console.log(`Résultats finaux: ${visibleCount} visibles, ${hiddenCount} masqués`);
+            // FORCER LE REDESSIN DE L'INTERFACE UTILISATEUR
+            setTimeout(() => {
+                forceUIRedraw();
+            }, 10);
+            
             updateVisibleCount();
+        }
+
+        // Nouvelle fonction pour forcer le redessin de l'interface utilisateur
+        function forceUIRedraw() {
+            const cardsContainer = document.getElementById('cards-container');
+            const tableContainer = document.getElementById('table-container');
+            const cardsGrid = document.getElementById('cards-grid');
+            const tableBody = document.getElementById('table-body');
+            
+            if (!cardsContainer || !tableContainer) {
+                return;
+            }
+            
+            // Détecter la vue active
+            const cardsActive = !cardsContainer.classList.contains('hidden');
+            
+            if (cardsActive) {
+                // Technique 1: Forcer le reflow avec modification du style
+                cardsGrid.style.transform = 'translateZ(0)';
+                cardsContainer.style.display = 'none';
+                
+                // Forcer le reflow en lisant une propriété calculée
+                const height = cardsContainer.offsetHeight;
+                
+                // Restaurer l'affichage
+                cardsContainer.style.display = 'block';
+                cardsGrid.style.transform = '';
+                
+                // Technique 2: Forcer un scroll pour déclencher le repaint
+                setTimeout(() => {
+                    const currentScroll = window.pageYOffset;
+                    window.scrollTo(0, currentScroll + 1);
+                    window.scrollTo(0, currentScroll);
+                }, 5);
+                
+            } else {
+                // Même technique pour le tableau
+                tableBody.style.transform = 'translateZ(0)';
+                tableContainer.style.display = 'none';
+                
+                const height = tableContainer.offsetHeight;
+                
+                tableContainer.style.display = 'block';
+                tableBody.style.transform = '';
+                
+                setTimeout(() => {
+                    const currentScroll = window.pageYOffset;
+                    window.scrollTo(0, currentScroll + 1);
+                    window.scrollTo(0, currentScroll);
+                }, 5);
+            }
+            
+            // Technique 3: Forcer le repaint avec requestAnimationFrame
+            requestAnimationFrame(() => {
+                // Technique 4: Modification temporaire des classes CSS
+                const bodyElement = document.body;
+                bodyElement.classList.add('force-repaint');
+                
+                setTimeout(() => {
+                    bodyElement.classList.remove('force-repaint');
+                }, 10);
+            });
         }
 
         // Fonction pour mettre à jour le compteur d'éléments visibles
         function updateVisibleCount() {
             updateFilterableElements();
             const visibleElements = allFilterableElements.filter(el => el.style.display !== 'none');
-            console.log('Éléments visibles:', visibleElements.length, 'sur', allFilterableElements.length);
         }
-
-        // Modifier les fonctions de changement de vue pour réinitialiser les filtres
-        const originalSwitchView = switchView;
-        switchView = function(view) {
-            console.log('🔄 switchView appelée avec vue:', view);
-            originalSwitchView(view);
-            
-            // Réappliquer les filtres après changement de vue
-            setTimeout(() => {
-                console.log('🔄 Réapplication des filtres après changement de vue');
-                
-                // Forcer le réaffichage de tous les éléments dans toutes les vues
-                const allCards = document.querySelectorAll('.map-card');
-                const allRows = document.querySelectorAll('#table-body tr.table-row');
-                allCards.forEach(card => card.style.display = '');
-                allRows.forEach(row => row.style.display = '');
-                console.log('🔄 Tous les éléments réaffichés avant réapplication');
-                
-                applySearchAndFilter();
-            }, 200);  // Délai plus long pour s'assurer que le DOM est stable
-        };
 
         // === FIN FONCTIONS DE RECHERCHE ET FILTRAGE ===
 
@@ -1984,6 +2278,262 @@
             });
             
             console.log(`Tous les éléments forcés visibles: ${allCards.length} cartes, ${allRows.length} lignes`);
+        };
+
+        // Exposer la fonction de réinitialisation pour debug
+        window.resetSearch = resetSearch;
+        
+        // Version alternative : regénération complète forcée
+        function forceCompleteRefresh() {
+            console.log('🚀 === REGÉNÉRATION COMPLÈTE FORCÉE ===');
+            
+            const cardsGrid = document.getElementById('cards-grid');
+            const tableBody = document.getElementById('table-body');
+            const cardsContainer = document.getElementById('cards-container');
+            const tableContainer = document.getElementById('table-container');
+            
+            if (!cardsGrid || !tableBody) {
+                console.error('Éléments de contenu non trouvés');
+                return;
+            }
+            
+            // Sauvegarder l'état de la vue actuelle
+            const currentlyCardsVisible = !cardsContainer.classList.contains('hidden');
+            
+            console.log('Vue actuelle:', currentlyCardsVisible ? 'cartes' : 'tableau');
+            
+            // ÉTAPE 1: Restaurer le contenu complet depuis les sauvegardes
+            if (cardsHTMLContent && cardsHTMLContent.length > 100) {
+                console.log('Restauration contenu cartes depuis sauvegarde');
+                cardsGrid.innerHTML = cardsHTMLContent;
+            }
+            
+            if (tableHTMLContent && tableHTMLContent.length > 100) {
+                console.log('Restauration contenu tableau depuis sauvegarde');
+                tableBody.innerHTML = tableHTMLContent;
+            }
+            
+            // ÉTAPE 2: Forcer l'affichage de tous les éléments
+            const allCards = document.querySelectorAll('.map-card[data-ark-id]');
+            const allRows = document.querySelectorAll('#table-body tr.table-row[data-ark-id]');
+            
+            allCards.forEach(card => {
+                card.style.display = '';
+                card.style.visibility = 'visible';
+            });
+            
+            allRows.forEach(row => {
+                row.style.display = '';
+                row.style.visibility = 'visible';
+            });
+            
+            console.log(`Contenu restauré: ${allCards.length} cartes, ${allRows.length} lignes`);
+            
+            // ÉTAPE 3: Réappliquer immédiatement les filtres
+            setTimeout(() => {
+                console.log('Réapplication des filtres après restauration');
+                applySearchAndFilter();
+                
+                // ÉTAPE 4: Forcer le rafraîchissement de la vue active
+                setTimeout(() => {
+                    if (currentlyCardsVisible) {
+                        cardsContainer.style.display = 'none';
+                        setTimeout(() => {
+                            cardsContainer.style.display = 'block';
+                            cardsContainer.classList.remove('hidden');
+                        }, 5);
+                    } else {
+                        tableContainer.style.display = 'none';
+                        setTimeout(() => {
+                            tableContainer.style.display = 'block';
+                            tableContainer.classList.remove('hidden');
+                        }, 5);
+                    }
+                }, 50);
+            }, 10);
+        }
+
+        // Exposer la fonction de regénération complète
+        window.forceCompleteRefresh = forceCompleteRefresh;
+        
+        // Exposer la fonction de diagnostic pour debug
+        window.diagnoseViewDifferences = diagnoseViewDifferences;
+        
+        // Fonction pour débugger l'état de la recherche
+        window.debugSearchState = function() {
+            console.log('=== ÉTAT DE LA RECHERCHE ===');
+            console.log('Vue actuelle:', currentView);
+            console.log('Dernier terme recherché:', lastSearchTerm);
+            console.log('Dernier filtre période:', lastPeriodFilter);
+            
+            const searchInput = document.getElementById('search-input');
+            const periodFilter = document.getElementById('period-filter');
+            console.log('Valeur actuelle recherche:', searchInput?.value);
+            console.log('Valeur actuelle période:', periodFilter?.value);
+            
+            const allCards = document.querySelectorAll('.map-card');
+            const allRows = document.querySelectorAll('#table-body tr.table-row');
+            
+            const visibleCards = Array.from(allCards).filter(card => card.style.display !== 'none').length;
+            const visibleRows = Array.from(allRows).filter(row => row.style.display !== 'none').length;
+            
+            console.log(`Cartes: ${visibleCards}/${allCards.length} visibles`);
+            console.log(`Lignes: ${visibleRows}/${allRows.length} visibles`);
+        };
+        
+        // Fonction pour tester manuellement la recherche avec regénération complète
+        window.testSearchWithCompleteRefresh = function(searchTerm = 'paris') {
+            console.log('🧪 === TEST RECHERCHE AVEC REGÉNÉRATION COMPLÈTE ===');
+            
+            const searchInput = document.getElementById('search-input');
+            if (searchInput) {
+                searchInput.value = searchTerm;
+                console.log('Terme de recherche défini:', searchTerm);
+                
+                // Utiliser la regénération complète
+                forceCompleteRefresh();
+            } else {
+                console.error('Champ de recherche non trouvé');
+            }
+        };
+
+        // Fonction pour tester différentes stratégies de forçage
+        window.testAllForcingStrategies = function(searchTerm = 'toul') {
+            console.log('🧪 === TEST DE TOUTES LES STRATÉGIES DE FORÇAGE ===');
+            
+            const searchInput = document.getElementById('search-input');
+            if (!searchInput) {
+                console.error('Champ de recherche non trouvé');
+                return;
+            }
+            
+            searchInput.value = searchTerm;
+            
+            console.log('1. Test avec applySearchAndFilter + forceUIRedraw');
+            applySearchAndFilter();
+            setTimeout(() => forceUIRedraw(), 100);
+            
+            setTimeout(() => {
+                console.log('2. Test avec forceCompleteRefresh');
+                forceCompleteRefresh();
+                
+                setTimeout(() => {
+                    console.log('3. Test avec forceCompleteRecreation');
+                    forceCompleteRecreation();
+                }, 2000);
+            }, 2000);
+        };
+
+        // Fonction de diagnostic visuel
+        window.checkVisualState = function() {
+            console.log('👁️ === DIAGNOSTIC ÉTAT VISUEL ===');
+            
+            const allCards = document.querySelectorAll('.map-card[data-ark-id]');
+            const cardsContainer = document.getElementById('cards-container');
+            
+            console.log('Vue active:', cardsContainer.classList.contains('hidden') ? 'tableau' : 'cartes');
+            
+            let hiddenByStyle = 0;
+            let visibleByStyle = 0;
+            
+            allCards.forEach((card, i) => {
+                const computedStyle = window.getComputedStyle(card);
+                const isHidden = card.style.display === 'none' || computedStyle.display === 'none';
+                
+                if (isHidden) {
+                    hiddenByStyle++;
+                } else {
+                    visibleByStyle++;
+                }
+                
+                if (i < 3) {
+                    console.log(`Carte ${i}:`, {
+                        'data-ark-id': card.getAttribute('data-ark-id'),
+                        'style.display': card.style.display,
+                        'computed.display': computedStyle.display,
+                        'visible': !isHidden
+                    });
+                }
+            });
+            
+            console.log(`Résumé: ${visibleByStyle} visibles, ${hiddenByStyle} cachées`);
+            
+            return {
+                totalCards: allCards.length,
+                visibleByStyle,
+                hiddenByStyle
+            };
+        };
+
+        // Fonction pour vérifier la cohérence des sélections
+        window.checkSelectionConsistency = function() {
+            console.log('☑️ === DIAGNOSTIC COHÉRENCE SÉLECTIONS ===');
+            
+            const allCards = document.querySelectorAll('.map-card[data-ark-id]');
+            const allRows = document.querySelectorAll('#table-body .table-row[data-ark-id]');
+            
+            let inconsistencies = 0;
+            
+            allCards.forEach(card => {
+                const arkId = card.getAttribute('data-ark-id');
+                const cardSelected = card.classList.contains('selected');
+                const cardCheckbox = document.querySelector(`#cards-grid input[data-ark-id="${arkId}"]`);
+                const cardCheckboxChecked = cardCheckbox ? cardCheckbox.checked : false;
+                
+                const correspondingRow = document.querySelector(`#table-body .table-row[data-ark-id="${arkId}"]`);
+                const rowSelected = correspondingRow ? correspondingRow.classList.contains('selected') : false;
+                const rowCheckbox = document.querySelector(`#table-body input[data-ark-id="${arkId}"]`);
+                const rowCheckboxChecked = rowCheckbox ? rowCheckbox.checked : false;
+                
+                const inSelectedMaps = selectedMaps.has(arkId);
+                
+                const states = {
+                    arkId,
+                    cardSelected,
+                    cardCheckboxChecked,
+                    rowSelected,
+                    rowCheckboxChecked,
+                    inSelectedMaps
+                };
+                
+                // Vérifier la cohérence
+                const allStatesMatch = cardSelected === rowSelected && 
+                                     cardSelected === cardCheckboxChecked && 
+                                     cardSelected === rowCheckboxChecked && 
+                                     cardSelected === inSelectedMaps;
+                
+                if (!allStatesMatch) {
+                    console.warn(`❌ Incohérence ${arkId}:`, states);
+                    inconsistencies++;
+                    
+                    // Auto-correction
+                    const correctState = inSelectedMaps;
+                    syncSelectionBetweenViews(arkId, correctState);
+                } else if (inSelectedMaps) {
+                    console.log(`✅ Cohérent ${arkId}: sélectionné partout`);
+                }
+            });
+            
+            console.log(`Total incohérences détectées et corrigées: ${inconsistencies}`);
+            return inconsistencies;
+        };
+
+        // Fonction d'arrêt d'urgence pour stopper le clignottement
+        window.stopRefreshing = function() {
+            console.log('🛑 === ARRÊT D\'URGENCE DU RAFRAÎCHISSEMENT ===');
+            isRefreshing = false;
+            
+            // Stopper tous les timeouts de recherche
+            clearTimeout(window.searchTimeout);
+            
+            // Forcer l'affichage de tous les éléments
+            const allCards = document.querySelectorAll('.map-card');
+            const allRows = document.querySelectorAll('#table-body tr.table-row');
+            
+            allCards.forEach(card => card.style.display = '');
+            allRows.forEach(row => row.style.display = '');
+            
+            console.log('Rafraîchissement arrêté, tous les éléments affichés');
         };
         
         // === FIN FONCTIONS DE DEBUG ===
