@@ -222,7 +222,7 @@ class GalerieManager {
         }
 
         try {
-            const manifestUrl = `https://gallica.bnf.fr/iiif/ark:/12148/${arkId}/manifest.json`;
+            const manifestUrl = `https://openapi.bnf.fr/iiif/presentation/v3/ark:/12148/${arkId}/manifest.json`;
             console.log(`Chargement des métadonnées pour ${arkId}`);
             
             const response = await fetch(manifestUrl);

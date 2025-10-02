@@ -172,7 +172,7 @@ async function load_ark_picture() {
 
 async function load_oai_metada(input_ark) {
         
-        var string_url = 'https://gallica.bnf.fr/iiif/ark:/12148/'+ input_ark +'/manifest.json'
+        var string_url = 'https://openapi.bnf.fr/iiif/presentation/v3/ark:/12148/'+ input_ark +'/manifest.json'
 
         // var input = document.querySelector('#ark_url').value;
         // input_ark = input.substr(input.lastIndexOf("/")+1);

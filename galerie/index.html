@@ -717,9 +717,8 @@
 
     <!-- Scripts de l'application -->
     <script src="../js/version.js"></script>
-    <!-- NOUVEAU SYSTÈME D'AUTHENTIFICATION CONFORME À LA DOC BACKEND -->
-    <script src="../js/ptm-auth-fixed.js"></script>
-    <script src="../js/ptm-auth-wrapper.js"></script>
+    <!-- Système d'authentification PTM (avec support JWT anonyme) -->
+    <script src="../js/ptm-auth.js"></script>
     <script src="../js/cartes-georeferencees.js"></script>
 
     <script>
@@ -1094,7 +1093,7 @@
         // Fonction pour récupérer les métadonnées Gallica via l'API IIIF Manifest
         async function fetchGallicaMetadata(arkId) {
             try {
-                const manifestUrl = `https://gallica.bnf.fr/iiif/ark:/12148/${arkId}/manifest.json`;
+                const manifestUrl = `https://openapi.bnf.fr/iiif/presentation/v3/ark:/12148/${arkId}/manifest.json`;
                 console.log(`Récupération des métadonnées pour ${arkId}...`);
                 
                 const response = await fetch(manifestUrl);
@@ -2570,19 +2569,25 @@
             
             if (isAuthenticated && authContainer) {
                 // Remplacer le bouton de connexion par les informations utilisateur
-                window.ptmAuth.getUserProfile().then(userProfile => {
+                try {
+                    const token = window.ptmAuth.getToken();
+                    const payload = JSON.parse(atob(token.split('.')[1]));
+                    const userName = payload.name || 'Utilisateur';
+                    
                     authContainer.innerHTML = `
                         <div class="user-menu-container">
                             <span class="fr-text--sm">
                                 <span class="fr-icon-account-circle-line fr-mr-1w" aria-hidden="true"></span>
-                                ${userProfile.first_name} ${userProfile.last_name}
+                                ${userName}
                             </span>
-                            <button class="fr-btn fr-btn--sm fr-btn--secondary fr-ml-2w" onclick="window.ptmAuth.logout()">
+                            <button class="fr-btn fr-btn--sm fr-btn--secondary fr-ml-2w" onclick="window.ptmAuth.logout(); window.location.reload();">
                                 Déconnexion
                             </button>
                         </div>
                     `;
-                });
+                } catch (error) {
+                    console.error('❌ Erreur décodage token:', error);
+                }
             }
         }
 

@@ -975,11 +975,8 @@ function openExternalLink(url) {
     <script src="js/api_interactions.js"></script>
     <script src="js/gallica_interactions.js"></script>
     <script src="js/getParamAtStartup.js"></script>
-    <!-- NOUVEAU SYSTÈME D'AUTHENTIFICATION CONFORME À LA DOC BACKEND -->
-    <script src="js/ptm-auth-fixed.js"></script>
-    <script src="js/ptm-auth-wrapper.js"></script>
-    <!-- Script de diagnostic temporaire -->
-    <script src="js/auth-diagnostic.js"></script>
+    <!-- Système d'authentification PTM (avec support JWT anonyme) -->
+    <script src="js/ptm-auth.js"></script>
     <script src="js/form-generator.js"></script>
     <script src="js/settings-manager.js"></script>
     <script src="js/settings-utils.js"></script>
@@ -999,9 +996,8 @@ function openExternalLink(url) {
     // INITIALISATION GLOBALE DES MODULES
     // =======================================================
     
-    // Initialiser PTMAuth pour la gestion de l'authentification
-    window.ptmAuth = new PTMAuth();
-    console.log('✅ PTMAuth initialisé');
+    // PTMAuth est déjà initialisé par js/ptm-auth.js (window.ptmAuth)
+    console.log('✅ PTMAuth disponible:', typeof window.ptmAuth !== 'undefined');
     
     // Variable globale pour suivre l'état d'initialisation
     let settingsFormInitialized = false;
@@ -1324,10 +1320,10 @@ function openExternalLink(url) {
         
         // Vérifier l'état d'authentification au chargement de la page
         try {
-            const isAuthenticated = await window.ptmAuth.checkAuthStatus();
+            const isAuthenticated = window.ptmAuth.isAuthenticated();
             
             if (isAuthenticated) {
-                console.log('Utilisateur authentifié');
+                console.log('✅ Utilisateur authentifié avec ORCID');
                 // Mettre à jour l'interface utilisateur pour afficher les informations de connexion
                 await updateUIForAuthenticatedUser();
                 
@@ -1341,7 +1337,7 @@ function openExternalLink(url) {
                     updateButtonsForAuth();
                 }
             } else {
-                console.log('Utilisateur non authentifié');
+                console.log('ℹ️ Mode anonyme (non authentifié)');
                 
                 // Mettre à jour l'état des boutons pour un utilisateur non connecté
                 if (typeof updateButtonsForAuth === 'function') {
@@ -1349,7 +1345,7 @@ function openExternalLink(url) {
                 }
             }
         } catch (error) {
-            console.error('Erreur lors de la vérification de l\'authentification:', error);
+            console.error('❌ Erreur lors de la vérification de l\'authentification:', error);
             console.log('Utilisateur considéré comme non authentifié');
             
             // Mettre à jour l'état des boutons pour un utilisateur non connecté
@@ -1386,22 +1382,72 @@ function openExternalLink(url) {
     // Fonction pour mettre à jour l'UI quand l'utilisateur est connecté
     async function updateUIForAuthenticatedUser() {
         try {
-            const userProfile = await window.ptmAuth.getUserProfile();
+            // Récupérer le profil complet depuis l'API
+            let userProfile = null;
+            
+            try {
+                userProfile = await window.ptmAuth.getUserProfile();
+                console.log('👤 Profil utilisateur complet depuis API:', userProfile);
+            } catch (error) {
+                console.warn('⚠️ Impossible de récupérer le profil API, fallback sur token JWT:', error.message);
+                
+                // Fallback : décoder le token JWT
+                const token = window.ptmAuth.getToken();
+                if (token) {
+                    const payload = JSON.parse(atob(token.split('.')[1]));
+                    userProfile = {
+                        first_name: payload.name || '',
+                        last_name: '',
+                        orcid: payload.sub,
+                        email: ''
+                    };
+                }
+            }
+            
+            if (!userProfile) {
+                console.warn('⚠️ Aucun profil utilisateur disponible');
+                return;
+            }
+            
+            // Normaliser le profil pour s'assurer que tous les champs nécessaires existent
+            // Le backend peut retourner 'orcid' ou 'orcid_id', et on peut avoir besoin du 'sub' du JWT
+            if (!userProfile.orcid && !userProfile.orcid_id) {
+                // Essayer de récupérer l'ORCID depuis le token JWT
+                try {
+                    const token = window.ptmAuth.getToken();
+                    if (token) {
+                        const payload = JSON.parse(atob(token.split('.')[1]));
+                        userProfile.orcid = userProfile.orcid || payload.sub;
+                    }
+                } catch (e) {
+                    console.warn('⚠️ Impossible de récupérer l\'ORCID depuis le token JWT');
+                }
+            }
+            
+            // S'assurer que userProfile.orcid existe (mapper orcid_id vers orcid si nécessaire)
+            userProfile.orcid = userProfile.orcid || userProfile.orcid_id;
+            
+            console.log('👤 Profil normalisé:', userProfile);
             
             // Mettre à jour le menu utilisateur si il existe
-            updateUserMenu(userProfile);
+            if (typeof updateUserMenu === 'function') {
+                updateUserMenu(userProfile);
+            }
             
             // Mettre à jour les informations de profil dans la modale
-            updateProfileInfo(userProfile);
+            if (typeof updateProfileInfo === 'function') {
+                updateProfileInfo(userProfile);
+            }
             
             // Charger les favoris Cartoquete
-            await loadCartoqueteFavorites();
+            if (typeof loadCartoqueteFavorites === 'function') {
+                await loadCartoqueteFavorites();
+            }
             
         } catch (error) {
-            console.error('Erreur lors de la mise à jour de l\'interface utilisateur:', error);
+            console.error('❌ Erreur lors de la mise à jour de l\'interface utilisateur:', error);
         }
     }
-
     // Fonction pour charger les favoris Cartoquete et les cartes travaillées
     async function loadCartoqueteFavorites() {
         try {
@@ -1486,18 +1532,26 @@ function openExternalLink(url) {
 
     // Fonction pour mettre à jour les informations de profil
     function updateProfileInfo(userProfile) {
+        console.log('🔍 updateProfileInfo appelée avec:', userProfile);
+        console.log('🔍 userProfile.orcid:', userProfile.orcid);
+        console.log('🔍 userProfile.orcid_id:', userProfile.orcid_id);
+        console.log('🔍 Toutes les clés du profil:', Object.keys(userProfile));
+        
         const fields = {
             'user-first-name': userProfile.first_name,
             'user-last-name': userProfile.last_name,
             'user-email': userProfile.email,
-            'user-orcid': userProfile.orcid_id,
+            'user-orcid': userProfile.orcid || userProfile.orcid_id || userProfile.sub,
             'user-institution': userProfile.institution || 'Non renseigné'
         };
 
         Object.entries(fields).forEach(([id, value]) => {
             const element = document.getElementById(id);
             if (element) {
+                console.log(`📝 Mise à jour de ${id} avec:`, value);
                 element.textContent = value || 'Non renseigné';
+            } else {
+                console.warn(`⚠️ Élément ${id} non trouvé dans le DOM`);
             }
         });
     }

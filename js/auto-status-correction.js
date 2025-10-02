@@ -30,8 +30,10 @@ window.autoStatusCorrection = {
             
             // Trouver l'utilisateur actuel
             const userProfile = await window.ptmAuth.getUserProfile();
+            const userOrcid = userProfile?.orcid || userProfile?.orcid_id;
+            
             const currentUser = apiData.users.find(user => 
-                user.orcid_id === userProfile?.orcid_id
+                user.orcid_id === userOrcid || user.orcid === userOrcid
             );
             
             if (!currentUser || !currentUser.georeferenced_maps) {
@@ -49,10 +51,11 @@ window.autoStatusCorrection = {
                 if (!localArks.includes(apiMap.ark)) {
                     // Carte manquante localement, l'ajouter
                     try {
-                        await window.ptmAuth.updateWorkedMap(apiMap.ark, {
+                        await window.ptmAuth.saveMapStatus(apiMap.ark, apiMap.status, {
                             firstWorked: apiMap.firstWorked,
-                            lastUpdated: apiMap.lastUpdated
-                        }, apiMap.status);
+                            lastUpdated: apiMap.lastUpdated,
+                            quality: apiMap.quality || 2
+                        });
                         
                         correctionsMade++;
                         
@@ -64,8 +67,10 @@ window.autoStatusCorrection = {
                     const localMap = localMaps.find(map => map.ark === apiMap.ark);
                     if (localMap && localMap.status !== apiMap.status) {
                         try {
-                            await window.ptmAuth.updateMapStatus(apiMap.ark, apiMap.status, {
-                                lastUpdated: apiMap.lastUpdated
+                            await window.ptmAuth.saveMapStatus(apiMap.ark, apiMap.status, {
+                                firstWorked: localMap.firstWorked,
+                                lastUpdated: apiMap.lastUpdated,
+                                quality: apiMap.quality || localMap.quality || 2
                             });
                             
                             correctionsMade++;

@@ -23,8 +23,9 @@ class GeoreferencingCapabilityChecker {
         try {
             console.log('🔍 Vérification des capacités du serveur de géoréférencement...');
             
-            // Test avec une requête légère
-            const testResponse = await fetch(urlToAPI + 'health', {
+            // Test avec une requête légère sur l'endpoint health de l'API Galligeo
+            const healthUrl = 'https://api.ptm.huma-num.fr/galligeo/health';
+            const testResponse = await fetch(healthUrl, {
                 method: 'GET',
                 headers: {
                     'X-Anonymous-Test': 'true',
