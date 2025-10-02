@@ -136,11 +136,14 @@ function click_georef(image, points, polygon, input_ark) {
     console.log("click on georef")
     console.log(points)
     console.log(polygon)
-
-    // Vérifier que l'utilisateur est connecté
-    if (!window.ptmAuth || !window.ptmAuth.isAuthenticated()) {
-        alert('Vous devez être connecté pour utiliser la fonction de géoréférencement.');
-        return;
+    
+    // Vérifier le statut d'authentification et informer l'utilisateur
+    const isAuthenticated = window.ptmAuth && window.ptmAuth.isAuthenticated();
+    console.log(`🔐 Géoréférencement demandé - Authentifié: ${isAuthenticated}`);
+    
+    if (!isAuthenticated) {
+        console.log('⚠️ Mode anonyme - le géoréférencement pourrait ne pas fonctionner selon la configuration serveur');
+        // Note: On continue quand même, l'erreur sera gérée dans georef_api_post si nécessaire
     }
 
     // Bloquer le bouton et le passer en état de chargement
@@ -168,7 +171,30 @@ function click_georef(image, points, polygon, input_ark) {
      // Réactiver le bouton en cas d'erreur
      setGeoreferencingButtonState('normal');
      
-     alert('Erreur lors du géoréférencement. Veuillez vérifier votre connexion et réessayer.');
+     // Message d'erreur adapté selon le type d'erreur
+     let userMessage = 'Erreur lors du géoréférencement.';
+     
+     if (error.message) {
+       if (error.message.includes('422') || error.message.includes('authentification')) {
+         // Erreur d'authentification - proposer la connexion
+         const isAnonymous = !window.ptmAuth || !window.ptmAuth.isAuthenticated();
+         if (isAnonymous) {
+           userMessage = `⚠️ Géoréférencement actuellement limité aux utilisateurs connectés.
+
+Cliquez sur "Se connecter avec ORCID" en haut à droite pour accéder au géoréférencement.
+
+Vos points de contrôle resteront sauvegardés et seront transférés lors de votre connexion.`;
+         } else {
+           userMessage = 'Erreur d\'authentification. Veuillez vous reconnecter.';
+         }
+       } else if (error.message.includes('Timeout')) {
+         userMessage = 'Le géoréférencement prend trop de temps. Veuillez réessayer avec moins de points ou une image plus petite.';
+       } else {
+         userMessage = `Erreur: ${error.message}`;
+       }
+     }
+     
+     alert(userMessage);
    });
 }
 
@@ -182,13 +208,40 @@ async function georef_api_post(url = urlToAPI, data = {}) {
     "Content-Type": "application/json",
   };
   
+  const isAuthenticated = window.ptmAuth && window.ptmAuth.isAuthenticated();
+  console.log(`🔐 Géoréférencement - Utilisateur authentifié: ${isAuthenticated}`);
+  
+  // Préparer les données avec l'utilisateur approprié
+  const apiData = { ...data };
+  
   // Ajouter le token d'authentification si l'utilisateur est connecté
-  if (window.ptmAuth && window.ptmAuth.isAuthenticated()) {
+  if (isAuthenticated) {
     const token = window.ptmAuth.getToken();
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
+      console.log('🎫 Token d\'authentification ajouté');
     }
+    // L'API utilisera l'utilisateur authentifié depuis le token
+  } else {
+    // Pour les utilisateurs anonymes, forcer l'utilisateur anonyme dans les données
+    console.log('🔓 Utilisateur anonyme - préparation des headers et données...');
+    
+    // IMPORTANT: Ajouter l'utilisateur anonyme dans les données pour l'écriture en base
+    apiData.user_orcid_id = '0000-GALLI-ANONY-ME00';
+    
+    // Headers pour identifier la requête anonyme
+    const anonymousSession = 'anonymous-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    headers['X-Anonymous-Session'] = anonymousSession;
+    headers['X-Anonymous-Mode'] = 'true';
+    headers['X-Client-Type'] = 'galligeo-anonymous';
+    
+    console.log(`🔓 Session anonyme créée: ${anonymousSession}`);
+    console.log(`👤 Utilisateur anonyme défini: ${apiData.user_orcid_id}`);
   }
+  
+  console.log(`📡 Envoi vers: ${url}`);
+  console.log(`📦 Données:`, apiData);
+  console.log(`📋 Headers:`, headers);
 
   // Créer un AbortController pour gérer le timeout
   const controller = new AbortController();
@@ -202,7 +255,7 @@ async function georef_api_post(url = urlToAPI, data = {}) {
       headers: headers,
       redirect: "follow",
       referrerPolicy: "no-referrer",
-      body: JSON.stringify(data),
+      body: JSON.stringify(apiData),
       signal: controller.signal
     });
 
@@ -215,13 +268,24 @@ async function georef_api_post(url = urlToAPI, data = {}) {
 
       console.log(input_ark)
 
-      // Réactiver le bouton de géoréférencement après succès
+    // Réactiver le bouton de géoréférencement après succès
     setGeoreferencingButtonState('normal');
 
-    // Mettre à jour le statut de la carte vers "géoréférencée" si l'utilisateur est connecté
-    if (window.workedMapsManager && window.input_ark) {
-      window.workedMapsManager.updateMapStatus(window.input_ark, 'georeferenced').catch(error => {
-        console.error('Erreur lors de la mise à jour du statut de la carte:', error);
+    // Mettre à jour le statut de la carte vers "géoréférencée"
+    // Pour les utilisateurs connectés, utiliser la nouvelle API optimisée
+    if (window.ptmAuth && window.ptmAuth.isAuthenticated() && window.input_ark) {
+      window.ptmAuth.updateWorkedMap(window.input_ark, 'georeferenced', {
+        quality: 2 // Qualité par défaut pour géoréférencement réussi
+      }).catch(error => {
+        console.error('Erreur lors de la mise à jour du statut de la carte (utilisateur connecté):', error);
+      });
+    } 
+    // Pour les utilisateurs anonymes, sauvegarder localement ET en API
+    else if (window.input_ark && window.ptmAuth) {
+      window.ptmAuth.saveAnonymousMapStatus(window.input_ark, 'georeferenced', { 
+        quality: 2  // Qualité par défaut pour géoréférencement réussi
+      }).catch(error => {
+        console.error('Erreur lors de la sauvegarde locale du statut de la carte:', error);
       });
     }
 
@@ -262,11 +326,46 @@ async function georef_api_post(url = urlToAPI, data = {}) {
 
     return response.json();
   } else {
-    // En cas d'erreur HTTP, réactiver aussi le bouton
+    // En cas d'erreur HTTP, gérer spécifiquement selon le statut
     setGeoreferencingButtonState('normal');
-    
     right_map.fire('dataload');
-    throw new Error(`Erreur serveur: ${response.status}`);
+    
+    // Récupérer le détail de l'erreur depuis la réponse
+    let errorMessage = `Erreur serveur: ${response.status}`;
+    try {
+      const errorData = await response.json();
+      if (errorData.message || errorData.error) {
+        errorMessage += ` - ${errorData.message || errorData.error}`;
+      }
+      
+      // Gestion spécifique pour les erreurs 422 en mode anonyme
+      if (response.status === 422) {
+        if (!window.ptmAuth || !window.ptmAuth.isAuthenticated()) {
+          console.warn('⚠️ Erreur 422 en mode anonyme - l\'API pourrait ne pas supporter les utilisateurs anonymes');
+          console.warn('💡 Solution: Se connecter avec ORCID pour accéder au géoréférencement');
+          
+          errorMessage = `Le serveur de géoréférencement nécessite une authentification.
+          
+Deux options s'offrent à vous :
+1. Connectez-vous avec votre compte ORCID pour accéder au géoréférencement complet
+2. Ou attendez que l'équipe active le géoréférencement anonyme
+
+Votre session de travail (points de contrôle) est sauvegardée localement et sera transférée lors de votre connexion.`;
+        } else {
+          errorMessage += '\n\nVeuillez vérifier votre token d\'authentification ou vous reconnecter.';
+        }
+      } else if (response.status === 401) {
+        errorMessage = 'Authentification requise. Veuillez vous connecter pour utiliser le géoréférencement.';
+      } else if (response.status === 403) {
+        errorMessage = 'Accès refusé. Votre compte n\'a pas les permissions nécessaires pour le géoréférencement.';
+      } else if (response.status === 500) {
+        errorMessage = 'Erreur interne du serveur. Veuillez réessayer plus tard ou contacter l\'équipe technique.';
+      }
+    } catch (parseError) {
+      console.warn('Impossible de parser la réponse d\'erreur:', parseError);
+    }
+    
+    throw new Error(errorMessage);
   }
   } catch (error) {
     clearTimeout(timeoutId);

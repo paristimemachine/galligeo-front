@@ -11,10 +11,11 @@ if(ark) {
     // S'assurer que le contrôle de métadonnées est disponible avant de charger l'image
     console.log('Chargement d\'une carte via l\'URL avec ARK:', ark);
     
-    // Ajouter la carte à la liste des cartes travaillées si l'utilisateur est connecté
+    // Ajouter la carte à la liste des cartes travaillées
     window.addEventListener('load', () => {
         setTimeout(() => {
-            if (window.ptmAuth && window.ptmAuth.isAuthenticated() && window.workedMapsManager && ark) {
+            if (window.workedMapsManager && ark) {
+                // Utiliser la méthode universelle qui gère les utilisateurs connectés et anonymes
                 window.workedMapsManager.addWorkedMap(ark).catch(error => {
                     // Erreur silencieuse
                 });

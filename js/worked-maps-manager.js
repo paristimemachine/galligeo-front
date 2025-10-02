@@ -18,20 +18,24 @@ class WorkedMapsManager {
     }
 
     /**
-     * Charge les cartes travaillées depuis l'API
+     * Charge les cartes travaillées depuis l'API ou le localStorage
      */
     async loadWorkedMaps() {
         try {
             console.log('Chargement des cartes travaillées...');
             
+            let workedMaps = [];
+            
             // Vérifier si l'utilisateur est connecté
-            if (!window.ptmAuth || !window.ptmAuth.isAuthenticated()) {
-                console.log('Utilisateur non authentifié, pas de cartes travaillées à charger');
-                return [];
+            if (window.ptmAuth && window.ptmAuth.isAuthenticated()) {
+                // Utilisateur connecté : charger depuis l'API
+                workedMaps = await window.ptmAuth.getWorkedMaps();
+                console.log('Cartes travaillées récupérées depuis l\'API:', workedMaps);
+            } else {
+                // Utilisateur anonyme : charger depuis le localStorage
+                workedMaps = window.ptmAuth.getAnonymousWorkedMaps();
+                console.log('Cartes travaillées récupérées depuis le localStorage (anonyme):', workedMaps);
             }
-
-            const workedMaps = await window.ptmAuth.getWorkedMaps();
-            console.log('Cartes travaillées récupérées:', workedMaps);
             
             this.workedMaps = workedMaps;
             return workedMaps;
@@ -354,12 +358,14 @@ class WorkedMapsManager {
         try {
             console.log(`Ajout de la carte ${arkId} aux cartes travaillées`);
             
-            if (!window.ptmAuth || !window.ptmAuth.isAuthenticated()) {
-                console.log('Utilisateur non authentifié, impossible d\'ajouter la carte');
-                return false;
+            if (window.ptmAuth && window.ptmAuth.isAuthenticated()) {
+                // Utilisateur connecté : utiliser l'API
+                await window.ptmAuth.updateWorkedMap(arkId, mapData, 'en-cours');
+            } else {
+                // Utilisateur anonyme : sauvegarder localement
+                await window.ptmAuth.saveAnonymousMapStatus(arkId, 'en-cours', mapData);
             }
-
-            await window.ptmAuth.updateWorkedMap(arkId, mapData, 'en-cours');
+            
             console.log(`Carte ${arkId} ajoutée avec succès`);
             
             // Recharger l'affichage si nous sommes sur la page "Mes cartes"
@@ -379,12 +385,15 @@ class WorkedMapsManager {
      */
     async updateMapStatus(arkId, status, additionalData = {}) {
         try {
-            if (!window.ptmAuth || !window.ptmAuth.isAuthenticated()) {
-                console.log('Utilisateur non authentifié, impossible de mettre à jour la carte');
-                return false;
+            let result;
+            
+            if (window.ptmAuth && window.ptmAuth.isAuthenticated()) {
+                // Utilisateur connecté : utiliser l'API
+                result = await window.ptmAuth.updateMapStatus(arkId, status, additionalData);
+            } else {
+                // Utilisateur anonyme : sauvegarder localement
+                result = await window.ptmAuth.saveAnonymousMapStatus(arkId, status, additionalData);
             }
-
-            const result = await window.ptmAuth.updateMapStatus(arkId, status, additionalData);
             
             // Recharger l'affichage si nous sommes sur la page "Mes cartes"
             if (document.getElementById('worked-maps-container')) {
@@ -600,29 +609,11 @@ document.addEventListener('userLoggedIn', async (event) => {
     await window.workedMapsManager.init();
 });
 
-document.addEventListener('userLoggedOut', () => {
-    console.log('Utilisateur déconnecté, masquage des cartes travaillées');
+document.addEventListener('userLoggedOut', async () => {
+    console.log('Utilisateur déconnecté, basculement vers les cartes anonymes');
     
-    // Cacher la section des cartes travaillées
-    const workedMapsSection = document.getElementById('worked-maps-section');
-    if (workedMapsSection) {
-        workedMapsSection.style.display = 'none';
-    }
-    
-    const workedMapsContainer = document.getElementById('worked-maps-container');
-    if (workedMapsContainer) {
-        workedMapsContainer.innerHTML = `
-            <div class="fr-col-12">
-                <div class="fr-notice fr-notice--info">
-                    <div class="fr-container">
-                        <div class="fr-notice__body">
-                            <p>Connectez-vous pour voir vos cartes travaillées.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
+    // Recharger les cartes anonymes
+    await window.workedMapsManager.init();
 });
 
 // Écouteur pour l'onglet "Mes cartes" - recharger les cartes travaillées quand l'onglet est activé
@@ -631,7 +622,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (cartesTab) {
         cartesTab.addEventListener('click', async () => {
             console.log('Clic sur l\'onglet "Mes cartes"');
-            if (window.ptmAuth && window.ptmAuth.isAuthenticated() && window.workedMapsManager) {
+            if (window.workedMapsManager) {
                 await window.workedMapsManager.displayWorkedMaps();
             }
         });
@@ -651,8 +642,18 @@ window.addWorkedMap = function(arkId, mapData = {}) {
 };
 
 // Fonction globale pour mettre à jour le statut d'une carte
+// MISE À JOUR : Utilise maintenant le système PTMAuth optimisé
 window.updateMapStatus = function(arkId, status, additionalData = {}) {
-    if (window.workedMapsManager) {
+    if (window.ptmAuth) {
+        // Utiliser le nouveau système optimisé selon le type d'utilisateur
+        if (window.ptmAuth.isAuthenticated()) {
+            return window.ptmAuth.updateWorkedMap(arkId, status, additionalData);
+        } else {
+            return window.ptmAuth.saveAnonymousMapStatus(arkId, status, additionalData);
+        }
+    }
+    // Fallback vers l'ancien système si PTMAuth n'est pas disponible
+    else if (window.workedMapsManager) {
         return window.workedMapsManager.updateMapStatus(arkId, status, additionalData);
     }
     return Promise.resolve(false);

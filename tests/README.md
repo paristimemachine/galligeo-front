@@ -1,6 +1,80 @@
 # Tests de Non-Régression Galligeo
 
-Ce répertoire contient la suite complète de tests de non-régression pour l'application Galligeo.
+# Tests Galligeo
+
+Ce dossier contient tous les tests pour le projet Galligeo, organisés par catégorie.
+
+## 📁 Structure des tests
+
+### `/html/` - Tests d'interface
+- `test-incremental-writes.html` - Tests du système d'écriture incrémentale optimisé ⭐
+- `validation-jwt-production.html` - Validation JWT en production
+- `test-jwt-anonyme.html` - Tests d'authentification JWT anonyme
+- `test-api-*.html` - Tests des API
+- `test-cartes-georeferencees.html` - Tests des cartes géoréférencées
+- `test-georef-anonyme.html` - Tests de géoréférencement anonyme
+- `test-migration.html` - Tests de migration
+- `test-points-sans-carte.html` - Tests des points de contrôle sans carte
+- `test-structure-galligeo.html` - Tests de structure
+- Autres fichiers de test HTML legacy
+
+### `/js/` - Scripts de test JavaScript
+- `test-runner.js` - Lanceur de tests principal
+- `ptm-auth-test.js` - Tests d'authentification PTM
+- `anonymous-georef-test.js` - Tests de géoréférencement anonyme
+- `test-worked-maps.js` - Tests des cartes travaillées
+- `test-deposit-button.js` - Tests du bouton de dépôt
+- `debug-*.js` - Scripts de debug
+- `init-test.js` - Tests d'initialisation
+- `nakala_test_deposit.js` - Tests de dépôt Nakala
+
+### `/mock/` - Serveurs mock et données de test
+- `mock-api-server.js` - Serveur mock API simple
+- `mock-api-server-complet.js` - Serveur mock API complet
+
+### `/integration/` - Tests d'intégration
+- Tests end-to-end complexes
+
+### `/e2e/` - Tests end-to-end
+- Tests de bout en bout automatisés
+
+### `/backend/` - Tests backend
+- Tests spécifiques au backend
+
+### `/frontend/` - Tests frontend
+- Tests spécifiques au frontend
+
+### `/config/` - Configuration des tests
+- Fichiers de configuration pour les tests
+
+### `/reports/` - Rapports de tests
+- Rapports générés automatiquement
+
+## 🚀 Démarrage rapide
+
+### Test principal (système optimisé)
+```bash
+# Ouvrir dans le navigateur
+https://app.ptm.huma-num.fr/galligeo/tests/html/test-incremental-writes.html
+```
+
+### Lancer tous les tests
+```bash
+cd tests
+./run-tests.sh
+```
+
+## ⭐ Tests prioritaires
+
+1. **`html/test-incremental-writes.html`** - Système d'écriture incrémentale optimisé
+2. **`html/validation-jwt-production.html`** - Validation JWT production
+3. **`html/test-jwt-anonyme.html`** - Authentification anonyme
+
+## 📝 Notes
+
+- Les fichiers de test ont été nettoyés et organisés le 2 octobre 2025
+- L'ancien système de tests dispersés a été centralisé
+- Tous les fichiers mock et debug ont été déplacés dans cette structure
 
 ## 📁 Structure
 

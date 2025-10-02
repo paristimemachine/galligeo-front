@@ -3,7 +3,7 @@
  */
 class PTMAuth {
     constructor() {
-        this.baseUrl = 'https://api.ptm.huma-num.fr';
+        this.baseUrl = 'https://api.ptm.huma-num.fr/auth';
         this.token = null;
         this.userInfo = null;
     }
@@ -61,6 +61,21 @@ class PTMAuth {
     }
 
     /**
+     * Définit l'utilisateur actuel
+     */
+    setCurrentUser(username) {
+        this.currentUser = username;
+        console.log(`👤 Utilisateur défini: ${username}`);
+    }
+
+    /**
+     * Vérifie le statut d'authentification (pour compatibilité)
+     */
+    async checkAuthStatus() {
+        return this.isAuthenticated();
+    }
+
+    /**
      * Fait un appel API avec authentification
      */
     async apiCall(endpoint, options = {}) {
@@ -109,7 +124,7 @@ class PTMAuth {
      * Sauvegarde les données d'une application spécifique, optionnellement pour un ARK donné
      */
     async saveAppData(appName, data, arkId = null) {
-        let endpoint = `/auth/app/${appName}/data`;
+        let endpoint = `/app/${appName}/data`;
         const bodyData = { ...data };
         
         if (arkId) {
@@ -126,7 +141,7 @@ class PTMAuth {
      * Récupère les données d'une application spécifique, optionnellement pour un ARK donné
      */
     async getAppData(appName, arkId = null) {
-        let endpoint = `/auth/app/${appName}/data`;
+        let endpoint = `/app/${appName}/data`;
         if (arkId) {
             endpoint += `?ark=${encodeURIComponent(arkId)}`;
         }
@@ -140,7 +155,7 @@ class PTMAuth {
      * Supprime les données d'une application spécifique, optionnellement pour un ARK donné
      */
     async deleteAppData(appName, arkId = null) {
-        let endpoint = `/auth/app/${appName}/data`;
+        let endpoint = `/app/${appName}/data`;
         if (arkId) {
             endpoint += `?ark=${encodeURIComponent(arkId)}`;
         }
@@ -158,7 +173,7 @@ class PTMAuth {
             return this.userInfo;
         }
 
-        this.userInfo = await this.apiCall('/auth/profile', {
+        this.userInfo = await this.apiCall('/profile', {
             method: 'GET'
         });
 
@@ -169,7 +184,7 @@ class PTMAuth {
      * Sauvegarde le profil utilisateur
      */
     async saveUserProfile(profileData) {
-        const result = await this.apiCall('/auth/profile', {
+        const result = await this.apiCall('/profile', {
             method: 'POST',
             body: JSON.stringify(profileData)
         });
@@ -184,7 +199,7 @@ class PTMAuth {
      * Liste les applications utilisées par l'utilisateur
      */
     async getUserApps() {
-        return this.apiCall('/auth/user/apps', {
+        return this.apiCall('/user/apps', {
             method: 'GET'
         });
     }
@@ -198,7 +213,7 @@ class PTMAuth {
         localStorage.removeItem('ptm_auth_token');
         
         // Rediriger vers la page de connexion
-        window.location.href = `${this.baseUrl}/auth/login?redirect_url=${encodeURIComponent(window.location.href)}`;
+        window.location.href = `${this.baseUrl}/login?redirect_url=${encodeURIComponent(window.location.href)}`;
     }
 
     /**
@@ -452,6 +467,589 @@ class PTMAuth {
         } catch (error) {
             console.error('Erreur lors de la récupération des statistiques:', error);
             throw error;
+        }
+    }
+
+    /**
+     * Gestion des cartes géoréférencées pour les utilisateurs anonymes
+     * Les données sont stockées dans le localStorage avec une clé spéciale
+     */
+    getAnonymousWorkedMaps() {
+        try {
+            // Essayer d'abord la nouvelle structure
+            const newStructure = localStorage.getItem('galligeo_anonymous_structure');
+            if (newStructure) {
+                const data = JSON.parse(newStructure);
+                return data.galligeo?.rec_ark || [];
+            }
+            
+            // Fallback vers l'ancienne structure pour rétrocompatibilité
+            const oldData = localStorage.getItem('galligeo_anonymous_maps');
+            return oldData ? JSON.parse(oldData) : [];
+        } catch (error) {
+            console.error('Erreur lors de la récupération des cartes anonymes:', error);
+            return [];
+        }
+    }
+
+    /**
+     * Récupère la structure galligeo complète pour un utilisateur anonyme
+     */
+    getAnonymousGalligeoStructure() {
+        try {
+            const data = localStorage.getItem('galligeo_anonymous_structure');
+            return data ? JSON.parse(data) : null;
+        } catch (error) {
+            console.error('Erreur lors de la récupération de la structure galligeo anonyme:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Sauvegarde le statut d'une carte pour un utilisateur anonyme
+     */
+    async saveAnonymousMapStatus(arkId, status, additionalData = {}) {
+        try {
+            // 1. Sauvegarder en localStorage dans la nouvelle structure
+            await this.saveAnonymousMapToLocalStorage(arkId, status, additionalData);
+            
+            // 2. Envoyer à l'API avec l'utilisateur anonyme
+            await this.saveAnonymousMapToAPI(arkId, status, additionalData);
+            
+            console.log(`Carte anonyme ${arkId} sauvegardée avec le statut '${status}' (local + API)`);
+            
+            return {
+                ark: arkId,
+                status: status,
+                lastUpdated: new Date().toISOString()
+            };
+        } catch (error) {
+            console.error('Erreur lors de la sauvegarde de la carte anonyme:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Sauvegarde une carte anonyme en localStorage dans la structure galligeo
+     */
+    async saveAnonymousMapToLocalStorage(arkId, status, additionalData = {}) {
+        try {
+            // Récupérer ou créer la structure galligeo
+            let galligeoData = JSON.parse(localStorage.getItem('galligeo_anonymous_structure') || '{}');
+            
+            // Initialiser la structure si elle n'existe pas
+            if (!galligeoData.galligeo) {
+                galligeoData.galligeo = {
+                    arkId: "general-settings",
+                    rec_ark: [],
+                    settings: {
+                        "input-scale": "100000",
+                        "select-algo": "helmert",
+                        "select-quality": "medium",
+                        "select-resample": "nearest",
+                        "checkbox-matrice": true,
+                        "checkbox-autosave": true,
+                        "input-max-backups": "3",
+                        "checkbox-compression": true,
+                        "checkbox-transparent": false,
+                        "select-backup-frequency": "300"
+                    },
+                    lastUpdated: new Date().toISOString()
+                };
+            }
+            
+            if (!galligeoData.cartoquete) {
+                galligeoData.cartoquete = {
+                    favoris: []
+                };
+            }
+            
+            // Chercher si la carte existe déjà
+            const existingMapIndex = galligeoData.galligeo.rec_ark.findIndex(map => map.ark === arkId);
+            const now = new Date().toISOString();
+            
+            const mapRecord = {
+                ark: arkId,
+                status: status,
+                quality: additionalData.quality || 2, // Qualité par défaut pour géoréférencement
+                firstWorked: existingMapIndex >= 0 ? galligeoData.galligeo.rec_ark[existingMapIndex].firstWorked : now,
+                lastUpdated: now,
+                ...additionalData
+            };
+            
+            if (existingMapIndex >= 0) {
+                galligeoData.galligeo.rec_ark[existingMapIndex] = mapRecord;
+            } else {
+                galligeoData.galligeo.rec_ark.push(mapRecord);
+            }
+            
+            // Mettre à jour la date de dernière modification globale
+            galligeoData.galligeo.lastUpdated = now;
+            
+            // Sauvegarder en localStorage
+            localStorage.setItem('galligeo_anonymous_structure', JSON.stringify(galligeoData));
+            console.log(`📁 Structure galligeo anonyme mise à jour pour ${arkId}`);
+            
+            return mapRecord;
+        } catch (error) {
+            console.error('Erreur lors de la sauvegarde localStorage anonyme:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Envoie les données de carte anonyme à l'API avec l'utilisateur 0000-GALLI-ANONY-ME00
+     */
+    async saveAnonymousMapToAPI(arkId, status, additionalData = {}) {
+        try {
+            // Récupérer la structure galligeo actuelle depuis localStorage
+            const galligeoData = this.getAnonymousGalligeoStructure() || {
+                galligeo: {
+                    arkId: "general-settings",
+                    rec_ark: [],
+                    settings: {
+                        "input-scale": "100000",
+                        "select-algo": "helmert",
+                        "select-quality": "medium",
+                        "select-resample": "nearest",
+                        "checkbox-matrice": true,
+                        "checkbox-autosave": true,
+                        "input-max-backups": "3",
+                        "checkbox-compression": true,
+                        "checkbox-transparent": false,
+                        "select-backup-frequency": "300"
+                    },
+                    lastUpdated: new Date().toISOString()
+                },
+                cartoquete: {
+                    favoris: []
+                }
+            };
+
+            // Utiliser l'API existante /app/galligeo/data avec authentification spéciale
+            const endpoint = '/app/galligeo/data';
+            const url = `${this.baseUrl}${endpoint}`;
+            
+            // Headers pour requête anonyme - utiliser un token spécial ou header
+            const headers = {
+                'Content-Type': 'application/json',
+                'X-Anonymous-Mode': 'true',
+                'X-Client-Type': 'galligeo-anonymous',
+                'X-Anonymous-Session': 'anonymous-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
+                'X-Anonymous-User': '0000-GALLI-ANONY-ME00'
+            };
+            
+            console.log(`📡 Envoi carte anonyme ${arkId} à l'API pour utilisateur 0000-GALLI-ANONY-ME00`);
+            console.log(`� URL: ${url}`);
+            console.log('� Données API:', galligeoData);
+            
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify(galligeoData)
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(`Erreur API: ${response.status} ${response.statusText} - ${errorData.message || ''}`);
+            }
+            
+            const result = await response.json();
+            console.log('✅ Carte anonyme sauvegardée en API:', result);
+            return result;
+            
+        } catch (error) {
+            console.error('Erreur lors de l\'envoi à l\'API anonyme:', error);
+            // Ne pas faire échouer la sauvegarde locale si l'API échoue
+            console.warn('⚠️ Sauvegarde API échouée, mais sauvegarde locale conservée');
+            return { success: false, error: error.message };
+        }
+    }
+
+    /**
+     * Supprime une carte de la liste des cartes anonymes
+     */
+    removeAnonymousMap(arkId) {
+        try {
+            // Récupérer la structure galligeo
+            let galligeoData = JSON.parse(localStorage.getItem('galligeo_anonymous_structure') || '{}');
+            
+            if (galligeoData.galligeo && galligeoData.galligeo.rec_ark) {
+                // Filtrer la carte à supprimer
+                galligeoData.galligeo.rec_ark = galligeoData.galligeo.rec_ark.filter(map => map.ark !== arkId);
+                galligeoData.galligeo.lastUpdated = new Date().toISOString();
+                
+                // Sauvegarder la structure mise à jour
+                localStorage.setItem('galligeo_anonymous_structure', JSON.stringify(galligeoData));
+            }
+            
+            // Aussi supprimer de l'ancienne structure si elle existe (rétrocompatibilité)
+            const oldData = localStorage.getItem('galligeo_anonymous_maps');
+            if (oldData) {
+                const anonymousMaps = JSON.parse(oldData);
+                const filteredMaps = anonymousMaps.filter(map => map.ark !== arkId);
+                localStorage.setItem('galligeo_anonymous_maps', JSON.stringify(filteredMaps));
+            }
+            
+            console.log(`Carte anonyme ${arkId} supprimée de la structure galligeo`);
+        } catch (error) {
+            console.error('Erreur lors de la suppression de la carte anonyme:', error);
+        }
+    }
+
+    /**
+     * Crée un profil utilisateur temporaire pour les utilisateurs anonymes
+     */
+    getAnonymousUserProfile() {
+        return {
+            first_name: 'Utilisateur',
+            last_name: 'Anonyme',
+            email: 'anonymous@galligeo.local',
+            orcid_id: null,
+            institution: 'Non renseigné',
+            isAnonymous: true
+        };
+    }
+
+    /**
+     * Version étendue de isAuthenticated qui indique le type d'utilisateur
+     */
+    getUserAuthStatus() {
+        const isAuth = this.isAuthenticated();
+        return {
+            isAuthenticated: isAuth,
+            isAnonymous: !isAuth,
+            userType: isAuth ? 'authenticated' : 'anonymous'
+        };
+    }
+
+    // ==============================================
+    // SYSTÈME D'ÉCRITURE INCRÉMENTALE OPTIMISÉ
+    // ==============================================
+
+    /**
+     * Génère un token JWT pour utilisateur anonyme
+     */
+    async generateAnonymousToken() {
+        try {
+            console.log('🔐 Génération token JWT anonyme...');
+            
+            const response = await fetch(`${this.baseUrl}/anonymous-token`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    username: '0000-GALLI-ANONY-ME00',
+                    client_id: 'galligeo-frontend',
+                    app: 'galligeo',
+                    purpose: 'ark_submission',
+                    anonymous: true
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                const errorMsg = `API anonyme indisponible: ${response.status} ${response.statusText}`;
+                
+                if (response.status === 403) {
+                    console.warn('⚠️ Utilisateur anonyme non autorisé - fonctionnement en mode local uniquement');
+                } else if (response.status === 404) {
+                    console.warn('⚠️ Endpoint anonyme non trouvé - fonctionnement en mode local uniquement');
+                } else {
+                    console.error('❌ Erreur API anonyme:', errorMsg, errorData);
+                }
+                
+                throw new Error(`${errorMsg} - ${errorData.error || 'Mode local uniquement'}`);
+            }
+
+            const data = await response.json();
+            const token = data.token;
+            
+            // Stocker le token avec expiration (selon expires_in ou 1 heure par défaut)
+            const expiresIn = data.expires_in || 3600; // 3600 secondes = 1 heure
+            const expirationTime = Date.now() + (expiresIn * 1000);
+            localStorage.setItem('anonymous_token', token);
+            localStorage.setItem('anonymous_token_expires', expirationTime.toString());
+            
+            console.log('✅ Token JWT anonyme généré');
+            console.log(`ℹ️ Token expire dans ${expiresIn / 60} minutes`);
+            return token;
+            
+        } catch (error) {
+            console.error('❌ Erreur génération token anonyme:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Récupère un token anonyme valide (génère si nécessaire)
+     */
+    async getValidAnonymousToken() {
+        const existingToken = localStorage.getItem('anonymous_token');
+        const expirationTime = localStorage.getItem('anonymous_token_expires');
+        
+        if (existingToken && expirationTime) {
+            const expiration = parseInt(expirationTime);
+            const fiveMinutesFromNow = Date.now() + (5 * 60 * 1000);
+            
+            // Si le token expire dans plus de 5 minutes, on peut l'utiliser
+            if (expiration > fiveMinutesFromNow) {
+                console.log('✅ Token anonyme existant encore valide');
+                return existingToken;
+            }
+        }
+        
+        // Token expiré ou inexistant, essayer de générer un nouveau
+        try {
+            console.log('🔄 Génération d\'un nouveau token anonyme...');
+            return await this.generateAnonymousToken();
+        } catch (error) {
+            console.warn('⚠️ API JWT anonyme non disponible, fonctionnement en localStorage uniquement');
+            console.log('ℹ️ Le système continuera en mode hors ligne pour les utilisateurs anonymes');
+            // Retourner null pour indiquer qu'on fonctionne sans API
+            return null;
+        }
+    }
+
+    /**
+     * Sauvegarde une carte pour un utilisateur anonyme (localStorage + API optionnel)
+     */
+    async saveAnonymousMapStatus(arkId, status, additionalData = {}) {
+        try {
+            console.log(`💾 Sauvegarde carte anonyme: ${arkId} - ${status}`);
+            
+            // 1. Sauvegarder en local d'abord (toujours)
+            const localResult = await this.saveAnonymousMapToLocalStorage(arkId, status, additionalData);
+            
+            // 2. Essayer la sauvegarde API avec fusion intelligente (optionnel)
+            try {
+                await this.saveMapToAPI(arkId, status, additionalData, true); // true = mode anonyme
+                console.log('✅ Sauvegarde complète (local + API avec fusion intelligente)');
+            } catch (apiError) {
+                console.warn('⚠️ Sauvegarde API échouée, local OK:', apiError.message);
+                console.log('ℹ️ L\'application continue en mode hors ligne');
+                // Continuer avec le localStorage seulement - pas d'erreur fatale
+            }
+            
+            return localResult;
+        } catch (error) {
+            console.error('❌ Erreur sauvegarde carte anonyme:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Sauvegarde optimisée avec fusion intelligente backend
+     */
+    async saveMapToAPI(arkId, status, additionalData = {}, isAnonymous = false) {
+        try {
+            console.log(`📡 Sauvegarde ${isAnonymous ? 'anonyme' : 'authentifiée'} de ${arkId} via API PTM`);
+            
+            // Préparer les données de la carte uniquement (pas toute la structure)
+            const now = new Date().toISOString();
+            const mapData = {
+                ark: arkId,
+                status: status,
+                quality: additionalData.quality || 2,
+                lastUpdated: now,
+                firstWorked: additionalData.firstWorked || now,
+                ...additionalData
+            };
+
+            // Structure optimisée pour fusion intelligente backend
+            const payload = {
+                galligeo: {
+                    operation: 'upsert_map', // Indique au backend de fusionner intelligemment
+                    map: mapData
+                }
+            };
+
+            // Headers et URL selon le type d'utilisateur
+            let headers = { 'Content-Type': 'application/json' };
+            let url = `${this.baseUrl}/app/galligeo/data`;
+
+            if (isAnonymous) {
+                const token = await this.getValidAnonymousToken();
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                } else {
+                    // Pas de token disponible, impossible de sauvegarder en API
+                    throw new Error('Token anonyme non disponible, sauvegarde localStorage uniquement');
+                }
+            } else {
+                // Pour les utilisateurs authentifiés, utiliser le token JWT
+                const token = this.getToken();
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                } else {
+                    throw new Error('Token d\'authentification non disponible');
+                }
+            }
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                
+                // Pour les utilisateurs anonymes, essayer de renouveler le token si 401
+                if (isAnonymous && response.status === 401) {
+                    console.log('🔄 Token expiré, renouvellement...');
+                    localStorage.removeItem('anonymous_token');
+                    localStorage.removeItem('anonymous_token_expires');
+                    
+                    const newToken = await this.generateAnonymousToken();
+                    const retryResponse = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            ...headers,
+                            'Authorization': `Bearer ${newToken}`
+                        },
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    if (!retryResponse.ok) {
+                        const retryErrorData = await retryResponse.json().catch(() => ({}));
+                        throw new Error(`Erreur API (retry): ${retryResponse.status} ${retryResponse.statusText} - ${retryErrorData.message || ''}`);
+                    }
+                    
+                    const retryResult = await retryResponse.json();
+                    console.log('✅ Carte sauvegardée en API (après renouvellement token):', retryResult);
+                    return retryResult;
+                }
+                
+                throw new Error(`Erreur API: ${response.status} ${response.statusText} - ${errorData.message || ''}`);
+            }
+            
+            const result = await response.json();
+            console.log(`✅ Carte ${arkId} sauvegardée en API avec fusion intelligente:`, result);
+            return result;
+            
+        } catch (error) {
+            console.error(`❌ Erreur sauvegarde API ${isAnonymous ? 'anonyme' : 'authentifiée'}:`, error);
+            throw error;
+        }
+    }
+
+    /**
+     * Met à jour le statut d'une carte pour un utilisateur authentifié
+     */
+    async updateWorkedMap(arkId, status, additionalData = {}) {
+        if (!this.isAuthenticated()) {
+            throw new Error('Utilisateur non authentifié');
+        }
+
+        try {
+            console.log(`💾 Mise à jour carte authentifiée: ${arkId} - ${status}`);
+            const result = await this.saveMapToAPI(arkId, status, additionalData, false);
+            console.log('✅ Carte mise à jour (API avec fusion intelligente)');
+            return result;
+        } catch (error) {
+            console.error('❌ Erreur mise à jour carte authentifiée:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Alias pour updateWorkedMap
+     */
+    async updateMapStatus(arkId, status, additionalData = {}) {
+        return this.updateWorkedMap(arkId, status, additionalData);
+    }
+
+    /**
+     * Sauvegarde en localStorage pour utilisateur anonyme
+     */
+    async saveAnonymousMapToLocalStorage(arkId, status, additionalData = {}) {
+        try {
+            const existingData = JSON.parse(localStorage.getItem('galligeo_anonymous_structure') || '{}');
+            
+            if (!existingData.galligeo) existingData.galligeo = {};
+            if (!existingData.galligeo.workedMaps) existingData.galligeo.workedMaps = {};
+            
+            const now = new Date().toISOString();
+            existingData.galligeo.workedMaps[arkId] = {
+                ark: arkId,
+                status: status,
+                quality: additionalData.quality || 2,
+                lastUpdated: now,
+                firstWorked: existingData.galligeo.workedMaps[arkId]?.firstWorked || now,
+                ...additionalData
+            };
+            
+            localStorage.setItem('galligeo_anonymous_structure', JSON.stringify(existingData));
+            console.log('✅ Carte sauvegardée en localStorage');
+            return existingData.galligeo.workedMaps[arkId];
+        } catch (error) {
+            console.error('❌ Erreur sauvegarde localStorage:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Récupère les données anonymes depuis l'API
+     */
+    async getAnonymousDataFromAPI() {
+        try {
+            console.log('📖 Récupération des données anonymes depuis l\'API');
+            
+            const token = await this.getValidAnonymousToken();
+            
+            const response = await fetch(`${this.baseUrl}/app/galligeo/data`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                console.log('✅ Données anonymes récupérées:', data);
+                return data;
+            } else {
+                console.warn('⚠️ Aucune donnée anonyme trouvée ou erreur API');
+                return null;
+            }
+        } catch (error) {
+            console.error('❌ Erreur récupération données anonymes:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Récupère les données utilisateur authentifié depuis l'API
+     */
+    async getUserDataFromAPI() {
+        if (!this.isAuthenticated()) {
+            throw new Error('Utilisateur non authentifié');
+        }
+
+        try {
+            console.log('📖 Récupération des données utilisateur depuis l\'API');
+            
+            const response = await fetch(`${this.baseUrl}/app/galligeo/data`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${this.getToken()}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                console.log('✅ Données utilisateur récupérées:', data);
+                return data;
+            } else {
+                console.warn('⚠️ Aucune donnée utilisateur trouvée ou erreur API');
+                return null;
+            }
+        } catch (error) {
+            console.error('❌ Erreur récupération données utilisateur:', error);
+            return null;
         }
     }
 }

@@ -679,10 +679,41 @@ function checkGeoreferencingAvailability() {
     // Mettre à jour les données de géoréférencement
     updateGeoreferencingData();
     
+    // Vérifier qu'une carte est chargée avant de permettre le géoréférencement
+    const hasLoadedMap = window.input_ark && window.input_ark.trim() !== '';
+    
+    if (!hasLoadedMap) {
+        console.log('🚫 Aucune carte chargée - désactivation du bouton géoréférencement');
+        
+        // Pas de carte chargée - désactiver le bouton
+        if (typeof setGeoreferencingButtonState === 'function') {
+            setGeoreferencingButtonState('disabled', 'Géoréférencer', 'Chargez une carte pour commencer le géoréférencement');
+        } else {
+            const btnGeorefs = document.getElementById('btn_georef');
+            if (btnGeorefs) {
+                btnGeorefs.disabled = true;
+                btnGeorefs.title = 'Chargez une carte pour commencer le géoréférencement';
+            }
+        }
+        
+        // Réinitialiser le compteur
+        count_points = 0;
+        
+        // Mettre à jour le message de statut
+        const statusElement = document.getElementById('input-status');
+        if (statusElement) {
+            statusElement.textContent = 'Chargez une carte pour commencer';
+        }
+        
+        return;
+    }
+    
     const completePairs = window.pointPairs.filter(pair => pair.isComplete()).length;
     const totalPoints = window.pointPairs.length;
     const leftPoints = window.pointPairs.filter(pair => pair.leftPoint).length;
     const rightPoints = window.pointPairs.filter(pair => pair.rightPoint).length;
+    
+    console.log(`🔍 checkGeoreferencingAvailability: ${completePairs} paires complètes sur ${totalPoints} (carte: ${window.input_ark})`);
     
     // Mettre à jour le message de statut avec les informations détaillées
     const statusElement = document.getElementById('input-status');
@@ -698,28 +729,25 @@ function checkGeoreferencingAvailability() {
     count_points = completePairs;
     
     if (completePairs >= 3) {
+        console.log(`✅ ${completePairs} paires complètes >= 3, activation du bouton géoréférencement`);
+        
         // Utiliser la fonction dédiée pour gérer l'état du bouton
         if (typeof setGeoreferencingButtonState === 'function') {
-            if (window.ptmAuth && window.ptmAuth.isAuthenticated()) {
-                setGeoreferencingButtonState('normal', 'Géoréférencer', 'Géoréférencer cette carte');
-            } else {
-                setGeoreferencingButtonState('disabled', 'Géoréférencer', 'Connectez-vous pour utiliser le géoréférencement');
-            }
+            // Le géoréférencement est maintenant autorisé pour tous les utilisateurs
+            setGeoreferencingButtonState('normal', 'Géoréférencer', 'Géoréférencer cette carte');
+            console.log('🎯 setGeoreferencingButtonState(normal) appelée');
         } else {
             // Fallback vers l'ancienne méthode si la fonction n'est pas disponible
-            if (window.ptmAuth && window.ptmAuth.isAuthenticated()) {
-                const btnGeorefs = document.getElementById('btn_georef');
-                if (btnGeorefs) btnGeorefs.disabled = false;
-            } else {
-                console.log('Géoréférencement nécessite une connexion utilisateur');
-                const btnGeorefs = document.getElementById('btn_georef');
-                if (btnGeorefs) {
-                    btnGeorefs.disabled = true;
-                    btnGeorefs.title = 'Connectez-vous pour utiliser le géoréférencement';
-                }
+            const btnGeorefs = document.getElementById('btn_georef');
+            if (btnGeorefs) {
+                btnGeorefs.disabled = false;
+                btnGeorefs.title = 'Géoréférencer cette carte';
+                console.log('🎯 Bouton activé directement (fallback)');
             }
         }
     } else {
+        console.log(`⚠️ ${completePairs} paires complètes < 3, désactivation du bouton`);
+        
         // Pas assez de paires complètes
         if (typeof setGeoreferencingButtonState === 'function') {
             setGeoreferencingButtonState('disabled', 'Géoréférencer', `Minimum 3 paires de points requis (${completePairs}/3)`);
@@ -732,10 +760,8 @@ function checkGeoreferencingAvailability() {
         }
     }
     
-    // Mettre à jour l'état général des boutons
-    if (typeof updateButtonsForAuth === 'function') {
-        updateButtonsForAuth();
-    }
+    // Note: Nous ne faisons plus appel à updateButtonsForAuth() ici car le géoréférencement
+    // est maintenant disponible pour tous les utilisateurs, connectés ou non
 }
 
 function updateUIForInputMode() {
@@ -876,6 +902,9 @@ function resetInputSystem() {
     // Réinitialiser l'interface
     updateControlPointsTable();
     updateUIForInputMode();
+    
+    // Vérifier la disponibilité du géoréférencement après la réinitialisation
+    checkGeoreferencingAvailability();
     
     // Émettre un événement pour notifier la réinitialisation
     const event = new CustomEvent('controlPointsChanged', {
