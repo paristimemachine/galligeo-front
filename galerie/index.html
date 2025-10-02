@@ -1106,9 +1106,19 @@
                 console.log(`Manifest récupéré pour ${arkId}:`, manifest);
                 
                 // Extraction des métadonnées du manifest IIIF v3
-                // Le titre peut être dans label.none, label.fr, etc.
+                // Le titre descriptif est dans summary (IIIF v3), label est une cote/référence
                 let title = 'Titre non disponible';
-                if (manifest.label) {
+                
+                // Priorité 1 : summary (titre descriptif complet)
+                if (manifest.summary) {
+                    if (typeof manifest.summary === 'object') {
+                        title = manifest.summary.none?.[0] || manifest.summary.fr?.[0] || manifest.summary.en?.[0] || title;
+                    } else {
+                        title = manifest.summary;
+                    }
+                }
+                // Fallback : label (généralement la cote)
+                else if (manifest.label) {
                     if (typeof manifest.label === 'object') {
                         title = manifest.label.none?.[0] || manifest.label.fr?.[0] || manifest.label.en?.[0] || title;
                     } else {

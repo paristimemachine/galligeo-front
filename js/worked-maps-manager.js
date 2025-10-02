@@ -522,12 +522,13 @@ class WorkedMapsManager {
             const metadata = await this.getGallicaMetadata(arkId);
             
             // Définir les variables globales nécessaires pour le dépôt
+            // Utiliser les labels français pour compatibilité IIIF v3
             window.metadataDict = {
                 'Titre': metadata.metadata['Titre'] || 'Titre non disponible',
                 'Créateur': metadata.metadata['Créateur'] || 'Créateur non disponible',
                 'Date': metadata.metadata['Date'] || '',
                 'Cote': metadata.metadata['Cote'] || 'BNF Gallica',
-                'Source Images': metadata.gallicaUrl || `https://gallica.bnf.fr/ark:/12148/${arkId}`
+                'Images Source': metadata.gallicaUrl || `https://gallica.bnf.fr/ark:/12148/${arkId}`
             };
             
             // Vérifier s'il y a des points de contrôle en mémoire

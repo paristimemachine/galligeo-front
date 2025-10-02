@@ -494,6 +494,26 @@ class PTMAuthFixed {
     }
 
     /**
+     * Met à jour une carte travaillée (alias pour compatibilité)
+     * @param {string} arkId - L'identifiant ARK de la carte
+     * @param {string} status - Le statut ('en-cours', 'georeferenced', 'deposee')
+     * @param {object} additionalData - Données supplémentaires
+     */
+    async updateWorkedMap(arkId, status, additionalData = {}) {
+        return this.saveMapStatus(arkId, status, additionalData);
+    }
+
+    /**
+     * Met à jour le statut d'une carte (alias pour compatibilité)
+     * @param {string} arkId - L'identifiant ARK de la carte
+     * @param {string} status - Le statut ('en-cours', 'georeferenced', 'deposee')
+     * @param {object} additionalData - Données supplémentaires
+     */
+    async updateMapStatus(arkId, status, additionalData = {}) {
+        return this.saveMapStatus(arkId, status, additionalData);
+    }
+
+    /**
      * Récupère toutes les cartes avec un statut spécifique
      */
     async getMapsByStatus(status) {

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test nakala_test_deposit.js</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-box {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .success { color: green; font-weight: bold; }
+        .error { color: red; font-weight: bold; }
+        button {
+            background: #0055a4;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #003d7a;
+        }
+        pre {
+            background: #f0f0f0;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test de chargement de nakala_test_deposit.js</h1>
+
+    <div class="test-box">
+        <h2>1. Vérification du chargement du script</h2>
+        <div id="test1"></div>
+    </div>
+
+    <div class="test-box">
+        <h2>2. Test d'appel de la fonction</h2>
+        <p>Cliquez sur le bouton pour tester l'appel de deposerSurNakala() :</p>
+        <button onclick="testFunctionCall()">Tester deposerSurNakala()</button>
+        <div id="test2"></div>
+    </div>
+
+    <div class="test-box">
+        <h2>3. Variables globales nécessaires</h2>
+        <div id="test3"></div>
+    </div>
+
+    <div class="test-box">
+        <h2>4. Instructions</h2>
+        <p>Si le test 1 échoue (fonction non définie) :</p>
+        <ul>
+            <li>Videz le cache : <code>Ctrl + Shift + R</code></li>
+            <li>Ou ouvrez cette page en navigation privée</li>
+            <li>Vérifiez la console (F12) pour d'éventuelles erreurs</li>
+        </ul>
+    </div>
+
+    <!-- Charger le script à tester -->
+    <script src="js/nakala_test_deposit.js?v=20251002"></script>
+
+    <script>
+        // Test 1 : Vérifier que la fonction est définie
+        window.addEventListener('DOMContentLoaded', () => {
+            const test1Div = document.getElementById('test1');
+            
+            if (typeof deposerSurNakala === 'function') {
+                test1Div.innerHTML = '<p class="success">✅ La fonction deposerSurNakala est bien définie!</p>';
+                test1Div.innerHTML += '<pre>typeof deposerSurNakala = "function"</pre>';
+            } else {
+                test1Div.innerHTML = '<p class="error">❌ La fonction deposerSurNakala n\'est PAS définie!</p>';
+                test1Div.innerHTML += '<pre>typeof deposerSurNakala = "' + typeof deposerSurNakala + '"</pre>';
+                test1Div.innerHTML += '<p>⚠️ Videz le cache du navigateur (Ctrl + Shift + R)</p>';
+            }
+
+            // Test 3 : Vérifier les variables globales
+            const test3Div = document.getElementById('test3');
+            let html = '<ul>';
+            html += '<li>window.metadataDict: ' + (typeof window.metadataDict !== 'undefined' ? '✅ Défini' : '❌ Non défini') + '</li>';
+            html += '<li>window.input_ark: ' + (typeof window.input_ark !== 'undefined' ? '✅ Défini' : '❌ Non défini') + '</li>';
+            html += '<li>window.pointPairs: ' + (typeof window.pointPairs !== 'undefined' ? '✅ Défini' : '❌ Non défini') + '</li>';
+            html += '<li>window.ptmAuth: ' + (typeof window.ptmAuth !== 'undefined' ? '✅ Défini' : '❌ Non défini') + '</li>';
+            html += '</ul>';
+            html += '<p><small>Note: Ces variables sont normalement définies dans l\'application principale</small></p>';
+            test3Div.innerHTML = html;
+        });
+
+        // Test 2 : Tester l'appel de la fonction
+        function testFunctionCall() {
+            const test2Div = document.getElementById('test2');
+            
+            if (typeof deposerSurNakala !== 'function') {
+                test2Div.innerHTML = '<p class="error">❌ La fonction n\'est pas définie, impossible de tester</p>';
+                return;
+            }
+
+            // Simuler des données minimales
+            window.metadataDict = window.metadataDict || {
+                'Titre': 'Test',
+                'Cote': 'Test',
+                'Date': '2025',
+                'Images Source': 'https://gallica.bnf.fr/test'
+            };
+            window.input_ark = 'btv1b12345678';
+            window.pointPairs = [
+                {
+                    id: 1,
+                    leftPoint: { lat: 0, lng: 0 },
+                    rightPoint: { lat: 48.8566, lng: 2.3522 },
+                    isComplete: () => true
+                }
+            ];
+
+            test2Div.innerHTML = '<p class="success">✅ Tentative d\'appel de la fonction...</p>';
+            test2Div.innerHTML += '<p><small>Note: Ceci va probablement échouer car les clés API ne sont pas valides, mais cela prouve que la fonction est appelable.</small></p>';
+            test2Div.innerHTML += '<p>Vérifiez la console (F12) pour voir la sortie de la fonction.</p>';
+
+            // Appeler la fonction (elle va probablement échouer à l'upload, mais c'est OK)
+            try {
+                deposerSurNakala('test-api-key', 'test-collection')
+                    .then(() => {
+                        test2Div.innerHTML += '<p class="success">✅ La fonction s\'est exécutée!</p>';
+                    })
+                    .catch(err => {
+                        test2Div.innerHTML += '<p class="error">❌ Erreur attendue (clés API invalides): ' + err.message + '</p>';
+                    });
+            } catch (err) {
+                test2Div.innerHTML += '<p class="error">❌ Erreur: ' + err.message + '</p>';
+            }
+        }
+    </script>
+</body>
+</html>

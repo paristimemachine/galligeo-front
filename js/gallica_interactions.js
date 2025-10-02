@@ -137,9 +137,11 @@ async function load_ark_picture() {
         img.src = string_url;
 
         //manage display hidden and visible div : map / video
-        // document.getElementById('map-container-left-at-startup').style.display = "none";
-        // document.getElementById('map-container-left-at-startup').style.visibility = "hidden";
-        document.getElementById('map-container-left-at-startup').remove()
+        // Vérifier que l'élément existe avant de le supprimer (peut être null au 2e chargement)
+        const startupContainer = document.getElementById('map-container-left-at-startup');
+        if (startupContainer) {
+            startupContainer.remove();
+        }
 
         document.getElementById('map-container-left').style.display = "block";
         document.getElementById('map-container-left').style.visibility = 'visible';
