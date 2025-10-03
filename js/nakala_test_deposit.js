@@ -122,7 +122,13 @@ async function deposerSurNakala(apiKey_in, collection_id_in) {
     ]
 
     // Compatibilité avec IIIF v3 : utiliser les labels français
-    const url_gallica = window.metadataDict['Images Source'] || window.metadataDict['Source Images'];
+    // Essayer de récupérer l'URL depuis les métadonnées, sinon construire à partir de l'ARK
+    let url_gallica = window.metadataDict['Images Source'] || window.metadataDict['Source Images'];
+    if (!url_gallica && window.input_ark) {
+        // Construire l'URL Gallica à partir de l'ARK si elle n'est pas disponible
+        url_gallica = 'https://gallica.bnf.fr/ark:/12148/' + window.input_ark;
+    }
+    
     const url_app_ptm = 'https://app.ptm.huma-num.fr/galligeo/georef/?ark=' + window.input_ark;
     const url_tile_ptm_sub = 'https://{s}.tile.ptm.huma-num.fr/tiles/ark/12148/' + window.input_ark + '/{z}/{x}/{y}.png';
 

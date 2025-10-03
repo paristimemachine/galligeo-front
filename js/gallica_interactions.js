@@ -58,6 +58,23 @@ async function load_ark_picture() {
         try {
             const wait = await load_oai_metada(input_ark);
             
+            console.log('🔍 Vérification après load_oai_metada');
+            console.log('document.height_image:', document.height_image);
+            console.log('document.width_image:', document.width_image);
+            
+            // Si les dimensions ne sont pas disponibles dans le manifest, utiliser l'API Image IIIF
+            if (!document.height_image || !document.width_image) {
+                console.log('⚠️ Dimensions non disponibles dans le manifest, tentative avec l\'API Image IIIF...');
+                const dimensions = await load_image_dimensions_from_iiif_image_api(input_ark);
+                
+                if (!dimensions) {
+                    console.error('❌ Impossible de récupérer les dimensions de l\'image depuis les deux APIs');
+                    alert('Erreur: Impossible de récupérer les dimensions de l\'image. Veuillez réessayer.');
+                    map.fire('dataload');
+                    return;
+                }
+            }
+            
             // S'assurer que le contrôle de métadonnées est disponible après le chargement
             if (window.ensureMetadataControlAvailable && !window.metadataControl) {
                 console.log('Tentative d\'initialisation du contrôle de métadonnées après chargement');
@@ -68,8 +85,21 @@ async function load_ark_picture() {
                 }
             }
         } catch (error) {
+            console.error('❌ Erreur lors du chargement des métadonnées:', error);
             document.querySelector('#search-784-input').value = "L'API de Gallica ne répond pas...";
+            map.fire('dataload');
+            return;
         }
+        
+        // Vérification finale des dimensions
+        if (!document.height_image || !document.width_image) {
+            console.error('❌ Les dimensions de l\'image n\'ont pas pu être récupérées');
+            alert('Erreur: Impossible de récupérer les dimensions de l\'image. Veuillez réessayer.');
+            map.fire('dataload');
+            return;
+        }
+        
+        console.log(`📐 Dimensions de l'image chargées: ${document.width_image} x ${document.height_image}`);
         
         // const size_img_max = 15000000; // around 2Mo
         const size_img_max = 8500000; // around 1.9Mo
@@ -88,6 +118,8 @@ async function load_ark_picture() {
 
         document.image_width_scaled = width_temp;
         document.image_height_scaled = height_temp;
+        
+        console.log(`📐 Dimensions scalées calculées: ${document.image_width_scaled} x ${document.image_height_scaled}`);
 
         // console.log("width : " + document.width_image )
         // console.log("heigth : " + document.height_image )
@@ -172,6 +204,38 @@ async function load_ark_picture() {
     
 }
 
+/**
+ * Récupère les dimensions de l'image depuis l'API Image IIIF v3
+ * Utilisé comme fallback si le manifest ne contient pas les dimensions
+ */
+async function load_image_dimensions_from_iiif_image_api(input_ark) {
+    const infoUrl = `https://openapi.bnf.fr/iiif/image/v3/ark:/12148/${input_ark}/f1/info.json`;
+    
+    console.log('🔍 Tentative de récupération des dimensions depuis l\'API Image IIIF:', infoUrl);
+    
+    try {
+        const response = await fetch(infoUrl);
+        if (!response.ok) {
+            throw new Error(`Erreur HTTP ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.width && data.height) {
+            document.width_image = data.width;
+            document.height_image = data.height;
+            console.log('✅ Dimensions récupérées depuis l\'API Image IIIF:', data.width, 'x', data.height);
+            return { width: data.width, height: data.height };
+        } else {
+            console.warn('⚠️ L\'API Image IIIF ne contient pas de dimensions');
+            return null;
+        }
+    } catch (error) {
+        console.error('❌ Erreur lors de la récupération des dimensions depuis l\'API Image IIIF:', error);
+        return null;
+    }
+}
+
 async function load_oai_metada(input_ark) {
         
         var string_url = 'https://openapi.bnf.fr/iiif/presentation/v3/ark:/12148/'+ input_ark +'/manifest.json'
@@ -188,8 +252,23 @@ async function load_oai_metada(input_ark) {
             // Utiliser la variable globale
             window.metadataDict = window.metadataDict || {};
 
+            // Extraire l'URL Gallica depuis le champ homepage du manifest IIIF v3
+            if (data.homepage && Array.isArray(data.homepage) && data.homepage.length > 0) {
+                const gallicaHomepage = data.homepage[0];
+                if (gallicaHomepage.id && gallicaHomepage.id.includes('gallica.bnf.fr')) {
+                    window.metadataDict['Images Source'] = gallicaHomepage.id;
+                    window.metadataDict['Source Images'] = gallicaHomepage.id;
+                }
+            }
+
             // Récupérer le canvas (items[0] dans IIIF v3)
             const canvas = data.items && data.items[0];
+            
+            console.log('📊 Manifest IIIF chargé');
+            console.log('📊 Canvas trouvé:', canvas ? 'OUI' : 'NON');
+            if (canvas) {
+                console.log('📊 Dimensions du canvas:', canvas.width, 'x', canvas.height);
+            }
             
             // Ajouter les dimensions si disponibles
             if (canvas && canvas.height && canvas.width) {
@@ -200,6 +279,10 @@ async function load_oai_metada(input_ark) {
                 );
                 document.height_image = canvas.height;
                 document.width_image  = canvas.width;
+                console.log('✅ Dimensions de l\'image définies:', document.width_image, 'x', document.height_image);
+            } else {
+                console.error('❌ Impossible de récupérer les dimensions du canvas');
+                console.log('Canvas:', canvas);
             }
 
             const metadataOrder = [

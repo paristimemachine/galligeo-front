@@ -155,10 +155,24 @@ function click_georef(image, points, polygon, input_ark) {
     //waiting animation on map
     right_map.fire('dataloading');
 
+    // Vérifier que les dimensions de l'image sont définies
+    const imageWidth = document.image_width_scaled || document.width_image;
+    const imageHeight = document.image_height_scaled || document.height_image;
+    
+    if (!imageWidth || !imageHeight) {
+        console.error('❌ Dimensions de l\'image non disponibles');
+        alert('Erreur: Les dimensions de l\'image ne sont pas disponibles. Veuillez recharger l\'image.');
+        setGeoreferencingButtonState('normal');
+        right_map.fire('dataload');
+        return;
+    }
+    
+    console.log(`📐 Dimensions de l'image: ${imageWidth} x ${imageHeight}`);
+
    georef_api_post(urlToAPI, { 
      "gallica_ark_url": urlToRessource,
-     "image_width": document.image_width_scaled,
-     "image_height": document.image_height_scaled,
+     "image_width": imageWidth,
+     "image_height": imageHeight,
      "gcp_pairs": points,
      "clipping_polygon": polygon
    }).then((data) => {
