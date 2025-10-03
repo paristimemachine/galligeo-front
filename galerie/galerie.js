@@ -297,7 +297,7 @@ class GalerieManager {
             }
 
             // Générer l'URL de la vignette
-            const thumbnailUrl = `https://gallica.bnf.fr/iiif/ark:/12148/${arkId}/f1/full/300,/0/native.jpg`;
+            const thumbnailUrl = `https://openapi.bnf.fr/iiif/image/v3/ark:/12148/${arkId}/f1/full/,480/0/default.webp`;
             
             const result = {
                 arkId,
@@ -541,6 +541,16 @@ class GalerieManager {
             <div class="fr-col-md-6 fr-col-lg-4 fr-col">
                 <div class="fr-card fr-enlarge-link selectable-card" onclick="toggleMapSelection('${arkId}', this)" data-ark="${arkId}">
                     <div class="selection-checkbox"></div>
+                    ${thumbnailUrl ? `
+                    <div class="fr-card__header">
+                        <div class="fr-card__img">
+                            <img class="fr-responsive-img card-image" 
+                                 src="${thumbnailUrl}" 
+                                 alt="${title}"
+                                 onerror="this.parentElement.style.display='none';" />
+                        </div>
+                    </div>
+                    ` : ''}
                     <div class="fr-card__body">
                         <div class="fr-card__content">
                             <h3 class="fr-card__title">
@@ -565,16 +575,6 @@ class GalerieManager {
                             </div>
                         </div>
                     </div>
-                    ${thumbnailUrl ? `
-                    <div class="fr-card__header">
-                        <div class="fr-card__img">
-                            <img class="fr-responsive-img card-image" 
-                                 src="${thumbnailUrl}" 
-                                 alt="${title}"
-                                 onerror="this.parentElement.style.display='none';" />
-                        </div>
-                    </div>
-                    ` : ''}
                 </div>
             </div>
         `;

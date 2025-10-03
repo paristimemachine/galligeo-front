@@ -1077,7 +1077,7 @@
         
         // Fonction pour générer l'URL de la vignette Gallica IIIF
         function generateGallicaThumbnail(arkId) {
-            return `https://gallica.bnf.fr/iiif/ark:/12148/${arkId}/f1/full/300,/0/native.jpg`;
+            return `https://openapi.bnf.fr/iiif/image/v3/ark:/12148/${arkId}/f1/full/,480/0/default.webp`;
         }
         
         // Fonction pour générer l'URL Gallica (fallback si pas dans manifest)

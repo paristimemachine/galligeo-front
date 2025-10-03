@@ -11,8 +11,8 @@ class APIHealthMonitor {
         this.timeoutDuration = 10000; // Timeout de 10 secondes
         
         // URLs à tester
-        // TEMPORAIRE: URL de test IIIF - à remplacer par un endpoint health dédié
-        this.gallicaTestUrl = 'https://gallica.bnf.fr/iiif/ark:/12148/btv1b90017179/f15/info.json';
+        // TEMPORAIRE: URL de test IIIF v3 - à remplacer par un endpoint health dédié
+        this.gallicaTestUrl = 'https://openapi.bnf.fr/iiif/image/v3/ark:/12148/btv1b90017179/f15/info.json';
         // TEMPORAIRE: URL de test pour le serveur de tuiles PTM - à remplacer par un endpoint health dédié
         this.ptmTileTestUrl = 'https://tile.ptm.huma-num.fr/tiles/ark/info_tiles/12148/btv1b53121232b';
         

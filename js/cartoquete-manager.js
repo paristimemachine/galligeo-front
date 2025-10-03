@@ -174,12 +174,12 @@ class CartoqueteManager {
      * Génère l'URL de la vignette pour un ARK
      */
     generateThumbnailUrl(arkId) {
-        // Utiliser l'API IIIF pour générer une vignette de 300px de large
-        return `https://gallica.bnf.fr/iiif/ark:/12148/${arkId}/f1/full/300,/0/native.jpg`;
+        // Utiliser l'API IIIF v3 pour générer une vignette de 480px de hauteur en format webp
+        return `https://openapi.bnf.fr/iiif/image/v3/ark:/12148/${arkId}/f1/full/,480/0/default.webp`;
     }
 
     /**
-     * Génère une carte DSFR pour un favori
+     * Génère une carte DSFR pour un favori (style galerie compact)
      */
     generateCardHTML(favorite, metadata) {
         const title = metadata.metadata['Titre'] || 'Titre non disponible';
@@ -201,39 +201,40 @@ class CartoqueteManager {
         }
 
         return `
-            <div class="fr-col-md-6 fr-col">
+            <div class="fr-col-md-6 fr-col-lg-4 fr-col">
                 <div class="fr-card">
-                    <div class="fr-card__body">
-                        <div class="fr-card__content">
-                            <h4 class="fr-card__title">
-                                <a href="${gallicaUrl}" target="_blank" rel="noopener">${title}</a>
-                            </h4>
-                            ${description ? `<p class="fr-card__desc">${description}</p>` : ''}
-                            <p class="fr-card__desc">
-                                <a href="${gallicaUrl}" target="_blank" rel="noopener">Voir la notice Gallica</a>
-                            </p>
-                            <p class="fr-card__desc">
-                                <a href="${georefUrl}" target="_blank" rel="noopener">Géoréférencer cette carte</a>
-                            </p>
-                            <div class="fr-card__start">
-                                <ul class="fr-tags-group">
-                                    <li><p class="fr-tag fr-tag--blue-france">Cartoquete</p></li>
-                                    <li><p class="fr-tag fr-tag--yellow-tournesol">Favoris</p></li>
-                                </ul>
-                                <p class="fr-card__detail fr-icon-star-fill">Favori Cartoquete</p>
-                            </div>
-                        </div>
-                    </div>
                     ${thumbnailUrl && !metadata.error ? `
                     <div class="fr-card__header">
                         <div class="fr-card__img">
-                            <img class="fr-responsive-img" 
+                            <img class="fr-responsive-img card-image" 
                                  src="${thumbnailUrl}" 
                                  alt="${title}"
                                  onerror="this.parentElement.style.display='none';" />
                         </div>
                     </div>
                     ` : ''}
+                    <div class="fr-card__body">
+                        <div class="fr-card__content">
+                            <h3 class="fr-card__title">
+                                <a href="${gallicaUrl}" target="_blank" rel="noopener">${title}</a>
+                            </h3>
+                            ${description ? `<p class="fr-card__desc">${description}</p>` : ''}
+                            <div class="fr-card__start">
+                                <ul class="fr-tags-group">
+                                    <li><p class="fr-tag fr-tag--yellow-tournesol">Favori</p></li>
+                                    <li><p class="fr-tag fr-tag--blue-france">Cartoquete</p></li>
+                                </ul>
+                            </div>
+                            <div class="fr-btns-group fr-btns-group--sm fr-mt-2w">
+                                <a href="${georefUrl}" target="_blank" rel="noopener" class="fr-btn fr-btn--sm fr-btn--tertiary">
+                                    Géoréférencer
+                                </a>
+                                <a href="${gallicaUrl}" target="_blank" rel="noopener" class="fr-btn fr-btn--sm fr-btn--secondary">
+                                    Gallica
+                                </a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         `;

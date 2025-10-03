@@ -126,11 +126,11 @@ async function load_ark_picture() {
         // console.log("ratio calc : " + ratio_img )
         // console.log("heigth calc : " + height_temp )
         
-        // Poor resolution bases on size approx 2Mo
+        // High resolution image using IIIF v3 API
 
         //var string_url = 'https://gallica.bnf.fr/ark:/12148/' + input_ark + '/highres';
-        var string_url = 'https://gallica.bnf.fr/iiif/ark:/12148/'+input_ark+'/f1/full/'+ '3200' +'/0/native.jpg';
-        https://gallica.bnf.fr/iiif/ark:/12148/btv1b84460142/f1/full/full/0/native.jpg
+        var string_url = 'https://openapi.bnf.fr/iiif/image/v3/ark:/12148/'+input_ark+'/f1/full/3200,/0/default.webp';
+        // https://gallica.bnf.fr/iiif/ark:/12148/btv1b84460142/f1/full/full/0/native.jpg (old API)
         // var string_url = 'https://gallica.bnf.fr/iiif/ark:/12148/'+input_ark+'/f1/full/full/0/native.jpg';
         // var string_url = 'https://gallica.bnf.fr/ark:/12148/' + input_ark + '/f1.highres';
         

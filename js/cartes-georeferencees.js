@@ -297,7 +297,7 @@ class CartesGeoreferencees {
             }
 
             // Générer l'URL de la vignette
-            const thumbnailUrl = `https://gallica.bnf.fr/iiif/ark:/12148/${arkId}/f1/full/300,/0/native.jpg`;
+            const thumbnailUrl = `https://openapi.bnf.fr/iiif/image/v3/ark:/12148/${arkId}/f1/full/,480/0/default.webp`;
             
             const result = {
                 arkId,
@@ -513,7 +513,7 @@ class CartesGeoreferencees {
     }
 
     /**
-     * Génère le HTML pour une carte individuelle
+     * Génère le HTML pour une carte individuelle (style galerie compact)
      */
     generateCardHTML(map) {
         const title = map.title || 'Titre non disponible';
@@ -539,26 +539,7 @@ class CartesGeoreferencees {
 
         return `
             <div class="fr-col-md-6 fr-col-lg-4 fr-col">
-                <div class="fr-card fr-enlarge-link">
-                    <div class="fr-card__body">
-                        <div class="fr-card__content">
-                            <h3 class="fr-card__title">
-                                <a href="${georefUrl}" class="fr-card__link">${title}</a>
-                            </h3>
-                            ${description ? `<p class="fr-card__desc">${description}</p>` : ''}
-                            <p class="fr-card__desc">
-                                <a href="${gallicaUrl}" target="_blank" rel="noopener">Voir sur Gallica</a>
-                            </p>
-                            <div class="fr-card__start">
-                                <ul class="fr-tags-group">
-                                    <li><p class="fr-tag fr-tag--green-emeraude">Géoréférencée</p></li>
-                                    <li><p class="fr-tag fr-tag--blue-france">Gallica</p></li>
-                                </ul>
-                                <p class="fr-card__detail fr-icon-user-line">Par ${georefBy}</p>
-                                ${georefDate ? `<p class="fr-card__detail fr-icon-calendar-line">${georefDate}</p>` : ''}
-                            </div>
-                        </div>
-                    </div>
+                <div class="fr-card">
                     ${thumbnailUrl ? `
                     <div class="fr-card__header">
                         <div class="fr-card__img">
@@ -569,6 +550,30 @@ class CartesGeoreferencees {
                         </div>
                     </div>
                     ` : ''}
+                    <div class="fr-card__body">
+                        <div class="fr-card__content">
+                            <h3 class="fr-card__title">
+                                <a href="${georefUrl}">${title}</a>
+                            </h3>
+                            ${description ? `<p class="fr-card__desc">${description}</p>` : ''}
+                            <div class="fr-card__start">
+                                <ul class="fr-tags-group">
+                                    <li><p class="fr-tag fr-tag--green-emeraude">Géoréférencée</p></li>
+                                    <li><p class="fr-tag fr-tag--blue-france">Gallica</p></li>
+                                </ul>
+                                <p class="fr-card__detail fr-icon-user-line">Par ${georefBy}</p>
+                                ${georefDate ? `<p class="fr-card__detail fr-icon-calendar-line">${georefDate}</p>` : ''}
+                            </div>
+                            <div class="fr-btns-group fr-btns-group--sm fr-mt-2w">
+                                <a href="${georefUrl}" class="fr-btn fr-btn--sm fr-btn--tertiary">
+                                    Voir géoréf.
+                                </a>
+                                <a href="${gallicaUrl}" target="_blank" rel="noopener" class="fr-btn fr-btn--sm fr-btn--secondary">
+                                    Gallica
+                                </a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         `;
