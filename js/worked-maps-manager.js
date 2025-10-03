@@ -230,16 +230,6 @@ class WorkedMapsManager {
         return `
             <div class="fr-col-md-6 fr-col-lg-4 fr-col">
                 <div class="fr-card">
-                    ${thumbnailUrl && !metadata.error ? `
-                    <div class="fr-card__header">
-                        <div class="fr-card__img">
-                            <img class="fr-responsive-img card-image" 
-                                 src="${thumbnailUrl}" 
-                                 alt="${title}"
-                                 onerror="this.parentElement.style.display='none';" />
-                        </div>
-                    </div>
-                    ` : ''}
                     <div class="fr-card__body">
                         <div class="fr-card__content">
                             <h3 class="fr-card__title">
@@ -257,6 +247,16 @@ class WorkedMapsManager {
                             ${buttonsHTML}
                         </div>
                     </div>
+                    ${thumbnailUrl && !metadata.error ? `
+                    <div class="fr-card__header">
+                        <div class="fr-card__img">
+                            <img class="fr-responsive-img card-image" 
+                                 src="${thumbnailUrl}" 
+                                 alt="${title}"
+                                 onerror="this.parentElement.style.display='none';" />
+                        </div>
+                    </div>
+                    ` : ''}
                 </div>
             </div>
         `;

@@ -56,11 +56,15 @@
 
 .fr-btns-group {
     gap: 0.5rem !important;
+    flex-wrap: wrap !important;
 }
 
 .fr-btn--sm {
     padding: 0.25rem 0.75rem !important;
     font-size: 0.75rem !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* Tags plus compacts */
@@ -68,11 +72,16 @@
     padding: 0.25rem 0.5rem !important;
     font-size: 0.7rem !important;
     line-height: 1.2 !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
 }
 
 .fr-tags-group {
     gap: 0.25rem !important;
     margin-bottom: 0.5rem !important;
+    flex-wrap: wrap !important;
 }
 
 /* Statistiques plus compactes */
