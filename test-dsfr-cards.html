@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test DSFR Cards - Démo Simple</title>
+    
+    <!-- CSS DSFR officiel -->
+    <link href="node_modules/@gouvfr/dsfr/dist/core/core.min.css" rel="stylesheet">
+    <link href="node_modules/@gouvfr/dsfr/dist/component/link/link.min.css" rel="stylesheet">
+    <link href="node_modules/@gouvfr/dsfr/dist/component/card/card.min.css" rel="stylesheet">
+    <link href="node_modules/@gouvfr/dsfr/dist/utility/utility.min.css" rel="stylesheet">
+    
+    <style>
+        /* Aucun CSS custom sur les cards DSFR */
+        body {
+            margin: 0;
+            padding: 2rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="fr-container">
+        <h1 class="fr-h1">Test DSFR Cards - 3 Colonnes</h1>
+        <p class="fr-text--lead">Page de démo avec uniquement le code DSFR officiel, sans CSS custom</p>
+        
+        <hr class="fr-hr">
+        
+        <h2 class="fr-h2">Grille 3 colonnes (Desktop) / 2 colonnes (Tablette) / 1 colonne (Mobile)</h2>
+        
+        <div class="fr-grid-row fr-grid-row--gutters">
+            <!-- Card 1 -->
+            <div class="fr-col-12 fr-col-md-6 fr-col-lg-4">
+                <div class="fr-card fr-enlarge-link">
+                    <div class="fr-card__body">
+                        <div class="fr-card__content">
+                            <h3 class="fr-card__title">
+                                <a href="#" class="fr-card__link">Titre de la carte avec un texte assez long pour voir le comportement du débordement</a>
+                            </h3>
+                            <p class="fr-card__desc">Ceci est une description de la carte qui peut contenir plusieurs lignes de texte pour tester le débordement automatique géré par le DSFR. Le texte doit s'adapter automatiquement.</p>
+                            <p class="fr-card__detail">
+                                <span class="fr-icon-calendar-line" aria-hidden="true"></span>
+                                4 octobre 2025
+                            </p>
+                        </div>
+                        <div class="fr-card__start">
+                            <ul class="fr-tags-group">
+                                <li>
+                                    <p class="fr-tag">Tag 1</p>
+                                </li>
+                                <li>
+                                    <p class="fr-tag">Tag 2</p>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="fr-card__header">
+                        <div class="fr-card__img">
+                            <img src="https://gallica.bnf.fr/iiif/ark:/12148/btv1b8626787c/f1/full/400,/0/native.jpg" alt="Image de démonstration" class="fr-responsive-img">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Card 2 -->
+            <div class="fr-col-12 fr-col-md-6 fr-col-lg-4">
+                <div class="fr-card fr-enlarge-link">
+                    <div class="fr-card__body">
+                        <div class="fr-card__content">
+                            <h3 class="fr-card__title">
+                                <a href="#" class="fr-card__link">Carte numéro 2 avec un titre très très très très très très long</a>
+                            </h3>
+                            <p class="fr-card__desc">Une autre description avec beaucoup de texte pour vérifier que le DSFR gère correctement les débordements sans avoir besoin de CSS personnalisé. Le texte doit rester dans les limites de la carte.</p>
+                            <p class="fr-card__detail">
+                                <a href="#" class="fr-card__detail-link">Voir les détails</a>
+                            </p>
+                        </div>
+                        <div class="fr-card__start">
+                            <ul class="fr-tags-group">
+                                <li>
+                                    <p class="fr-tag">Exemple</p>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="fr-card__header">
+                        <div class="fr-card__img">
+                            <img src="https://gallica.bnf.fr/iiif/ark:/12148/btv1b53029912w/f1/full/400,/0/native.jpg" alt="Image de démonstration" class="fr-responsive-img">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Card 3 -->
+            <div class="fr-col-12 fr-col-md-6 fr-col-lg-4">
+                <div class="fr-card fr-enlarge-link">
+                    <div class="fr-card__body">
+                        <div class="fr-card__content">
+                            <h3 class="fr-card__title">
+                                <a href="#" class="fr-card__link">Troisième carte de test</a>
+                            </h3>
+                            <p class="fr-card__desc">Description courte pour cette carte.</p>
+                            <p class="fr-card__detail">Détail supplémentaire</p>
+                        </div>
+                        <div class="fr-card__start">
+                            <ul class="fr-tags-group">
+                                <li>
+                                    <p class="fr-tag">Test</p>
+                                </li>
+                                <li>
+                                    <p class="fr-tag">DSFR</p>
+                                </li>
+                                <li>
+                                    <p class="fr-tag">Demo</p>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="fr-card__header">
+                        <div class="fr-card__img">
+                            <img src="https://gallica.bnf.fr/iiif/ark:/12148/btv1b8447826h/f1/full/400,/0/native.jpg" alt="Image de démonstration" class="fr-responsive-img">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Card 4 -->
+            <div class="fr-col-12 fr-col-md-6 fr-col-lg-4">
+                <div class="fr-card fr-enlarge-link">
+                    <div class="fr-card__body">
+                        <div class="fr-card__content">
+                            <h3 class="fr-card__title">
+                                <a href="#" class="fr-card__link">Quatrième exemple</a>
+                            </h3>
+                            <p class="fr-card__desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed non risus. Suspendisse lectus tortor, dignissim sit amet, adipiscing nec, ultricies sed, dolor.</p>
+                            <p class="fr-card__detail">
+                                <a href="#" class="fr-card__detail-link">En savoir plus</a>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="fr-card__header">
+                        <div class="fr-card__img">
+                            <img src="https://gallica.bnf.fr/iiif/ark:/12148/btv1b8594559c/f1/full/400,/0/native.jpg" alt="Image de démonstration" class="fr-responsive-img">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Card 5 -->
+            <div class="fr-col-12 fr-col-md-6 fr-col-lg-4">
+                <div class="fr-card fr-enlarge-link">
+                    <div class="fr-card__body">
+                        <div class="fr-card__content">
+                            <h3 class="fr-card__title">
+                                <a href="#" class="fr-card__link">Cinquième carte avec un titre qui contient beaucoup trop de mots pour tenir sur une seule ligne</a>
+                            </h3>
+                            <p class="fr-card__desc">Cras mattis consectetur purus sit amet fermentum. Cras justo odio, dapibus ac facilisis in, egestas eget quam. Morbi leo risus, porta ac consectetur ac, vestibulum at eros.</p>
+                        </div>
+                        <div class="fr-card__start">
+                            <ul class="fr-tags-group">
+                                <li>
+                                    <p class="fr-tag">Tag long</p>
+                                </li>
+                                <li>
+                                    <p class="fr-tag">Autre tag</p>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="fr-card__header">
+                        <div class="fr-card__img">
+                            <img src="https://gallica.bnf.fr/iiif/ark:/12148/btv1b10537713t/f1/full/400,/0/native.jpg" alt="Image de démonstration" class="fr-responsive-img">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Card 6 -->
+            <div class="fr-col-12 fr-col-md-6 fr-col-lg-4">
+                <div class="fr-card fr-enlarge-link">
+                    <div class="fr-card__body">
+                        <div class="fr-card__content">
+                            <h3 class="fr-card__title">
+                                <a href="#" class="fr-card__link">Sixième et dernière carte</a>
+                            </h3>
+                            <p class="fr-card__desc">Une dernière description pour compléter la grille de test. Praesent commodo cursus magna, vel scelerisque nisl consectetur et.</p>
+                            <p class="fr-card__detail">Informations additionnelles</p>
+                        </div>
+                    </div>
+                    <div class="fr-card__header">
+                        <div class="fr-card__img">
+                            <img src="https://gallica.bnf.fr/iiif/ark:/12148/btv1b53138722t/f1/full/400,/0/native.jpg" alt="Image de démonstration" class="fr-responsive-img">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <hr class="fr-hr">
+        
+        <h2 class="fr-h2">Test avec structure Galerie (avec liens dans descriptions)</h2>
+        <p class="fr-text--sm">Cette section reproduit la structure exacte utilisée dans galerie.js et worked-maps-manager.js avec des liens dans les fr-card__desc</p>
+        
+        <div class="fr-grid-row fr-grid-row--gutters">
+            <!-- Card avec liens dans desc (style galerie) -->
+            <div class="fr-col-12 fr-col-md-6 fr-col-lg-4">
+                <div class="fr-card fr-enlarge-link">
+                    <div class="fr-card__body">
+                        <div class="fr-card__content">
+                            <h3 class="fr-card__title">
+                                <a href="https://gallica.bnf.fr/ark:/12148/btv1b8626787c" target="_blank" rel="noopener">Plan de Paris - Titre très long qui peut déborder</a>
+                            </h3>
+                            <p class="fr-card__desc">Auteur inconnu - 1789</p>
+                            <p class="fr-card__desc">
+                                <a href="https://gallica.bnf.fr/ark:/12148/btv1b8626787c" target="_blank" rel="noopener">Voir la notice Gallica</a>
+                            </p>
+                            <p class="fr-card__desc">
+                                <a href="#" target="_blank" rel="noopener">Continuer le géoréférencement</a>
+                            </p>
+                            <div class="fr-card__start">
+                                <ul class="fr-tags-group">
+                                    <li><p class="fr-tag fr-tag--green-emeraude">Géoréférencée</p></li>
+                                    <li><p class="fr-tag fr-tag--blue-france">Gallica</p></li>
+                                </ul>
+                                <p class="fr-card__detail fr-icon-calendar-line">Créé le 15/09/2024</p>
+                                <p class="fr-card__detail fr-icon-time-line">Modifié le 4/10/2025</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="fr-card__header">
+                        <div class="fr-card__img">
+                            <img src="https://gallica.bnf.fr/iiif/ark:/12148/btv1b8626787c/f1/full/400,/0/native.jpg" alt="Plan de Paris" class="fr-responsive-img">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Card avec bouton dans desc -->
+            <div class="fr-col-12 fr-col-md-6 fr-col-lg-4">
+                <div class="fr-card fr-enlarge-link">
+                    <div class="fr-card__body">
+                        <div class="fr-card__content">
+                            <h3 class="fr-card__title">
+                                <a href="#" target="_blank">Carte avec bouton de dépôt</a>
+                            </h3>
+                            <p class="fr-card__desc">Description de la carte</p>
+                            <p class="fr-card__desc">
+                                <a href="#" target="_blank" rel="noopener">Voir la notice Gallica</a>
+                            </p>
+                            <p class="fr-card__desc">
+                                <button class="fr-btn fr-btn--sm fr-btn--secondary" title="Déposer cette carte">
+                                    <span class="fr-icon-upload-line" aria-hidden="true"></span>
+                                    Déposer sur Nakala
+                                </button>
+                            </p>
+                            <div class="fr-card__start">
+                                <ul class="fr-tags-group">
+                                    <li><p class="fr-tag fr-tag--success">Déposée</p></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="fr-card__header">
+                        <div class="fr-card__img">
+                            <img src="https://gallica.bnf.fr/iiif/ark:/12148/btv1b53029912w/f1/full/400,/0/native.jpg" alt="Carte déposée" class="fr-responsive-img">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Card avec plusieurs liens longs -->
+            <div class="fr-col-12 fr-col-md-6 fr-col-lg-4">
+                <div class="fr-card fr-enlarge-link">
+                    <div class="fr-card__body">
+                        <div class="fr-card__content">
+                            <h3 class="fr-card__title">
+                                <a href="#">Carte avec beaucoup de liens qui peuvent poser problème de débordement</a>
+                            </h3>
+                            <p class="fr-card__desc">Créateur très long nom - Date complète 1er janvier 1789</p>
+                            <p class="fr-card__desc">
+                                <a href="#">Voir la notice complète sur Gallica avec un texte de lien très long</a>
+                            </p>
+                            <p class="fr-card__desc">
+                                <a href="#">Continuer le géoréférencement de cette carte historique</a>
+                            </p>
+                            <p class="fr-card__desc">
+                                <a href="#">Télécharger la version haute résolution de cette carte</a>
+                            </p>
+                            <div class="fr-card__start">
+                                <ul class="fr-tags-group">
+                                    <li><p class="fr-tag">En cours</p></li>
+                                    <li><p class="fr-tag">Gallica</p></li>
+                                    <li><p class="fr-tag">Tag 3</p></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="fr-card__header">
+                        <div class="fr-card__img">
+                            <img src="https://gallica.bnf.fr/iiif/ark:/12148/btv1b8447826h/f1/full/400,/0/native.jpg" alt="Carte multi liens" class="fr-responsive-img">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <hr class="fr-hr">
+        
+        <div class="fr-callout">
+            <h3 class="fr-callout__title">À propos de ce test</h3>
+            <p class="fr-callout__text">
+                Cette page utilise <strong>uniquement</strong> le code DSFR officiel sans aucun CSS personnalisé sur les cards.
+            </p>
+            <ul>
+                <li><strong>Grille</strong> : <code>fr-col-12 fr-col-md-6 fr-col-lg-4</code></li>
+                <li><strong>Card</strong> : <code>fr-card fr-enlarge-link</code></li>
+                <li><strong>Structure</strong> : body → content + start, puis header avec img</li>
+                <li><strong>CSS</strong> : core.min.css + link.min.css + card.min.css</li>
+            </ul>
+            <p>
+                <strong>Testez en redimensionnant la fenêtre :</strong>
+            </p>
+            <ul>
+                <li>Desktop (&gt; 992px) : <strong>3 colonnes</strong></li>
+                <li>Tablette (768-992px) : <strong>2 colonnes</strong></li>
+                <li>Mobile (&lt; 768px) : <strong>1 colonne</strong></li>
+            </ul>
+        </div>
+    </div>
+    
+    <!-- JS DSFR (optionnel pour les cards) -->
+    <script src="node_modules/@gouvfr/dsfr/dist/dsfr.module.min.js" type="module"></script>
+</body>
+</html>

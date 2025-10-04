@@ -206,21 +206,18 @@ class CartoqueteManager {
                     <div class="fr-card__body">
                         <div class="fr-card__content">
                             <h3 class="fr-card__title">
-                                <a href="${gallicaUrl}" target="_blank" rel="noopener">${title}</a>
+                                <a href="${georefUrl}" target="_blank" rel="noopener">${title}</a>
                             </h3>
                             ${description ? `<p class="fr-card__desc">${description}</p>` : ''}
                             <p class="fr-card__desc">
                                 <a href="${gallicaUrl}" target="_blank" rel="noopener">Voir la notice Gallica</a>
                             </p>
-                            <p class="fr-card__desc">
-                                <a href="${georefUrl}" target="_blank" rel="noopener">Géoréférencer cette carte</a>
-                            </p>
-                            <div class="fr-card__start">
-                                <ul class="fr-tags-group">
-                                    <li><p class="fr-tag fr-tag--blue-france">Cartoquete</p></li>
-                                    <li><p class="fr-tag fr-tag--yellow-tournesol">Favoris</p></li>
-                                </ul>
-                            </div>
+                        </div>
+                        <div class="fr-card__start">
+                            <ul class="fr-tags-group">
+                                <li><p class="fr-tag fr-tag--blue-france">Cartoquete</p></li>
+                                <li><p class="fr-tag fr-tag--yellow-tournesol">Favoris</p></li>
+                            </ul>
                         </div>
                     </div>
                     ${thumbnailUrl && !metadata.error ? `

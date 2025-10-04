@@ -233,18 +233,18 @@ class WorkedMapsManager {
                     <div class="fr-card__body">
                         <div class="fr-card__content">
                             <h3 class="fr-card__title">
-                                <a href="${gallicaUrl}" target="_blank" rel="noopener">${title}</a>
+                                <a href="${georefUrl}" target="_blank" rel="noopener">${title}</a>
                             </h3>
                             ${description ? `<p class="fr-card__desc">${description}</p>` : ''}
                             ${linksHTML}
-                            <div class="fr-card__start">
-                                <ul class="fr-tags-group">
-                                    <li><p class="fr-tag ${statusColor}">${statusLabel}</p></li>
-                                    <li><p class="fr-tag fr-tag--blue-france">Galligeo</p></li>
-                                </ul>
-                                ${firstWorked ? `<p class="fr-card__detail fr-icon-calendar-line">Première fois: ${firstWorked}</p>` : ''}
-                                ${lastUpdated ? `<p class="fr-card__detail fr-icon-refresh-line">Dernière modification: ${lastUpdated}</p>` : ''}
-                            </div>
+                            ${firstWorked ? `<p class="fr-card__detail fr-icon-calendar-line">Créée le ${firstWorked}</p>` : ''}
+                            ${lastUpdated ? `<p class="fr-card__detail fr-icon-refresh-line">Modifiée le ${lastUpdated}</p>` : ''}
+                        </div>
+                        <div class="fr-card__start">
+                            <ul class="fr-tags-group">
+                                <li><p class="fr-tag ${statusColor}">${statusLabel}</p></li>
+                                <li><p class="fr-tag fr-tag--blue-france">Galligeo</p></li>
+                            </ul>
                         </div>
                     </div>
                     ${thumbnailUrl && !metadata.error ? `

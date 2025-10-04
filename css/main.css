@@ -50,91 +50,8 @@ nav.fr-nav .fr-grid-row {
 }
 
 /* =====================================================
-   STYLES POUR LES CARTES (GALERIE ET MODALE)
+   STYLES POUR LES IMAGES DE CARTES (NON-DSFR)
    ===================================================== */
-
-/* Cartes compactes - style unifié */
-.fr-card {
-    margin-bottom: 1rem;
-}
-
-.fr-card__body {
-    padding: 1rem !important;
-}
-
-.fr-card__content {
-    padding: 0 !important;
-}
-
-.fr-card__title {
-    font-size: 1rem !important;
-    line-height: 1.3 !important;
-    margin-bottom: 0.5rem !important;
-}
-
-.fr-card__title a:hover,
-.fr-card__title .fr-card__link:hover {
-    text-decoration: underline;
-}
-
-.fr-card__desc {
-    font-size: 0.85rem !important;
-    line-height: 1.3 !important;
-    margin-bottom: 0.75rem !important;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    hyphens: auto;
-    /* Hauteur max pour ~2 lignes */
-    max-height: 2.6rem;
-    overflow: hidden;
-    width: 100%;
-    max-width: 100%;
-}
-
-.fr-card__detail {
-    font-size: 0.75rem !important;
-    margin-bottom: 0.25rem !important;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.fr-card__desc {
-    font-size: 0.85rem !important;
-    line-height: 1.3 !important;
-    margin-bottom: 0.75rem !important;
-}
-
-.fr-card__detail {
-    font-size: 0.75rem !important;
-    margin-bottom: 0.25rem !important;
-}
-
-.fr-card__start {
-    margin-bottom: 0.75rem !important;
-}
-
-.fr-btns-group {
-    gap: 0.5rem !important;
-    flex-wrap: wrap !important;
-}
-
-.fr-btn--sm {
-    padding: 0.25rem 0.75rem !important;
-    font-size: 0.75rem !important;
-}
-
-/* Tags plus compacts */
-.fr-tag {
-    padding: 0.25rem 0.5rem !important;
-    font-size: 0.7rem !important;
-    line-height: 1.2 !important;
-}
-
-.fr-tags-group {
-    gap: 0.25rem !important;
-    margin-bottom: 0.5rem !important;
-}
 
 /* Images de cartes */
 .card-image {
@@ -143,27 +60,6 @@ nav.fr-nav .fr-grid-row {
     display: block;
     object-fit: cover;
 }
-
-/* Bouton de dépôt dans les cartes */
-.fr-card .fr-btn--deposit {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin: 0;
-    width: auto;
-    max-width: 100%;
-    overflow: hidden;
-}
-
-.fr-card .fr-btn--deposit .fr-icon-upload-line {
-    flex-shrink: 0;
-}
-
-.fr-card__desc:last-child {
-    margin-bottom: 0;
-}
-
-
 
 /* Footer garde sa position normale */
 .footer {
