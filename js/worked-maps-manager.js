@@ -184,79 +184,80 @@ class WorkedMapsManager {
             description = date;
         }
 
+        // Construire les liens selon le statut
+        let linksHTML = '';
+        
+        // Lien vers Gallica (toujours présent)
+        linksHTML += `<p class="fr-card__desc">
+            <a href="${gallicaUrl}" target="_blank" rel="noopener">Voir la notice Gallica</a>
+        </p>`;
+
+        // Liens spécifiques selon le statut
+        if (status === 'en-cours') {
+            linksHTML += `<p class="fr-card__desc">
+                <a href="${georefUrl}" target="_blank" rel="noopener">Continuer le géoréférencement</a>
+            </p>`;
+        } else if (status === 'georeferenced') {
+            linksHTML += `<p class="fr-card__desc">
+                <a href="${georefUrl}" target="_blank" rel="noopener">Voir le géoréférencement</a>
+            </p>`;
+            // Ajouter un bouton pour proposer le dépôt sur Nakala
+            linksHTML += `<p class="fr-card__desc">
+                <button class="fr-btn fr-btn--sm fr-btn--secondary fr-btn--deposit" 
+                        onclick="window.workedMapsManager.openDepositModalForMap('${arkId}')"
+                        title="Déposer cette carte géoréférencée sur Nakala">
+                    <span class="fr-icon-upload-line" aria-hidden="true"></span>
+                    Déposer sur Nakala
+                </button>
+            </p>`;
+        } else if (status === 'deposee') {
+            linksHTML += `<p class="fr-card__desc">
+                <a href="${georefUrl}" target="_blank" rel="noopener">Voir le géoréférencement</a>
+            </p>`;
+            
+            // Ajouter le lien Nakala si disponible
+            if (workedMap.doi) {
+                linksHTML += `<p class="fr-card__desc">
+                    <a href="https://doi.org/${workedMap.doi}" target="_blank" rel="noopener">Voir sur Nakala</a>
+                </p>`;
+            }
+        }
+
         // Informations de traçabilité
         const firstWorked = workedMap.firstWorked ? new Date(workedMap.firstWorked).toLocaleDateString('fr-FR') : '';
         const lastUpdated = workedMap.lastUpdated ? new Date(workedMap.lastUpdated).toLocaleDateString('fr-FR') : '';
 
-        // Construire les boutons selon le statut
-        let buttonsHTML = '<div class="fr-btns-group fr-btns-group--sm fr-mt-2w">';
-        
-        if (status === 'en-cours') {
-            buttonsHTML += `
-                <a href="${georefUrl}" target="_blank" rel="noopener" class="fr-btn fr-btn--sm fr-btn--tertiary">
-                    Continuer
-                </a>`;
-        } else if (status === 'georeferenced') {
-            buttonsHTML += `
-                <a href="${georefUrl}" target="_blank" rel="noopener" class="fr-btn fr-btn--sm fr-btn--tertiary">
-                    Voir géoréf.
-                </a>
-                <button class="fr-btn fr-btn--sm fr-btn--secondary" 
-                        onclick="window.workedMapsManager.openDepositModalForMap('${arkId}')"
-                        title="Déposer sur Nakala">
-                    <span class="fr-icon-upload-line" aria-hidden="true"></span>
-                    Déposer
-                </button>`;
-        } else if (status === 'deposee') {
-            buttonsHTML += `
-                <a href="${georefUrl}" target="_blank" rel="noopener" class="fr-btn fr-btn--sm fr-btn--tertiary">
-                    Voir géoréf.
-                </a>`;
-            
-            if (workedMap.doi) {
-                buttonsHTML += `
-                <a href="https://doi.org/${workedMap.doi}" target="_blank" rel="noopener" class="fr-btn fr-btn--sm fr-btn--secondary">
-                    Nakala
-                </a>`;
-            }
-        }
-        
-        buttonsHTML += `
-            <a href="${gallicaUrl}" target="_blank" rel="noopener" class="fr-btn fr-btn--sm fr-btn--secondary">
-                Gallica
-            </a>
-        </div>`;
-
         return `
-            <div class="fr-col-md-6 fr-col-lg-4 fr-col">
+            <div class="fr-col-md-6 fr-col">
                 <div class="fr-card">
+                    <div class="fr-card__body">
+                        <div class="fr-card__content">
+                            <h4 class="fr-card__title">
+                                <a href="${gallicaUrl}" target="_blank" rel="noopener">${title}</a>
+                            </h4>
+                            ${description ? `<p class="fr-card__desc">${description}</p>` : ''}
+                            ${linksHTML}
+                            <div class="fr-card__start">
+                                <ul class="fr-tags-group">
+                                    <li><p class="fr-tag ${statusColor}">${statusLabel}</p></li>
+                                    <li><p class="fr-tag fr-tag--blue-france">Galligeo</p></li>
+                                </ul>
+                                <p class="fr-card__detail fr-icon-map-pin-2-fill">Carte travaillée</p>
+                                ${firstWorked ? `<p class="fr-card__detail fr-icon-calendar-line">Première fois: ${firstWorked}</p>` : ''}
+                                ${lastUpdated ? `<p class="fr-card__detail fr-icon-refresh-line">Dernière modification: ${lastUpdated}</p>` : ''}
+                            </div>
+                        </div>
+                    </div>
                     ${thumbnailUrl && !metadata.error ? `
                     <div class="fr-card__header">
                         <div class="fr-card__img">
-                            <img class="fr-responsive-img card-image" 
+                            <img class="fr-responsive-img" 
                                  src="${thumbnailUrl}" 
                                  alt="${title}"
                                  onerror="this.parentElement.style.display='none';" />
                         </div>
                     </div>
                     ` : ''}
-                    <div class="fr-card__body">
-                        <div class="fr-card__content">
-                            <h3 class="fr-card__title">
-                                <a href="${gallicaUrl}" target="_blank" rel="noopener">${title}</a>
-                            </h3>
-                            ${description ? `<p class="fr-card__desc">${description}</p>` : ''}
-                            <div class="fr-card__start">
-                                <ul class="fr-tags-group">
-                                    <li><p class="fr-tag ${statusColor}">${statusLabel}</p></li>
-                                    <li><p class="fr-tag fr-tag--blue-france">Galligeo</p></li>
-                                </ul>
-                                ${firstWorked ? `<p class="fr-card__detail fr-icon-calendar-line">Début: ${firstWorked}</p>` : ''}
-                                ${lastUpdated && lastUpdated !== firstWorked ? `<p class="fr-card__detail fr-icon-refresh-line">Modif: ${lastUpdated}</p>` : ''}
-                            </div>
-                            ${buttonsHTML}
-                        </div>
-                    </div>
                 </div>
             </div>
         `;
