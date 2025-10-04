@@ -1,7 +1,12 @@
 /**
  * Styles spécifiques à la galerie des cartes géoréférencées
  * Gestion de la sélection multiple et des interactions
+ * 
+ * ⚠️ NE PAS surcharger les styles DSFR des cards
+ * Les cards utilisent uniquement les classes DSFR officielles
  */
+
+/* ===== STYLES DE SÉLECTION UNIQUEMENT ===== */
 
 /* Styles pour les cartes sélectionnables */
 .selectable-card {
@@ -18,61 +23,6 @@
 .selectable-card.selected {
     box-shadow: 0 0 0 2px var(--blue-france-main-525);
     background-color: var(--blue-france-975-75);
-}
-
-/* Cartes compactes */
-.fr-card {
-    margin-bottom: 1rem;
-}
-
-.fr-card__body {
-    padding: 1rem !important;
-}
-
-.fr-card__content {
-    padding: 0 !important;
-}
-
-.fr-card__title {
-    font-size: 1rem !important;
-    line-height: 1.3 !important;
-    margin-bottom: 0.5rem !important;
-}
-
-.fr-card__desc {
-    font-size: 0.85rem !important;
-    line-height: 1.3 !important;
-    margin-bottom: 0.75rem !important;
-}
-
-.fr-card__detail {
-    font-size: 0.75rem !important;
-    margin-bottom: 0.25rem !important;
-}
-
-.fr-card__start {
-    margin-bottom: 0.75rem !important;
-}
-
-.fr-btns-group {
-    gap: 0.5rem !important;
-}
-
-.fr-btn--sm {
-    padding: 0.25rem 0.75rem !important;
-    font-size: 0.75rem !important;
-}
-
-/* Tags plus compacts */
-.fr-tag {
-    padding: 0.25rem 0.5rem !important;
-    font-size: 0.7rem !important;
-    line-height: 1.2 !important;
-}
-
-.fr-tags-group {
-    gap: 0.25rem !important;
-    margin-bottom: 0.5rem !important;
 }
 
 /* Statistiques plus compactes */
@@ -208,25 +158,17 @@
     }
 }
 
+/* ===== STYLES POUR LES IMAGES (NON-DSFR) ===== */
+
 /* Amélioration des images de cartes */
 .card-image {
     transition: transform 0.3s ease;
     object-fit: cover;
     width: 100%;
-    height: 200px;
 }
 
 .selectable-card:hover .card-image {
     transform: scale(1.05);
-}
-
-.fr-card__header {
-    margin-bottom: 0 !important;
-}
-
-.fr-card__img {
-    border-radius: 4px 4px 0 0;
-    overflow: hidden;
 }
 
 /* Styles responsifs pour la galerie */
@@ -335,10 +277,6 @@
 
 /* Optimisations pour les petits écrans */
 @media (max-width: 576px) {
-    .fr-card {
-        margin-bottom: 1rem;
-    }
-    
     .fr-table {
         font-size: 0.875rem;
     }
@@ -346,11 +284,6 @@
     .fr-table td,
     .fr-table th {
         padding: 0.5rem 0.25rem;
-    }
-    
-    .fr-btns-group--sm .fr-btn {
-        font-size: 0.75rem;
-        padding: 0.25rem 0.5rem;
     }
 }
 
@@ -514,15 +447,6 @@ body {
         padding-right: 0.5rem !important;
     }
     
-    /* Cartes plus compactes sur mobile */
-    .fr-card__body {
-        padding: 0.75rem !important;
-    }
-    
-    .fr-card__title {
-        font-size: 0.9rem !important;
-    }
-    
     .card-image {
         height: 140px;
     }
@@ -551,44 +475,11 @@ body {
 }
 
 /* Prévention des débordements pour tous les éléments */
-.fr-card,
 .fr-table,
 .selection-toolbar,
 .statistics-card {
     max-width: 100%;
     overflow: hidden;
-}
-
-/* Barre d'outils de sélection */
-.selection-toolbar {
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    background: white;
-    border-bottom: 1px solid var(--border-default-grey);
-    padding: 1rem 0;
-    margin-bottom: 1rem;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.selection-toolbar.hidden {
-    display: none;
-}
-
-.selection-toolbar .selection-info {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-bottom: 0;
-}
-
-.selection-counter {
-    background-color: var(--blue-france-main-525);
-    color: white;
-    padding: 0.25rem 0.75rem;
-    border-radius: 1rem;
-    font-size: 0.875rem;
-    font-weight: 600;
 }
 
 /* Tables responsives */
@@ -601,16 +492,4 @@ body {
 .fr-table th {
     word-wrap: break-word;
     overflow-wrap: break-word;
-}
-
-/* Cartes qui s'adaptent */
-.fr-card {
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-}
-
-.fr-card__title {
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    hyphens: auto;
 }

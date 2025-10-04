@@ -228,13 +228,13 @@ class WorkedMapsManager {
         const lastUpdated = workedMap.lastUpdated ? new Date(workedMap.lastUpdated).toLocaleDateString('fr-FR') : '';
 
         return `
-            <div class="fr-col-md-6 fr-col">
-                <div class="fr-card">
+            <div class="fr-col-12 fr-col-md-6 fr-col-lg-4">
+                <div class="fr-card fr-enlarge-link">
                     <div class="fr-card__body">
                         <div class="fr-card__content">
-                            <h4 class="fr-card__title">
+                            <h3 class="fr-card__title">
                                 <a href="${gallicaUrl}" target="_blank" rel="noopener">${title}</a>
-                            </h4>
+                            </h3>
                             ${description ? `<p class="fr-card__desc">${description}</p>` : ''}
                             ${linksHTML}
                             <div class="fr-card__start">
@@ -242,7 +242,6 @@ class WorkedMapsManager {
                                     <li><p class="fr-tag ${statusColor}">${statusLabel}</p></li>
                                     <li><p class="fr-tag fr-tag--blue-france">Galligeo</p></li>
                                 </ul>
-                                <p class="fr-card__detail fr-icon-map-pin-2-fill">Carte travaillée</p>
                                 ${firstWorked ? `<p class="fr-card__detail fr-icon-calendar-line">Première fois: ${firstWorked}</p>` : ''}
                                 ${lastUpdated ? `<p class="fr-card__detail fr-icon-refresh-line">Dernière modification: ${lastUpdated}</p>` : ''}
                             </div>

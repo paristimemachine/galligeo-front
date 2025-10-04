@@ -201,13 +201,13 @@ class CartoqueteManager {
         }
 
         return `
-            <div class="fr-col-md-6 fr-col">
-                <div class="fr-card">
+            <div class="fr-col-12 fr-col-md-6 fr-col-lg-4">
+                <div class="fr-card fr-enlarge-link">
                     <div class="fr-card__body">
                         <div class="fr-card__content">
-                            <h4 class="fr-card__title">
+                            <h3 class="fr-card__title">
                                 <a href="${gallicaUrl}" target="_blank" rel="noopener">${title}</a>
-                            </h4>
+                            </h3>
                             ${description ? `<p class="fr-card__desc">${description}</p>` : ''}
                             <p class="fr-card__desc">
                                 <a href="${gallicaUrl}" target="_blank" rel="noopener">Voir la notice Gallica</a>
@@ -220,7 +220,6 @@ class CartoqueteManager {
                                     <li><p class="fr-tag fr-tag--blue-france">Cartoquete</p></li>
                                     <li><p class="fr-tag fr-tag--yellow-tournesol">Favoris</p></li>
                                 </ul>
-                                <p class="fr-card__detail fr-icon-star-fill">Favori Cartoquete</p>
                             </div>
                         </div>
                     </div>
