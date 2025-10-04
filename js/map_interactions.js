@@ -382,6 +382,111 @@ function add_wms_layers(map) {
     return drawnItems;
 }
 
+// Contrôle de transparence pour la carte géoréférencée (carte droite)
+L.Control.OpacityControl = L.Control.extend({
+    options: {
+        position: 'topright'
+    },
+
+    onAdd: function(map) {
+        this._map = map;
+        
+        var container = L.DomUtil.create('div', 'leaflet-control-opacity leaflet-bar leaflet-control');
+        container.style.backgroundColor = 'white';
+        container.style.padding = '10px';
+        container.style.minWidth = '200px';
+        
+        var title = L.DomUtil.create('div', 'opacity-control-title', container);
+        title.innerHTML = '<strong>Transparence de la carte</strong>';
+        title.style.marginBottom = '8px';
+        title.style.fontSize = '12px';
+        
+        var sliderContainer = L.DomUtil.create('div', 'opacity-slider-container', container);
+        sliderContainer.style.display = 'flex';
+        sliderContainer.style.alignItems = 'center';
+        sliderContainer.style.gap = '10px';
+        
+        var slider = L.DomUtil.create('input', 'opacity-slider', sliderContainer);
+        slider.type = 'range';
+        slider.min = '0';
+        slider.max = '100';
+        slider.value = '100';
+        slider.style.flex = '1';
+        slider.style.cursor = 'pointer';
+        
+        var valueDisplay = L.DomUtil.create('span', 'opacity-value', sliderContainer);
+        valueDisplay.innerHTML = '100%';
+        valueDisplay.style.minWidth = '40px';
+        valueDisplay.style.fontSize = '12px';
+        valueDisplay.style.textAlign = 'right';
+        
+        this._slider = slider;
+        this._valueDisplay = valueDisplay;
+        
+        // Événement pour changer l'opacité
+        L.DomEvent.on(slider, 'input', this._onSliderChange, this);
+        
+        // Empêcher la propagation des événements
+        L.DomEvent.disableClickPropagation(container);
+        L.DomEvent.disableScrollPropagation(container);
+        
+        // Masquer le contrôle par défaut (sera affiché quand un layer géoréférencé est ajouté)
+        container.style.display = 'none';
+        this._container = container;
+        
+        return container;
+    },
+
+    _onSliderChange: function(e) {
+        var opacity = e.target.value / 100;
+        this._valueDisplay.innerHTML = e.target.value + '%';
+        
+        // Changer l'opacité du layer géoréférencé actuel
+        if (window.currentGeoreferencedLayer) {
+            window.currentGeoreferencedLayer.setOpacity(opacity);
+        }
+    },
+    
+    show: function() {
+        if (this._container) {
+            this._container.style.display = 'block';
+        }
+    },
+    
+    hide: function() {
+        if (this._container) {
+            this._container.style.display = 'none';
+        }
+    },
+    
+    reset: function() {
+        if (this._slider) {
+            this._slider.value = 100;
+            this._valueDisplay.innerHTML = '100%';
+        }
+    },
+
+    onRemove: function() {
+        if (this._slider) {
+            L.DomEvent.off(this._slider, 'input', this._onSliderChange, this);
+        }
+    }
+});
+
+// Factory function
+L.control.opacityControl = function(options) {
+    return new L.Control.OpacityControl(options);
+};
+
+// Ajouter le contrôle d'opacité à la carte droite
+var opacityControl = L.control.opacityControl({
+    position: 'topright'
+});
+right_map.addControl(opacityControl);
+
+// Exposer le contrôle globalement
+window.opacityControl = opacityControl;
+
 // Contrôle de métadonnées pour la carte gauche
 L.Control.MetadataInfo = L.Control.extend({
     options: {

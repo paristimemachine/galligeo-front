@@ -61,3 +61,6 @@ window.isDragging = false;
 
 // Variable globale pour stocker les métadonnées
 window.metadataDict = {};
+
+// Variable globale pour stocker le layer géoréférencé actuel
+window.currentGeoreferencedLayer = null;

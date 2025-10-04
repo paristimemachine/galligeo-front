@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test - Refresh Géoréférencement et Contrôle d'Opacité</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .test-section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            color: #2196f3;
+            border-bottom: 3px solid #2196f3;
+            padding-bottom: 10px;
+        }
+        
+        h2 {
+            color: #333;
+            margin-top: 0;
+        }
+        
+        .test-item {
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 4px solid #ddd;
+            background: #f9f9f9;
+        }
+        
+        .test-item.success {
+            border-left-color: #4caf50;
+            background: #e8f5e9;
+        }
+        
+        .test-item.warning {
+            border-left-color: #ff9800;
+            background: #fff3e0;
+        }
+        
+        .test-item.error {
+            border-left-color: #f44336;
+            background: #ffebee;
+        }
+        
+        .code {
+            background: #263238;
+            color: #aed581;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+        
+        button {
+            background: #2196f3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+        }
+        
+        button:hover {
+            background: #1976d2;
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+        
+        .status.ok {
+            background: #4caf50;
+            color: white;
+        }
+        
+        .status.ko {
+            background: #f44336;
+            color: white;
+        }
+        
+        .status.pending {
+            background: #ff9800;
+            color: white;
+        }
+        
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .feature-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .feature-list li:before {
+            content: "✓ ";
+            color: #4caf50;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Tests - Refresh Géoréférencement et Contrôle d'Opacité</h1>
+    
+    <div class="test-section">
+        <h2>📋 Checklist des fonctionnalités</h2>
+        <ul class="feature-list">
+            <li>Variable globale <code>window.currentGeoreferencedLayer</code> créée</li>
+            <li>Suppression automatique de l'ancien layer avant d'ajouter le nouveau</li>
+            <li>Timestamp ajouté aux URLs des tuiles pour éviter le cache</li>
+            <li>Contrôle d'opacité créé et ajouté à la carte droite</li>
+            <li>Contrôle d'opacité affiché/masqué selon la présence d'un layer</li>
+            <li>Contrôle d'opacité réinitialisé à 100% lors d'un nouveau géoréférencement</li>
+            <li>Styles CSS ajoutés pour un design moderne</li>
+        </ul>
+    </div>
+    
+    <div class="test-section">
+        <h2>🔍 Test 1 : Vérification de la variable globale</h2>
+        <div id="test1" class="test-item">
+            <p><strong>Test :</strong> Vérifier que <code>window.currentGeoreferencedLayer</code> existe</p>
+            <button onclick="runTest1()">Exécuter le test</button>
+            <span id="test1-status"></span>
+        </div>
+        <div id="test1-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>🔍 Test 2 : Vérification du contrôle d'opacité</h2>
+        <div id="test2" class="test-item">
+            <p><strong>Test :</strong> Vérifier que <code>window.opacityControl</code> existe</p>
+            <button onclick="runTest2()">Exécuter le test</button>
+            <span id="test2-status"></span>
+        </div>
+        <div id="test2-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>🔍 Test 3 : Vérification des méthodes du contrôle</h2>
+        <div id="test3" class="test-item">
+            <p><strong>Test :</strong> Vérifier que le contrôle a les méthodes <code>show()</code>, <code>hide()</code>, et <code>reset()</code></p>
+            <button onclick="runTest3()">Exécuter le test</button>
+            <span id="test3-status"></span>
+        </div>
+        <div id="test3-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>📝 Instructions de test manuel</h2>
+        <div class="test-item">
+            <h3>Test du refresh du géoréférencement</h3>
+            <ol>
+                <li>Charger une carte Gallica dans l'interface</li>
+                <li>Placer au moins 3 points de contrôle</li>
+                <li>Cliquer sur "Géoréférencer"</li>
+                <li>Attendre que la carte géoréférencée apparaisse sur la carte droite</li>
+                <li><strong>Modifier les points de contrôle</strong> (déplacer ou supprimer/ajouter)</li>
+                <li>Cliquer à nouveau sur "Géoréférencer"</li>
+                <li><strong>✓ Vérifier que la nouvelle carte remplace l'ancienne sans doublon</strong></li>
+            </ol>
+        </div>
+        
+        <div class="test-item">
+            <h3>Test du contrôle d'opacité</h3>
+            <ol>
+                <li>Après un géoréférencement réussi</li>
+                <li><strong>✓ Vérifier qu'un contrôle "Transparence de la carte" apparaît en haut à droite</strong></li>
+                <li>Déplacer le slider de transparence</li>
+                <li><strong>✓ Vérifier que la transparence de la carte géoréférencée change en temps réel</strong></li>
+                <li>Mettre le slider à 0% (carte invisible)</li>
+                <li>Mettre le slider à 100% (carte opaque)</li>
+                <li>Refaire un géoréférencement</li>
+                <li><strong>✓ Vérifier que le slider revient à 100%</strong></li>
+            </ol>
+        </div>
+        
+        <div class="test-item">
+            <h3>Test de la gestion mémoire</h3>
+            <ol>
+                <li>Ouvrir la console développeur (F12)</li>
+                <li>Faire plusieurs géoréférencements successifs</li>
+                <li><strong>✓ Vérifier dans les logs qu'il y a des messages "🔄 Suppression de l'ancien layer"</strong></li>
+                <li><strong>✓ Vérifier qu'aucune erreur n'apparaît</strong></li>
+            </ol>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>🐛 Problèmes potentiels à surveiller</h2>
+        <div class="test-item warning">
+            <h3>⚠️ Cache du navigateur</h3>
+            <p>Si les tuiles ne se rafraîchissent pas, vérifier que le timestamp est bien ajouté aux URLs.</p>
+            <div class="code">
+                // Dans la console, vérifier l'URL des tuiles :
+                URL devrait contenir : ?t=1234567890
+            </div>
+        </div>
+        
+        <div class="test-item warning">
+            <h3>⚠️ Layers multiples</h3>
+            <p>Si plusieurs couches s'empilent, vérifier que <code>window.currentGeoreferencedLayer</code> est bien mis à jour.</p>
+        </div>
+        
+        <div class="test-item warning">
+            <h3>⚠️ Contrôle d'opacité non visible</h3>
+            <p>Vérifier que le fichier CSS <code>map.css</code> est bien chargé.</p>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>✅ Critères de réussite</h2>
+        <div class="test-item success">
+            <ul>
+                <li><strong>Refresh fonctionnel</strong> : Un nouveau géoréférencement remplace l'ancien sans doublon</li>
+                <li><strong>Cache invalidé</strong> : Les nouvelles tuiles sont bien chargées (pas de cache)</li>
+                <li><strong>Contrôle visible</strong> : Le contrôle d'opacité apparaît après le géoréférencement</li>
+                <li><strong>Opacité réactive</strong> : Le slider modifie la transparence en temps réel</li>
+                <li><strong>Reset fonctionnel</strong> : Le slider revient à 100% lors d'un nouveau géoréférencement</li>
+                <li><strong>Pas d'erreur console</strong> : Aucune erreur JavaScript</li>
+                <li><strong>Performance</strong> : Pas de ralentissement notable</li>
+            </ul>
+        </div>
+    </div>
+    
+    <script>
+        function runTest1() {
+            const statusEl = document.getElementById('test1-status');
+            const resultEl = document.getElementById('test1-result');
+            
+            if (typeof window.currentGeoreferencedLayer !== 'undefined') {
+                statusEl.className = 'status ok';
+                statusEl.textContent = 'OK';
+                resultEl.innerHTML = '<div class="test-item success"><strong>✓ SUCCÈS</strong><br>La variable <code>window.currentGeoreferencedLayer</code> existe.<div class="code">Type: ' + typeof window.currentGeoreferencedLayer + '<br>Valeur: ' + window.currentGeoreferencedLayer + '</div></div>';
+            } else {
+                statusEl.className = 'status ko';
+                statusEl.textContent = 'KO';
+                resultEl.innerHTML = '<div class="test-item error"><strong>✗ ÉCHEC</strong><br>La variable <code>window.currentGeoreferencedLayer</code> n\'existe pas.<br><em>Vérifier que init.js est chargé.</em></div>';
+            }
+        }
+        
+        function runTest2() {
+            const statusEl = document.getElementById('test2-status');
+            const resultEl = document.getElementById('test2-result');
+            
+            if (typeof window.opacityControl !== 'undefined') {
+                statusEl.className = 'status ok';
+                statusEl.textContent = 'OK';
+                resultEl.innerHTML = '<div class="test-item success"><strong>✓ SUCCÈS</strong><br>La variable <code>window.opacityControl</code> existe.<div class="code">Type: ' + typeof window.opacityControl + '</div></div>';
+            } else {
+                statusEl.className = 'status ko';
+                statusEl.textContent = 'KO';
+                resultEl.innerHTML = '<div class="test-item error"><strong>✗ ÉCHEC</strong><br>La variable <code>window.opacityControl</code> n\'existe pas.<br><em>Vérifier que map_interactions.js est chargé et que les cartes sont initialisées.</em></div>';
+            }
+        }
+        
+        function runTest3() {
+            const statusEl = document.getElementById('test3-status');
+            const resultEl = document.getElementById('test3-result');
+            
+            if (typeof window.opacityControl === 'undefined') {
+                statusEl.className = 'status ko';
+                statusEl.textContent = 'KO';
+                resultEl.innerHTML = '<div class="test-item error"><strong>✗ ÉCHEC</strong><br>Le contrôle n\'existe pas. Exécuter d\'abord le Test 2.</div>';
+                return;
+            }
+            
+            const hasShow = typeof window.opacityControl.show === 'function';
+            const hasHide = typeof window.opacityControl.hide === 'function';
+            const hasReset = typeof window.opacityControl.reset === 'function';
+            
+            if (hasShow && hasHide && hasReset) {
+                statusEl.className = 'status ok';
+                statusEl.textContent = 'OK';
+                resultEl.innerHTML = '<div class="test-item success"><strong>✓ SUCCÈS</strong><br>Toutes les méthodes existent.<ul><li>show(): ' + hasShow + '</li><li>hide(): ' + hasHide + '</li><li>reset(): ' + hasReset + '</li></ul></div>';
+            } else {
+                statusEl.className = 'status ko';
+                statusEl.textContent = 'KO';
+                resultEl.innerHTML = '<div class="test-item error"><strong>✗ ÉCHEC</strong><br>Certaines méthodes sont manquantes.<ul><li>show(): ' + hasShow + '</li><li>hide(): ' + hasHide + '</li><li>reset(): ' + hasReset + '</li></ul></div>';
+            }
+        }
+        
+        // Auto-exécution des tests au chargement
+        window.addEventListener('load', function() {
+            console.log('🧪 Page de test chargée');
+            console.log('📋 Pour tester, visitez l\'application principale et revenez sur cette page');
+        });
+    </script>
+</body>
+</html>

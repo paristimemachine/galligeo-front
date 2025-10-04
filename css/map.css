@@ -91,6 +91,76 @@
     background: #f0f0f0;
 }
 
+/* Styles pour le contrôle d'opacité */
+.leaflet-control-opacity {
+    border-radius: 4px;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.4);
+}
+
+.leaflet-control-opacity .opacity-control-title {
+    margin-bottom: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+}
+
+.leaflet-control-opacity .opacity-slider-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.leaflet-control-opacity .opacity-slider {
+    flex: 1;
+    height: 4px;
+    border-radius: 2px;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    background: linear-gradient(to right, #e0e0e0 0%, #2196f3 100%);
+}
+
+.leaflet-control-opacity .opacity-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #2196f3;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.leaflet-control-opacity .opacity-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.leaflet-control-opacity .opacity-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #2196f3;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.leaflet-control-opacity .opacity-slider::-moz-range-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.leaflet-control-opacity .opacity-value {
+    min-width: 40px;
+    font-size: 12px;
+    text-align: right;
+    color: #666;
+    font-weight: 500;
+}
+
 /* Styles des cartes */
 #map-left {
     display: flex;

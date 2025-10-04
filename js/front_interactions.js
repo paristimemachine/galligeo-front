@@ -303,6 +303,18 @@ async function georef_api_post(url = urlToAPI, data = {}) {
       });
     }
 
+    // Supprimer l'ancien layer géoréférencé s'il existe
+    if (window.currentGeoreferencedLayer) {
+      console.log("🔄 Suppression de l'ancien layer géoréférencé pour rafraîchir la vue");
+      right_map.removeLayer(window.currentGeoreferencedLayer);
+      window.currentGeoreferencedLayer = null;
+      
+      // Réinitialiser le contrôle d'opacité
+      if (window.opacityControl) {
+        window.opacityControl.reset();
+      }
+    }
+
     // let galligeoLayer = L.tileLayer(URL_TILE_SERVER + 'tiles/12148/' + input_ark + '/{z}/{x}/{y}.png', {
     //   // minNativeZoom: json.minzoom,
     //   // maxNativeZoom: json.maxzoom,
@@ -319,7 +331,9 @@ async function georef_api_post(url = urlToAPI, data = {}) {
 
     // https://a.tile.ptm.huma-num.fr/tiles/ark/12148/btv1b530293076/17/66031/47651.png
 
-    let galligeoLayer = L.tileLayer(URL_TILE_SERVER_SUB + '12148/' + input_ark + '/{z}/{x}/{y}.png', {
+    // Créer le nouveau layer avec un timestamp pour forcer le refresh du cache
+    const timestamp = new Date().getTime();
+    let galligeoLayer = L.tileLayer(URL_TILE_SERVER_SUB + '12148/' + input_ark + '/{z}/{x}/{y}.png?t=' + timestamp, {
       // minNativeZoom: parseInt(json.minzoom),
       // maxNativeZoom: parseInt(json.maxzoom),
       minZoom: 10,
@@ -329,6 +343,15 @@ async function georef_api_post(url = urlToAPI, data = {}) {
     }).addTo(right_map);
 
     galligeoLayer.bringToFront();
+    
+    // Stocker la référence du layer pour pouvoir le supprimer plus tard
+    window.currentGeoreferencedLayer = galligeoLayer;
+    
+    // Afficher le contrôle d'opacité
+    if (window.opacityControl) {
+      console.log("🎨 Affichage du contrôle de transparence");
+      window.opacityControl.show();
+    }
 
     document.getElementById('btn_deposit').disabled = false;
 
