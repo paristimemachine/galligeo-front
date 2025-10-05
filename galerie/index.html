@@ -45,6 +45,97 @@
             background: white;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
+
+        /* Styles pour le bouton utilisateur dans le header */
+        .user-menu-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            position: relative;
+            z-index: 10001 !important;
+        }
+
+        .user-menu-toggle:hover {
+            background-color: rgba(0, 172, 140, 0.1) !important;
+        }
+
+        .user-menu-toggle[data-fr-opened="true"] {
+            background-color: #f5f5fe !important;
+        }
+
+        /* Menu déroulant utilisateur */
+        .user-dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            min-width: 280px;
+            padding: 16px;
+            z-index: 99999 !important;
+            margin-top: 8px;
+            display: none;
+        }
+
+        .user-info {
+            margin-bottom: 12px;
+        }
+
+        .user-info p {
+            margin: 4px 0;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .user-info strong {
+            color: #000091;
+        }
+
+        .user-dropdown-menu hr {
+            border: none;
+            border-top: 1px solid #eee;
+            margin: 12px 0;
+        }
+
+        .user-menu-actions {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .user-menu-actions li {
+            margin: 8px 0;
+        }
+
+        .user-menu-actions .fr-btn {
+            width: 100%;
+            text-align: left;
+            justify-content: flex-start;
+            background-color: transparent;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+
+        .user-menu-actions .fr-btn:hover {
+            background-color: #f5f5fe;
+            color: #000091;
+        }
+
+        @media (max-width: 768px) {
+            .user-dropdown-menu {
+                right: -16px;
+                min-width: 250px;
+            }
+        }
+
+        /* Forcer le menu utilisateur au premier plan */
+        .fr-header__tools-links .user-dropdown-menu {
+            z-index: 99999 !important;
+            position: fixed !important;
+        }
         
         /* Barre de sélection sticky sous le header */
         .selection-toolbar {
@@ -554,7 +645,13 @@
                                 <span class="fr-icon-close-line fr-mr-1w" aria-hidden="true"></span>
                                 Tout désélectionner
                             </button>
-                            <button type="button" class="atlas-button" id="atlas-button" onclick="createAtlas()" disabled>
+                            <button type="button" 
+                                    class="atlas-button" 
+                                    id="atlas-button" 
+                                    data-fr-opened="false"
+                                    aria-controls="fr-modal-create-atlas"
+                                    onclick="createAtlas()" 
+                                    disabled>
                                 <span class="fr-icon-map-2-line fr-mr-1w" aria-hidden="true"></span>
                                 Créer un atlas
                             </button>
@@ -708,6 +805,277 @@
     </footer>
     <!--  -->
     <!-- END FOOTER -->
+    <!--  -->
+
+    <!--  -->
+    <!-- Modal Settings DSFR (partagée avec l'application principale) -->
+    <dialog class="fr-modal" id="fr-modal-settings" aria-labelledby="fr-modal-settings-title">
+        <div class="fr-container fr-container--fluid fr-container-md">
+            <div class="fr-grid-row fr-grid-row--center">
+                <div class="fr-col-12 fr-col-md-8 fr-col-lg-6">
+                    <div class="fr-modal__body">
+                        <div class="fr-modal__header">
+                            <button class="fr-link--close fr-link" aria-controls="fr-modal-settings">Fermer</button>
+                        </div>
+                        <div class="fr-modal__content">
+                            <h2 id="fr-modal-settings-title" class="fr-modal__title">
+                                <span class="fr-icon-account-circle-line fr-icon--lg" aria-hidden="true"></span>
+                                Mon Espace Galerie
+                            </h2>
+
+                            <div class="fr-tabs" id="user-tabs">
+                                <ul class="fr-tabs__list" role="tablist" aria-label="Navigation espace utilisateur">
+                                    <li role="presentation">
+                                        <button id="tabpanel-profil" class="fr-tabs__tab" tabindex="0" role="tab" aria-selected="true" aria-controls="tabpanel-profil-panel">Profil utilisateur</button>
+                                    </li>
+                                    <li role="presentation">
+                                        <button id="tabpanel-atlas" class="fr-tabs__tab" tabindex="-1" role="tab" aria-selected="false" aria-controls="tabpanel-atlas-panel">Mes atlas</button>
+                                    </li>
+                                </ul>
+
+                                <!-- Panel Profil -->
+                                <div id="tabpanel-profil-panel" class="fr-tabs__panel fr-tabs__panel--selected" role="tabpanel" aria-labelledby="tabpanel-profil" tabindex="0">
+                                    <section class="fr-container fr-card fr-card--shadow fr-p-4w fr-mb-4w">
+                                        <h3 class="fr-h4">Informations utilisateur</h3>
+                                        <div class="fr-grid-row fr-grid-row--gutters fr-mt-2w">
+                                            <div class="fr-col-3">
+                                                <img src="../img/users/avatar_neutre.jpg" alt="Photo de profil" class="fr-responsive-img fr-mb-2w" style="border-radius: 50%; max-width: 80%;">
+                                            </div>
+                                            <div class="fr-col-9">
+                                                <div class="user-profile-info">
+                                                    <div class="fr-grid-row fr-grid-row--gutters">
+                                                        <div class="fr-col-12 fr-col-md-6">
+                                                            <div class="info-item">
+                                                                <span class="info-label"><strong>Prénom :</strong></span>
+                                                                <span class="info-value" id="user-first-name">Chargement...</span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="fr-col-12 fr-col-md-6">
+                                                            <div class="info-item">
+                                                                <span class="info-label"><strong>Nom :</strong></span>
+                                                                <span class="info-value" id="user-last-name">Chargement...</span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="fr-col-12">
+                                                            <div class="info-item">
+                                                                <span class="info-label"><strong>Email :</strong></span>
+                                                                <span class="info-value" id="user-email">Chargement...</span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="fr-col-12">
+                                                            <div class="info-item">
+                                                                <span class="info-label"><strong>ORCID :</strong></span>
+                                                                <span class="info-value" id="user-orcid">Chargement...</span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="fr-col-12">
+                                                            <div class="info-item">
+                                                                <span class="info-label"><strong>Institution :</strong></span>
+                                                                <span class="info-value" id="user-institution">Chargement...</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <p class="fr-mt-2w">Vous pouvez modifier ces informations dans votre 
+                                                    <a href="https://api.ptm.huma-num.fr/auth/profile" target="_blank" rel="noopener">
+                                                        profil centralisé
+                                                    </a>.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </section>
+                                </div>
+
+                                <!-- Panel Mes atlas -->
+                                <div id="tabpanel-atlas-panel" class="fr-tabs__panel" role="tabpanel" aria-labelledby="tabpanel-atlas" tabindex="0">
+                                    <section class="fr-container fr-py-4w">
+                                        <h3 class="fr-h4 fr-mb-3w">
+                                            <span class="fr-icon-map-2-fill fr-mr-1w" aria-hidden="true"></span>
+                                            Mes atlas
+                                        </h3>
+
+                                        <div class="fr-alert fr-alert--info fr-mb-3w">
+                                            <p class="fr-text--sm">
+                                                <span class="fr-icon-information-line fr-mr-1w" aria-hidden="true"></span>
+                                                Les atlas sont des collections thématiques de cartes géoréférencées regroupées par ville, région ou thème.
+                                            </p>
+                                        </div>
+
+                                        <!-- Liste des atlas -->
+                                        <div id="atlas-list-container" class="fr-mb-3w">
+                                            <!-- Message de chargement par défaut -->
+                                            <div class="fr-alert fr-alert--info" id="atlas-loading">
+                                                <p class="fr-text--sm">
+                                                    <span class="fr-icon-refresh-line fr-mr-1w" aria-hidden="true"></span>
+                                                    Chargement de vos atlas...
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <p class="fr-text--sm fr-mt-4w" style="opacity: 0.7;">
+                                            <span id="atlas-status-message"></span>
+                                        </p>
+                                    </section>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </dialog>
+    <!--  -->
+    <!-- END Modal Settings  -->
+    <!--  -->
+
+    <!--  -->
+    <!-- Modal Créer un Atlas -->
+    <dialog class="fr-modal" id="fr-modal-create-atlas" aria-labelledby="fr-modal-create-atlas-title">
+        <div class="fr-container fr-container--fluid fr-container-md">
+            <div class="fr-grid-row fr-grid-row--center">
+                <div class="fr-col-12 fr-col-md-10 fr-col-lg-8">
+                    <div class="fr-modal__body">
+                        <div class="fr-modal__header">
+                            <button class="fr-link--close fr-link" aria-controls="fr-modal-create-atlas">Fermer</button>
+                        </div>
+                        <div class="fr-modal__content">
+                            <h2 id="fr-modal-create-atlas-title" class="fr-modal__title">
+                                <span class="fr-icon-map-2-fill fr-icon--lg" aria-hidden="true"></span>
+                                Créer un nouvel atlas
+                            </h2>
+
+                            <p class="fr-text--sm" style="opacity: 0.8;">
+                                Un atlas est une collection thématique de cartes géoréférencées.
+                            </p>
+
+                            <!-- Formulaire de création -->
+                            <form id="create-atlas-form" onsubmit="return false;">
+                                
+                                <!-- Nom de l'atlas -->
+                                <div class="fr-input-group">
+                                    <label class="fr-label" for="atlas-name">
+                                        Nom de l'atlas
+                                        <span class="fr-hint-text">Donnez un titre à votre collection</span>
+                                    </label>
+                                    <input class="fr-input" 
+                                           type="text" 
+                                           id="atlas-name" 
+                                           name="atlas-name" 
+                                           required
+                                           maxlength="100"
+                                           placeholder="Ex: Paris au XIXe siècle">
+                                </div>
+
+                                <!-- Description optionnelle -->
+                                <div class="fr-input-group fr-mt-2w">
+                                    <label class="fr-label" for="atlas-description">
+                                        Description (optionnelle)
+                                        <span class="fr-hint-text">Décrivez brièvement votre atlas</span>
+                                    </label>
+                                    <textarea class="fr-input" 
+                                              id="atlas-description" 
+                                              name="atlas-description" 
+                                              rows="3"
+                                              maxlength="500"
+                                              placeholder="Ex: Collection de cartes historiques du centre de Paris entre 1850 et 1900"></textarea>
+                                </div>
+
+                                <!-- Cartes sélectionnées -->
+                                <div class="fr-mt-3w">
+                                    <h3 class="fr-h6">
+                                        <span class="fr-icon-checkbox-circle-line fr-mr-1w" aria-hidden="true"></span>
+                                        Cartes sélectionnées
+                                    </h3>
+                                    <div id="selected-maps-list" class="fr-mt-1w" style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 1rem; border-radius: 4px; background: #f9f9f9;">
+                                        <!-- Liste des cartes sélectionnées sera injectée ici -->
+                                        <p class="fr-text--sm" style="opacity: 0.7;">Chargement...</p>
+                                    </div>
+                                </div>
+
+                                <!-- Mode de représentation -->
+                                <div class="fr-mt-3w">
+                                    <fieldset class="fr-fieldset" aria-labelledby="atlas-mode-legend">
+                                        <legend class="fr-fieldset__legend" id="atlas-mode-legend">
+                                            <h3 class="fr-h6">
+                                                <span class="fr-icon-layout-grid-line fr-mr-1w" aria-hidden="true"></span>
+                                                Mode de représentation
+                                            </h3>
+                                            <p class="fr-hint-text">Choisissez comment afficher vos cartes</p>
+                                        </legend>
+                                        <div class="fr-fieldset__content">
+                                            <!-- Mode Diachronique (défaut) -->
+                                            <div class="fr-radio-group">
+                                                <input type="radio" 
+                                                       id="mode-diachronique" 
+                                                       name="atlas-mode" 
+                                                       value="diachronique"
+                                                       checked>
+                                                <label class="fr-label" for="mode-diachronique">
+                                                    <strong>Diachronique</strong>
+                                                    <span class="fr-hint-text">
+                                                        Afficher l'évolution chronologique d'une même zone à différentes époques
+                                                    </span>
+                                                </label>
+                                            </div>
+
+                                            <!-- Mode Voisinage -->
+                                            <div class="fr-radio-group">
+                                                <input type="radio" 
+                                                       id="mode-voisinage" 
+                                                       name="atlas-mode" 
+                                                       value="voisinage">
+                                                <label class="fr-label" for="mode-voisinage">
+                                                    <strong>Voisinage</strong>
+                                                    <span class="fr-hint-text">
+                                                        Afficher les cartes côte à côte pour comparer des zones géographiques proches
+                                                    </span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </fieldset>
+                                </div>
+
+                                <!-- Message d'erreur (caché par défaut) -->
+                                <div id="create-atlas-error" class="fr-alert fr-alert--error fr-mt-3w" style="display: none;">
+                                    <p id="create-atlas-error-message"></p>
+                                </div>
+
+                                <!-- Message de succès (caché par défaut) -->
+                                <div id="create-atlas-success" class="fr-alert fr-alert--success fr-mt-3w" style="display: none;">
+                                    <p id="create-atlas-success-message"></p>
+                                </div>
+
+                            </form>
+                        </div>
+                        
+                        <!-- Footer avec boutons d'action -->
+                        <div class="fr-modal__footer">
+                            <ul class="fr-btns-group fr-btns-group--right fr-btns-group--inline-reverse fr-btns-group--inline-lg fr-btns-group--icon-left">
+                                <li>
+                                    <button class="fr-btn fr-btn--secondary fr-icon-close-line" 
+                                            aria-controls="fr-modal-create-atlas"
+                                            type="button">
+                                        Annuler
+                                    </button>
+                                </li>
+                                <li>
+                                    <button class="fr-btn fr-icon-add-line" 
+                                            id="btn-create-atlas"
+                                            type="button"
+                                            onclick="submitCreateAtlas()">
+                                        Créer l'atlas
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </dialog>
+    <!--  -->
+    <!-- END Modal Créer un Atlas  -->
     <!--  -->
 
     <!-- Scripts DSFR -->
@@ -978,19 +1346,221 @@
             }
             
             const selectedArray = Array.from(selectedMaps);
-            console.log('Création d\'un atlas avec les cartes:', selectedArray);
+            console.log('Ouverture modale création d\'atlas avec les cartes:', selectedArray);
             
             // Récupérer les données des cartes sélectionnées
             const selectedMapsData = realMapsData.filter(map => selectedArray.includes(map.ark));
             
-            console.log('Données des cartes sélectionnées:', selectedMapsData);
+            // Peupler la liste des cartes sélectionnées dans la modale
+            populateSelectedMapsInModal(selectedMapsData);
             
-            // TODO: Implémenter la logique de création d'atlas
-            const mapsList = selectedMapsData.map(map => 
-                `• ${map.ark} (géoréférencé par ${map.georeferenced_by})`
-            ).join('\n');
+            // Réinitialiser le formulaire
+            document.getElementById('atlas-name').value = '';
+            document.getElementById('atlas-description').value = '';
+            document.getElementById('mode-voisinage').checked = true;
             
-            alert(`Atlas à créer avec ${selectedArray.length} cartes :\n\n${mapsList}\n\nFonctionnalité en cours de développement...`);
+            // Masquer les messages d'erreur/succès
+            document.getElementById('create-atlas-error').style.display = 'none';
+            document.getElementById('create-atlas-success').style.display = 'none';
+            
+            // La modale s'ouvrira automatiquement via le DSFR car le bouton a aria-controls
+        }
+
+        // Fonction pour peupler la liste des cartes sélectionnées dans la modale
+        function populateSelectedMapsInModal(selectedMapsData) {
+            const container = document.getElementById('selected-maps-list');
+            
+            if (!container) {
+                console.error('❌ Conteneur selected-maps-list non trouvé');
+                return;
+            }
+            
+            if (selectedMapsData.length === 0) {
+                container.innerHTML = '<p class="fr-text--sm" style="opacity: 0.7;">Aucune carte sélectionnée</p>';
+                return;
+            }
+            
+            // Générer la liste des cartes
+            const listHTML = selectedMapsData.map((map, index) => `
+                <div class="fr-mb-1w" style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span class="fr-icon-checkbox-circle-fill" style="color: var(--background-action-high-success);" aria-hidden="true"></span>
+                    <span class="fr-text--sm">
+                        <strong>${index + 1}.</strong> ${map.ark}
+                        <span style="opacity: 0.7;">(par ${map.georeferenced_by || 'Inconnu'})</span>
+                    </span>
+                </div>
+            `).join('');
+            
+            container.innerHTML = `
+                <div class="fr-text--sm">
+                    <p class="fr-mb-2w"><strong>${selectedMapsData.length} carte${selectedMapsData.length > 1 ? 's' : ''} sélectionnée${selectedMapsData.length > 1 ? 's' : ''}</strong></p>
+                    ${listHTML}
+                </div>
+            `;
+        }
+
+        // Fonction pour soumettre le formulaire de création d'atlas
+        async function submitCreateAtlas() {
+            console.log('📝 Soumission du formulaire de création d\'atlas');
+            
+            // Récupérer les valeurs du formulaire
+            const atlasName = document.getElementById('atlas-name').value.trim();
+            const atlasDescription = document.getElementById('atlas-description').value.trim();
+            const atlasMode = document.querySelector('input[name="atlas-mode"]:checked').value;
+            
+            // Validation
+            if (!atlasName) {
+                showAtlasError('Veuillez donner un nom à votre atlas.');
+                return;
+            }
+            
+            if (selectedMaps.size < 2) {
+                showAtlasError('Au moins 2 cartes doivent être sélectionnées.');
+                return;
+            }
+            
+            // Préparer les données selon le format de l'API
+            const selectedArray = Array.from(selectedMaps);
+            
+            // Générer l'URL de l'atlas
+            const atlasSlug = atlasName.toLowerCase()
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // Retirer les accents
+                .replace(/[^a-z0-9]+/g, '-') // Remplacer les caractères spéciaux par des tirets
+                .replace(/^-+|-+$/g, ''); // Retirer les tirets au début et à la fin
+            
+            const atlasUrl = `${window.location.origin}/atlas/${atlasSlug}-${Date.now()}`;
+            
+            // Construire le payload selon le format de l'API
+            const atlasData = {
+                name: atlasName,
+                url: atlasUrl,
+                ark_ids: selectedArray,
+                is_public: true // Par défaut, les atlas sont publics
+            };
+            
+            // Ajouter display_mode seulement si ce n'est pas le mode par défaut (diachronique)
+            if (atlasMode !== 'diachronique') {
+                atlasData.display_mode = atlasMode;
+            }
+            
+            console.log('Données de l\'atlas à créer:', atlasData);
+            
+            // Désactiver le bouton pendant la création
+            const createButton = document.getElementById('btn-create-atlas');
+            const originalButtonText = createButton.innerHTML;
+            createButton.disabled = true;
+            createButton.innerHTML = '<span class="fr-icon-refresh-line fr-icon--sm" aria-hidden="true"></span> Création en cours...';
+            
+            try {
+                // Vérifier l'authentification
+                const token = window.ptmAuth.getToken();
+                
+                console.log('🔐 Vérification de l\'authentification...');
+                console.log('Token présent:', token ? 'OUI' : 'NON');
+                
+                if (!token) {
+                    throw new Error('Vous devez être connecté pour créer un atlas.');
+                }
+                
+                // Log du payload avant envoi
+                console.log('📦 Payload à envoyer:', JSON.stringify(atlasData, null, 2));
+                console.log('🔑 Token (premiers caractères):', token.substring(0, 20) + '...');
+                
+                // Appeler l'API pour créer l'atlas
+                const response = await fetch('https://api.ptm.huma-num.fr/auth/app/galligeo/atlas', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(atlasData)
+                });
+                
+                console.log('📡 Réponse API reçue:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    ok: response.ok
+                });
+                
+                if (!response.ok) {
+                    // Gestion spécifique de l'erreur 401 (Unauthorized)
+                    if (response.status === 401) {
+                        console.error('❌ Erreur 401: Token invalide ou expiré');
+                        
+                        // Vérifier le statut d'authentification
+                        const authStatus = await window.ptmAuth.checkAuthStatus();
+                        console.log('Status auth après 401:', authStatus);
+                        
+                        throw new Error('Votre session a expiré. Veuillez vous reconnecter.');
+                    }
+                    
+                    const errorData = await response.json().catch(() => ({}));
+                    console.error('❌ Erreur API:', errorData);
+                    throw new Error(errorData.message || `Erreur ${response.status}: ${response.statusText}`);
+                }
+                
+                const result = await response.json();
+                console.log('✅ Atlas créé avec succès:', result);
+                
+                // Afficher le message de succès
+                showAtlasSuccess(`Atlas "${atlasName}" créé avec succès ! ${selectedArray.length} cartes ajoutées.`);
+                
+                // Réinitialiser la sélection
+                selectedMaps.clear();
+                updateSelectionUI();
+                
+                // Fermer la modale après 2 secondes
+                setTimeout(() => {
+                    const modal = document.getElementById('fr-modal-create-atlas');
+                    if (modal) {
+                        // Fermer via le bouton de fermeture DSFR
+                        const closeButton = modal.querySelector('.fr-link--close');
+                        if (closeButton) {
+                            closeButton.click();
+                        }
+                    }
+                }, 2000);
+                
+            } catch (error) {
+                console.error('❌ Erreur lors de la création de l\'atlas:', error);
+                showAtlasError(error.message || 'Une erreur est survenue lors de la création de l\'atlas.');
+            } finally {
+                // Réactiver le bouton
+                createButton.disabled = false;
+                createButton.innerHTML = originalButtonText;
+            }
+        }
+
+        // Fonction pour afficher un message d'erreur dans la modale
+        function showAtlasError(message) {
+            const errorDiv = document.getElementById('create-atlas-error');
+            const errorMessage = document.getElementById('create-atlas-error-message');
+            const successDiv = document.getElementById('create-atlas-success');
+            
+            if (errorDiv && errorMessage) {
+                errorMessage.textContent = message;
+                errorDiv.style.display = 'block';
+                successDiv.style.display = 'none';
+                
+                // Scroll vers le message
+                errorDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+
+        // Fonction pour afficher un message de succès dans la modale
+        function showAtlasSuccess(message) {
+            const successDiv = document.getElementById('create-atlas-success');
+            const successMessage = document.getElementById('create-atlas-success-message');
+            const errorDiv = document.getElementById('create-atlas-error');
+            
+            if (successDiv && successMessage) {
+                successMessage.textContent = message;
+                successDiv.style.display = 'block';
+                errorDiv.style.display = 'none';
+                
+                // Scroll vers le message
+                successDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
         }
 
         // Gestionnaire pour les clics sur les cartes
@@ -2568,6 +3138,139 @@
         
         // === FIN FONCTIONS DE DEBUG ===
 
+        // === FONCTION DE TEST AUTHENTIFICATION ===
+        
+        // Fonction pour tester l'authentification et le token
+        window.testAuthForAtlas = async function() {
+            console.log('🧪 === TEST AUTHENTIFICATION POUR ATLAS ===');
+            
+            try {
+                // 1. Vérifier si ptmAuth existe
+                if (!window.ptmAuth) {
+                    console.error('❌ window.ptmAuth n\'existe pas !');
+                    return;
+                }
+                console.log('✅ window.ptmAuth existe');
+                
+                // 2. Vérifier le statut d'authentification
+                const authStatus = await window.ptmAuth.checkAuthStatus();
+                console.log('📊 Status d\'authentification:', authStatus);
+                
+                if (!authStatus.authenticated) {
+                    console.error('❌ Utilisateur NON authentifié');
+                    return;
+                }
+                console.log('✅ Utilisateur authentifié');
+                
+                // 3. Récupérer le token
+                const token = window.ptmAuth.getToken();
+                if (!token) {
+                    console.error('❌ Aucun token trouvé');
+                    return;
+                }
+                console.log('✅ Token trouvé');
+                console.log('🔑 Token (premiers 30 caractères):', token.substring(0, 30) + '...');
+                console.log('📏 Longueur du token:', token.length);
+                
+                // 4. Décoder le token JWT pour voir son contenu
+                try {
+                    const parts = token.split('.');
+                    if (parts.length === 3) {
+                        const payload = JSON.parse(atob(parts[1]));
+                        console.log('📋 Contenu du token (payload):', payload);
+                        
+                        // Vérifier l'expiration
+                        if (payload.exp) {
+                            const expirationDate = new Date(payload.exp * 1000);
+                            const now = new Date();
+                            const isExpired = now > expirationDate;
+                            
+                            console.log('⏰ Token expire le:', expirationDate.toLocaleString('fr-FR'));
+                            console.log('⏰ Date actuelle:', now.toLocaleString('fr-FR'));
+                            console.log(isExpired ? '❌ Token EXPIRÉ' : '✅ Token VALIDE');
+                            
+                            if (isExpired) {
+                                console.error('⚠️ Le token est expiré, il faut se reconnecter !');
+                            }
+                        }
+                    }
+                } catch (decodeError) {
+                    console.warn('⚠️ Impossible de décoder le token:', decodeError);
+                }
+                
+                // 5. Tester une requête à l'API atlas
+                console.log('🧪 Test de requête à l\'API atlas...');
+                
+                const testPayload = {
+                    name: "Test Atlas " + Date.now(),
+                    url: `${window.location.origin}/atlas/test-${Date.now()}`,
+                    ark_ids: ["ark:/12148/test1", "ark:/12148/test2"],
+                    is_public: true
+                };
+                
+                console.log('📦 Payload de test:', testPayload);
+                
+                const response = await fetch('https://api.ptm.huma-num.fr/auth/app/galligeo/atlas', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(testPayload)
+                });
+                
+                console.log('📡 Réponse de l\'API:');
+                console.log('  - Status:', response.status);
+                console.log('  - Status Text:', response.statusText);
+                console.log('  - OK:', response.ok);
+                
+                // Afficher les headers de réponse
+                console.log('📨 Headers de réponse:');
+                response.headers.forEach((value, key) => {
+                    console.log(`  - ${key}: ${value}`);
+                });
+                
+                if (response.status === 401) {
+                    console.error('❌ ERREUR 401: Token rejeté par l\'API');
+                    console.error('Causes possibles:');
+                    console.error('  1. Token expiré');
+                    console.error('  2. Token invalide ou corrompu');
+                    console.error('  3. Token ne correspond pas au bon environnement');
+                    console.error('  4. API attend un format différent');
+                    
+                    // Essayer de lire le corps de la réponse
+                    try {
+                        const errorBody = await response.json();
+                        console.error('📄 Corps de l\'erreur:', errorBody);
+                    } catch (e) {
+                        const errorText = await response.text();
+                        console.error('📄 Texte de l\'erreur:', errorText);
+                    }
+                } else if (response.ok) {
+                    const result = await response.json();
+                    console.log('✅ Requête réussie !');
+                    console.log('📦 Résultat:', result);
+                } else {
+                    console.error(`❌ Erreur ${response.status}`);
+                    try {
+                        const errorBody = await response.json();
+                        console.error('📄 Corps de l\'erreur:', errorBody);
+                    } catch (e) {
+                        const errorText = await response.text();
+                        console.error('📄 Texte de l\'erreur:', errorText);
+                    }
+                }
+                
+            } catch (error) {
+                console.error('❌ Erreur lors du test:', error);
+                console.error('Stack:', error.stack);
+            }
+            
+            console.log('=== FIN DU TEST ===');
+        };
+        
+        // === FIN FONCTION DE TEST AUTHENTIFICATION ===
+
         // Fonction pour vérifier l'état d'authentification
         async function checkAuthenticationStatus() {
             try {
@@ -2583,42 +3286,597 @@
                     window.history.replaceState({}, document.title, window.location.pathname);
                 }
                 
-                const isAuthenticated = await window.ptmAuth.checkAuthStatus();
-                updateAuthenticationUI(isAuthenticated);
+                const authStatus = await window.ptmAuth.checkAuthStatus();
+                updateAuthenticationUI(authStatus.authenticated, authStatus.user);
                 
             } catch (error) {
                 console.error('Erreur lors de la vérification de l\'authentification:', error);
-                updateAuthenticationUI(false);
+                updateAuthenticationUI(false, null);
             }
         }
 
         // Fonction pour mettre à jour l'interface utilisateur selon l'état d'authentification
-        function updateAuthenticationUI(isAuthenticated) {
+        function updateAuthenticationUI(isAuthenticated, user) {
             const authContainer = document.getElementById('auth-button-container');
             
-            if (isAuthenticated && authContainer) {
-                // Remplacer le bouton de connexion par les informations utilisateur
-                try {
-                    const token = window.ptmAuth.getToken();
-                    const payload = JSON.parse(atob(token.split('.')[1]));
-                    const userName = payload.name || 'Utilisateur';
+            if (isAuthenticated && authContainer && user) {
+                // Déterminer le nom à afficher
+                const displayName = user.name || 'Utilisateur';
+                
+                // Charger le profil complet pour avoir toutes les infos
+                loadUserProfile().then(profile => {
+                    const fullName = profile ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() : displayName;
+                    const userProfile = profile || {};
                     
+                    // Créer le menu déroulant utilisateur
                     authContainer.innerHTML = `
-                        <div class="user-menu-container">
-                            <span class="fr-text--sm">
-                                <span class="fr-icon-account-circle-line fr-mr-1w" aria-hidden="true"></span>
-                                ${userName}
-                            </span>
-                            <button class="fr-btn fr-btn--sm fr-btn--secondary fr-ml-2w" onclick="window.ptmAuth.logout(); window.location.reload();">
-                                Déconnexion
-                            </button>
+                        <button class="fr-btn fr-icon-account-line user-menu-toggle" 
+                                style="color:#00ac8c;" 
+                                data-fr-opened="false" 
+                                aria-controls="user-dropdown-menu"
+                                onclick="toggleUserMenu()">
+                            ${fullName || displayName}
+                        </button>
+                        <div class="user-dropdown-menu" id="user-dropdown-menu" style="display: none;">
+                            <div class="user-info">
+                                <p><strong>Nom :</strong> ${userProfile.last_name || userProfile.family_name || 'Non renseigné'}</p>
+                                <p><strong>Prénom :</strong> ${userProfile.first_name || userProfile.given_name || 'Non renseigné'}</p>
+                                <p><strong>ORCID :</strong> ${userProfile.orcid || userProfile.orcid_id || userProfile.sub || 'Non renseigné'}</p>
+                                <p><strong>Email :</strong> ${userProfile.email || 'Non renseigné'}</p>
+                                ${userProfile.institution ? `<p><strong>Institution :</strong> ${userProfile.institution}</p>` : ''}
+                            </div>
+                            <hr>
+                            <ul class="user-menu-actions">
+                                <li>
+                                    <button type="button" 
+                                            class="fr-btn fr-btn--sm fr-icon-settings-3-line" 
+                                            data-fr-opened="false" 
+                                            aria-controls="fr-modal-settings"
+                                            onclick="toggleUserMenu()">
+                                        Paramètres
+                                    </button>
+                                </li>
+                                <li>
+                                    <button type="button" 
+                                            onclick="logout()" 
+                                            class="fr-btn fr-btn--sm fr-icon-logout-box-r-line">
+                                        Se déconnecter
+                                    </button>
+                                </li>
+                            </ul>
                         </div>
                     `;
-                } catch (error) {
-                    console.error('❌ Erreur décodage token:', error);
+                }).catch(error => {
+                    console.error('❌ Erreur lors du chargement du profil:', error);
+                    // Afficher quand même avec les infos de base
+                    authContainer.innerHTML = `
+                        <button class="fr-btn fr-icon-account-line user-menu-toggle" 
+                                style="color:#00ac8c;" 
+                                data-fr-opened="false" 
+                                aria-controls="user-dropdown-menu"
+                                onclick="toggleUserMenu()">
+                            ${displayName}
+                        </button>
+                        <div class="user-dropdown-menu" id="user-dropdown-menu" style="display: none;">
+                            <div class="user-info">
+                                <p><strong>Nom :</strong> ${displayName}</p>
+                                <p><em>Impossible de charger les détails du profil</em></p>
+                            </div>
+                            <hr>
+                            <ul class="user-menu-actions">
+                                <li>
+                                    <button type="button" 
+                                            class="fr-btn fr-btn--sm fr-icon-settings-3-line" 
+                                            data-fr-opened="false" 
+                                            aria-controls="fr-modal-settings"
+                                            onclick="toggleUserMenu()">
+                                        Paramètres
+                                    </button>
+                                </li>
+                                <li>
+                                    <button type="button" 
+                                            onclick="logout()" 
+                                            class="fr-btn fr-btn--sm fr-icon-logout-box-r-line">
+                                        Se déconnecter
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+                    `;
+                });
+            }
+        }
+
+        // Fonction pour charger le profil utilisateur complet
+        async function loadUserProfile() {
+            try {
+                console.log('📥 Chargement du profil utilisateur...');
+                const profile = await window.ptmAuth.getUserProfile();
+                console.log('✅ Profil reçu:', profile);
+                return profile;
+            } catch (error) {
+                console.error('❌ Erreur lors du chargement du profil:', error);
+                // Fallback : essayer d'extraire du token JWT
+                try {
+                    const token = window.ptmAuth.getToken();
+                    if (token) {
+                        const payload = JSON.parse(atob(token.split('.')[1]));
+                        return {
+                            first_name: payload.given_name,
+                            last_name: payload.family_name,
+                            email: payload.email,
+                            orcid: payload.orcid || payload.sub,
+                            institution: payload.institution
+                        };
+                    }
+                } catch (tokenError) {
+                    console.error('❌ Impossible d\'extraire du token:', tokenError);
+                }
+                throw error;
+            }
+        }
+
+        // Fonction pour basculer l'affichage du menu utilisateur
+        function toggleUserMenu() {
+            const menu = document.getElementById('user-dropdown-menu');
+            const button = document.querySelector('.user-menu-toggle');
+            
+            if (!menu || !button) {
+                console.warn('⚠️ Menu ou bouton non trouvé');
+                return;
+            }
+            
+            if (menu.style.display === 'none') {
+                menu.style.display = 'block';
+                menu.style.zIndex = '99999';
+                menu.style.position = 'absolute';
+                button.setAttribute('data-fr-opened', 'true');
+            } else {
+                menu.style.display = 'none';
+                button.setAttribute('data-fr-opened', 'false');
+            }
+        }
+
+        // Fermer le menu utilisateur si on clique ailleurs
+        document.addEventListener('click', function(event) {
+            const menu = document.getElementById('user-dropdown-menu');
+            const button = document.querySelector('.user-menu-toggle');
+            
+            if (menu && button && !button.contains(event.target) && !menu.contains(event.target)) {
+                menu.style.display = 'none';
+                button.setAttribute('data-fr-opened', 'false');
+            }
+        });
+
+        // Fonction de déconnexion
+        async function logout() {
+            try {
+                console.log('👋 Déconnexion en cours...');
+                window.ptmAuth.logout();
+                // Recharger la page pour réinitialiser l'interface
+                window.location.reload();
+            } catch (error) {
+                console.error('❌ Erreur lors de la déconnexion:', error);
+            }
+        }
+
+        // Fonction pour peupler le profil utilisateur dans la modale
+        async function populateUserProfileInModal() {
+            try {
+                console.log('📥 Chargement du profil pour la modale...');
+                
+                // Utiliser la même méthode que pour le dropdown
+                const userProfile = await window.ptmAuth.getUserProfile();
+                console.log('✅ Profil reçu pour la modale:', userProfile);
+                
+                if (!userProfile) {
+                    console.warn('⚠️ Aucun profil disponible');
+                    return;
+                }
+                
+                // Peupler les champs de la modale
+                const setFieldValue = (id, value) => {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        element.textContent = value || 'Non renseigné';
+                    }
+                };
+
+                // Mapping des champs (en respectant les différentes structures possibles)
+                setFieldValue('user-first-name', userProfile.given_name || userProfile.firstName || userProfile.first_name);
+                setFieldValue('user-last-name', userProfile.family_name || userProfile.lastName || userProfile.last_name);
+                setFieldValue('user-email', userProfile.email);
+                setFieldValue('user-orcid', userProfile.orcid || userProfile.orcid_id || userProfile.sub);
+                setFieldValue('user-institution', userProfile.institution);
+                
+                console.log('✅ Profil affiché dans la modale');
+            } catch (error) {
+                console.error('❌ Erreur lors du chargement du profil dans la modale:', error);
+                
+                // Fallback : essayer d'extraire du token JWT
+                try {
+                    const token = window.ptmAuth.getToken();
+                    if (token) {
+                        console.log('🔄 Tentative d\'extraction depuis le token JWT...');
+                        const payload = JSON.parse(atob(token.split('.')[1]));
+                        
+                        const setFieldValue = (id, value) => {
+                            const element = document.getElementById(id);
+                            if (element) element.textContent = value || 'Non renseigné';
+                        };
+
+                        setFieldValue('user-first-name', payload.given_name);
+                        setFieldValue('user-last-name', payload.family_name);
+                        setFieldValue('user-email', payload.email);
+                        setFieldValue('user-orcid', payload.orcid || payload.sub);
+                        setFieldValue('user-institution', payload.institution);
+                        
+                        console.log('✅ Profil extrait du token JWT');
+                    }
+                } catch (tokenError) {
+                    console.error('❌ Impossible d\'extraire du token:', tokenError);
                 }
             }
         }
+
+        // Observer l'ouverture de la modale pour charger les données
+        document.addEventListener('DOMContentLoaded', function() {
+            const modal = document.getElementById('fr-modal-settings');
+            if (modal) {
+                // Écouter l'événement d'ouverture de la modale
+                modal.addEventListener('dsfr.conceal', function() {
+                    console.log('📋 Modale fermée');
+                });
+                
+                modal.addEventListener('dsfr.disclose', function() {
+                    console.log('📋 Modale ouverte - chargement du profil');
+                    populateUserProfileInModal();
+                });
+            }
+            
+            // Écouter les changements d'onglet dans la modale
+            const atlasTab = document.getElementById('tabpanel-atlas');
+            if (atlasTab) {
+                atlasTab.addEventListener('click', function() {
+                    console.log('📋 Onglet Atlas activé - chargement des atlas');
+                    loadUserAtlas();
+                });
+            }
+        });
+
+        // === GESTION DES ATLAS ===
+        
+        // Fonction pour récupérer les atlas de l'utilisateur depuis l'API
+        async function loadUserAtlas() {
+            console.log('📦 Chargement des atlas de l\'utilisateur...');
+            
+            const container = document.getElementById('atlas-list-container');
+            const statusMessage = document.getElementById('atlas-status-message');
+            const loadingDiv = document.getElementById('atlas-loading');
+            
+            try {
+                // Vérifier l'authentification
+                const token = window.ptmAuth.getToken();
+                if (!token) {
+                    console.warn('⚠️ Utilisateur non authentifié');
+                    if (loadingDiv) loadingDiv.style.display = 'none';
+                    container.innerHTML = `
+                        <div class="fr-alert fr-alert--warning">
+                            <p class="fr-text--sm">
+                                <span class="fr-icon-warning-line fr-mr-1w" aria-hidden="true"></span>
+                                Vous devez être connecté pour voir vos atlas.
+                            </p>
+                        </div>
+                    `;
+                    if (statusMessage) statusMessage.textContent = 'Connectez-vous pour voir vos atlas.';
+                    return;
+                }
+                
+                // Récupérer le profil pour obtenir l'ORCID
+                const profile = await window.ptmAuth.getUserProfile();
+                const orcidId = profile?.orcid || profile?.orcid_id || profile?.sub;
+                
+                if (!orcidId) {
+                    throw new Error('Impossible de récupérer l\'identifiant ORCID');
+                }
+                
+                console.log('🔑 ORCID ID:', orcidId);
+                
+                // Appeler l'API pour récupérer les atlas de l'utilisateur
+                // GET /auth/app/galligeo/atlas?owner=ORCID&include_private=true
+                const response = await fetch(`https://api.ptm.huma-num.fr/auth/app/galligeo/atlas?owner=${encodeURIComponent(orcidId)}&include_private=true`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                console.log('📡 Réponse API atlas:', response.status, response.statusText);
+                
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        throw new Error('Session expirée. Veuillez vous reconnecter.');
+                    }
+                    throw new Error(`Erreur ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                console.log('✅ Atlas reçus:', data);
+                
+                // Afficher les atlas
+                displayAtlasList(data.atlas || data || []);
+                
+                if (statusMessage) {
+                    const count = (data.atlas || data || []).length;
+                    statusMessage.textContent = count > 0 
+                        ? `${count} atlas trouvé${count > 1 ? 's' : ''}.` 
+                        : 'Aucun atlas pour le moment.';
+                }
+                
+            } catch (error) {
+                console.error('❌ Erreur lors du chargement des atlas:', error);
+                
+                if (loadingDiv) loadingDiv.style.display = 'none';
+                container.innerHTML = `
+                    <div class="fr-alert fr-alert--error">
+                        <p class="fr-text--sm">
+                            <span class="fr-icon-error-line fr-mr-1w" aria-hidden="true"></span>
+                            ${error.message || 'Erreur lors du chargement des atlas.'}
+                        </p>
+                    </div>
+                `;
+                
+                if (statusMessage) statusMessage.textContent = 'Erreur de chargement.';
+            }
+        }
+        
+        // Fonction pour afficher la liste des atlas
+        function displayAtlasList(atlasList) {
+            console.log('🖼️ Affichage de', atlasList.length, 'atlas');
+            
+            const container = document.getElementById('atlas-list-container');
+            const loadingDiv = document.getElementById('atlas-loading');
+            
+            // Masquer le message de chargement
+            if (loadingDiv) loadingDiv.style.display = 'none';
+            
+            // Si aucun atlas
+            if (!atlasList || atlasList.length === 0) {
+                container.innerHTML = `
+                    <div class="fr-alert fr-alert--info">
+                        <p class="fr-text--sm">
+                            <span class="fr-icon-information-line fr-mr-1w" aria-hidden="true"></span>
+                            Vous n'avez pas encore créé d'atlas. Sélectionnez des cartes dans la galerie et créez votre premier atlas !
+                        </p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Générer la liste HTML des atlas
+            const atlasListHTML = atlasList.map(atlas => {
+                const displayMode = atlas.display_mode || 'diachronique';
+                const isPublic = atlas.is_public !== false;
+                const createdDate = atlas.created_at ? new Date(atlas.created_at).toLocaleDateString('fr-FR') : 'N/A';
+                const mapCount = atlas.ark_ids ? atlas.ark_ids.length : 0;
+                
+                // Icône selon le mode
+                const modeIcon = displayMode === 'voisinage' 
+                    ? '<span class="fr-icon-layout-grid-line" aria-hidden="true"></span>' 
+                    : '<span class="fr-icon-time-line" aria-hidden="true"></span>';
+                
+                // Badge de statut
+                const statusBadge = isPublic 
+                    ? '<span class="fr-badge fr-badge--success fr-badge--sm">Public</span>'
+                    : '<span class="fr-badge fr-badge--warning fr-badge--sm">Privé</span>';
+                
+                return `
+                    <div class="fr-card fr-card--horizontal fr-card--sm fr-mb-2w" data-atlas-id="${atlas.id}">
+                        <div class="fr-card__body">
+                            <div class="fr-card__content">
+                                <h4 class="fr-card__title">
+                                    ${modeIcon}
+                                    <a href="${atlas.url || '#'}" class="fr-card__link" ${atlas.url ? '' : 'onclick="event.preventDefault(); alert(\'Lien non disponible\');"'}>
+                                        ${atlas.name || 'Sans titre'}
+                                    </a>
+                                </h4>
+                                <p class="fr-card__desc fr-text--sm">
+                                    <strong>Type :</strong> ${displayMode === 'voisinage' ? 'Voisinage' : 'Diachronique'}
+                                    <br>
+                                    <strong>Cartes :</strong> ${mapCount} carte${mapCount > 1 ? 's' : ''}
+                                    <br>
+                                    <strong>Créé le :</strong> ${createdDate}
+                                </p>
+                                <div class="fr-card__footer" style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div>${statusBadge}</div>
+                                    <button class="fr-btn fr-btn--sm fr-btn--tertiary-no-outline fr-icon-delete-line" 
+                                            onclick="confirmDeleteAtlas('${atlas.id}', \`${atlas.name}\`)"
+                                            title="Supprimer cet atlas"
+                                            aria-label="Supprimer l'atlas ${atlas.name}">
+                                        Supprimer
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="fr-card__header">
+                            <div class="fr-card__img" style="background-color: #f5f5f5; display: flex; align-items: center; justify-content: center; min-height: 100px;">
+                                <span class="fr-icon-map-2-fill" style="font-size: 3rem; color: #ccc;" aria-hidden="true"></span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            container.innerHTML = atlasListHTML;
+        }
+        
+        // Exposer la fonction pour debug
+        window.loadUserAtlas = loadUserAtlas;
+        
+        // Fonction pour confirmer la suppression d'un atlas
+        function confirmDeleteAtlas(atlasId, atlasName) {
+            console.log('🗑️ Demande de suppression atlas:', atlasId, atlasName);
+            
+            // Confirmation avec une modale DSFR native
+            const confirmed = confirm(
+                `Êtes-vous sûr de vouloir supprimer l'atlas "${atlasName}" ?\n\n` +
+                `Cette action est irréversible.`
+            );
+            
+            if (confirmed) {
+                deleteAtlas(atlasId, atlasName);
+            } else {
+                console.log('❌ Suppression annulée par l\'utilisateur');
+            }
+        }
+        
+        // Fonction pour supprimer un atlas
+        async function deleteAtlas(atlasId, atlasName) {
+            console.log('🗑️ Suppression de l\'atlas:', atlasId);
+            
+            try {
+                // Vérifier l'authentification
+                const token = window.ptmAuth.getToken();
+                if (!token) {
+                    alert('Vous devez être connecté pour supprimer un atlas.');
+                    return;
+                }
+                
+                // Afficher un indicateur de chargement sur la carte
+                const atlasCard = document.querySelector(`[data-atlas-id="${atlasId}"]`);
+                if (atlasCard) {
+                    atlasCard.style.opacity = '0.5';
+                    atlasCard.style.pointerEvents = 'none';
+                    
+                    // Ajouter un spinner
+                    const deleteButton = atlasCard.querySelector('.fr-btn--tertiary-no-outline');
+                    if (deleteButton) {
+                        deleteButton.innerHTML = '<span class="fr-icon-refresh-line fr-mr-1w" aria-hidden="true"></span>Suppression...';
+                        deleteButton.disabled = true;
+                    }
+                }
+                
+                // Appeler l'API DELETE
+                const response = await fetch(`https://api.ptm.huma-num.fr/auth/app/galligeo/atlas/${atlasId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                console.log('📡 Réponse API suppression:', response.status, response.statusText);
+                
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        throw new Error('Session expirée. Veuillez vous reconnecter.');
+                    } else if (response.status === 403) {
+                        throw new Error('Vous n\'avez pas les droits pour supprimer cet atlas.');
+                    } else if (response.status === 404) {
+                        throw new Error('Atlas introuvable.');
+                    }
+                    
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.message || `Erreur ${response.status}: ${response.statusText}`);
+                }
+                
+                console.log('✅ Atlas supprimé avec succès');
+                
+                // Animer la suppression de la carte
+                if (atlasCard) {
+                    atlasCard.style.transition = 'all 0.3s ease-out';
+                    atlasCard.style.transform = 'translateX(-100%)';
+                    atlasCard.style.opacity = '0';
+                    
+                    // Supprimer l'élément du DOM après l'animation
+                    setTimeout(() => {
+                        atlasCard.remove();
+                        
+                        // Vérifier s'il reste des atlas
+                        const container = document.getElementById('atlas-list-container');
+                        const remainingCards = container.querySelectorAll('[data-atlas-id]');
+                        
+                        if (remainingCards.length === 0) {
+                            // Afficher le message "Aucun atlas"
+                            container.innerHTML = `
+                                <div class="fr-alert fr-alert--info">
+                                    <p class="fr-text--sm">
+                                        <span class="fr-icon-information-line fr-mr-1w" aria-hidden="true"></span>
+                                        Vous n'avez pas encore créé d'atlas. Sélectionnez des cartes dans la galerie et créez votre premier atlas !
+                                    </p>
+                                </div>
+                            `;
+                        }
+                        
+                        // Mettre à jour le message de statut
+                        const statusMessage = document.getElementById('atlas-status-message');
+                        if (statusMessage) {
+                            const count = remainingCards.length;
+                            statusMessage.textContent = count > 0 
+                                ? `${count} atlas trouvé${count > 1 ? 's' : ''}.` 
+                                : 'Aucun atlas pour le moment.';
+                        }
+                        
+                        // Afficher une notification de succès
+                        showAtlasNotification('success', `L'atlas "${atlasName}" a été supprimé avec succès.`);
+                        
+                    }, 300);
+                }
+                
+            } catch (error) {
+                console.error('❌ Erreur lors de la suppression:', error);
+                
+                // Restaurer la carte en cas d'erreur
+                const atlasCard = document.querySelector(`[data-atlas-id="${atlasId}"]`);
+                if (atlasCard) {
+                    atlasCard.style.opacity = '1';
+                    atlasCard.style.pointerEvents = 'auto';
+                    
+                    const deleteButton = atlasCard.querySelector('.fr-btn--tertiary-no-outline');
+                    if (deleteButton) {
+                        deleteButton.innerHTML = '<span class="fr-icon-delete-line" aria-hidden="true"></span>Supprimer';
+                        deleteButton.disabled = false;
+                    }
+                }
+                
+                // Afficher l'erreur
+                showAtlasNotification('error', error.message || 'Erreur lors de la suppression de l\'atlas.');
+            }
+        }
+        
+        // Fonction pour afficher une notification temporaire
+        function showAtlasNotification(type, message) {
+            const container = document.getElementById('atlas-list-container');
+            
+            const alertType = type === 'success' ? 'fr-alert--success' : 'fr-alert--error';
+            const iconType = type === 'success' ? 'fr-icon-checkbox-circle-line' : 'fr-icon-error-line';
+            
+            const notification = document.createElement('div');
+            notification.className = `fr-alert ${alertType} fr-mb-2w`;
+            notification.innerHTML = `
+                <p class="fr-text--sm">
+                    <span class="${iconType} fr-mr-1w" aria-hidden="true"></span>
+                    ${message}
+                </p>
+            `;
+            
+            // Insérer en haut du conteneur
+            container.insertBefore(notification, container.firstChild);
+            
+            // Supprimer après 5 secondes
+            setTimeout(() => {
+                notification.style.transition = 'opacity 0.3s ease-out';
+                notification.style.opacity = '0';
+                setTimeout(() => notification.remove(), 300);
+            }, 5000);
+        }
+        
+        // Exposer les fonctions pour debug
+        window.confirmDeleteAtlas = confirmDeleteAtlas;
+        window.deleteAtlas = deleteAtlas;
+        
+        // === FIN GESTION DES ATLAS ===
 
         // Fonction pour initialiser l'affichage de version
         function initializeVersionDisplay() {

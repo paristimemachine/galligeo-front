@@ -405,6 +405,9 @@
                                     <li role="presentation">
                                         <button id="tabpanel-cartes" class="fr-tabs__tab" tabindex="-1" role="tab" aria-selected="false" aria-controls="tabpanel-cartes-panel">Mes cartes</button>
                                     </li>
+                                    <li role="presentation">
+                                        <button id="tabpanel-atlas" class="fr-tabs__tab" tabindex="-1" role="tab" aria-selected="false" aria-controls="tabpanel-atlas-panel">Mes atlas</button>
+                                    </li>
                                 </ul>
 
                                 <!-- Panel Profil -->
@@ -625,6 +628,47 @@
                                         </p>
                                     </section>
                                 </div>
+
+                                <!-- Panel Mes atlas -->
+                                <div id="tabpanel-atlas-panel" class="fr-tabs__panel" role="tabpanel" aria-labelledby="tabpanel-atlas" tabindex="0">
+                                    <section class="fr-container fr-py-4w">
+                                        <h3 class="fr-h4 fr-mb-3w">
+                                            <span class="fr-icon-map-2-fill fr-mr-1w" aria-hidden="true"></span>
+                                            Mes atlas
+                                        </h3>
+
+                                        <div class="fr-alert fr-alert--info fr-mb-3w">
+                                            <p class="fr-text--sm">
+                                                <span class="fr-icon-information-line fr-mr-1w" aria-hidden="true"></span>
+                                                Les atlas sont des collections thématiques de cartes géoréférencées regroupées par ville, région ou thème.
+                                            </p>
+                                        </div>
+
+                                        <!-- Liste des atlas disponibles -->
+                                        <div id="atlas-list-container">
+                                            <div class="fr-grid-row fr-grid-row--gutters">
+                                                <!-- Les atlas seront chargés ici dynamiquement -->
+                                                <div class="fr-col-12">
+                                                    <div class="fr-alert fr-alert--info">
+                                                        <p>Chargement de vos atlas...</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Lien vers la création d'atlas -->
+                                        <div class="fr-mt-4w">
+                                            <button class="fr-btn fr-btn--secondary fr-icon-add-line" onclick="alert('Fonctionnalité de création d\'atlas à venir')">
+                                                Créer un nouvel atlas
+                                            </button>
+                                        </div>
+
+                                        <p class="fr-text--sm fr-mt-4w" style="opacity: 0.7;">
+                                            <span id="atlas-status-message">Connectez-vous pour gérer vos atlas.</span>
+                                        </p>
+                                    </section>
+                                </div>
+
                             </div>
 
                             <!-- Footer Modal

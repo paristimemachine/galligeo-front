@@ -9178,3 +9178,6 @@ tests/js/ptm-auth-jwt.js
 tests/js/ptm-auth-old-headers.js
 tests/mock/mock-api-server-complet.js
 tests/mock/mock-api-server.js
+tests/test-nakala-script.html
+tests/test-dsfr-cards.html
+tests/test-galerie-auth.html

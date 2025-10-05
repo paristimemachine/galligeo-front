@@ -13,6 +13,20 @@ class PTMAuthFixed {
     }
 
     /**
+     * Définit le token JWT manuellement
+     */
+    setToken(token) {
+        if (!token) {
+            console.warn('⚠️ Tentative de définir un token vide');
+            return;
+        }
+        
+        this.token = token;
+        localStorage.setItem('ptm_auth_token', token);
+        console.log('✅ Token défini manuellement');
+    }
+
+    /**
      * Récupère le token JWT depuis le localStorage ou l'URL
      */
     getToken() {
@@ -44,7 +58,7 @@ class PTMAuthFixed {
 
         // Vérifier les query params (format: ?token=...)
         const urlParams = new URLSearchParams(window.location.search);
-        const tokenFromQuery = urlParams.get('token');
+        const tokenFromQuery = urlParams.get('token') || urlParams.get('access_token');
         if (tokenFromQuery) {
             this.token = tokenFromQuery;
             localStorage.setItem('ptm_auth_token', this.token);
@@ -82,6 +96,55 @@ class PTMAuthFixed {
         } catch (error) {
             console.warn('⚠️ Token invalide:', error);
             return false;
+        }
+    }
+
+    /**
+     * Vérifie l'état d'authentification de manière asynchrone
+     * Retourne un objet avec les informations d'authentification
+     */
+    async checkAuthStatus() {
+        const token = this.getToken();
+        
+        if (!token) {
+            console.log('ℹ️ Aucun token disponible');
+            return {
+                authenticated: false,
+                user: null
+            };
+        }
+
+        // Vérifier l'expiration du token
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            const now = Math.floor(Date.now() / 1000);
+            
+            if (payload.exp && payload.exp > now) {
+                console.log('✅ Utilisateur authentifié:', payload);
+                this.userInfo = payload;
+                
+                return {
+                    authenticated: true,
+                    user: {
+                        name: payload.name || payload.given_name || 'Utilisateur',
+                        orcid: payload.orcid || payload.sub,
+                        email: payload.email
+                    }
+                };
+            } else {
+                console.warn('⚠️ Token expiré');
+                this.logout();
+                return {
+                    authenticated: false,
+                    user: null
+                };
+            }
+        } catch (error) {
+            console.error('❌ Erreur lors de la vérification du token:', error);
+            return {
+                authenticated: false,
+                user: null
+            };
         }
     }
 
