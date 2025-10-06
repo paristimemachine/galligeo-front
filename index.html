@@ -644,27 +644,29 @@
                                             </p>
                                         </div>
 
-                                        <!-- Liste des atlas disponibles -->
-                                        <div id="atlas-list-container">
-                                            <div class="fr-grid-row fr-grid-row--gutters">
-                                                <!-- Les atlas seront chargés ici dynamiquement -->
-                                                <div class="fr-col-12">
-                                                    <div class="fr-alert fr-alert--info">
-                                                        <p>Chargement de vos atlas...</p>
-                                                    </div>
-                                                </div>
+                                        <!-- Liste des atlas -->
+                                        <div id="atlas-list-container" class="fr-mb-3w">
+                                            <!-- Message de chargement par défaut -->
+                                            <div class="fr-alert fr-alert--info" id="atlas-loading">
+                                                <p class="fr-text--sm">
+                                                    <span class="fr-icon-refresh-line fr-mr-1w" aria-hidden="true"></span>
+                                                    Chargement de vos atlas...
+                                                </p>
                                             </div>
                                         </div>
 
-                                        <!-- Lien vers la création d'atlas -->
+                                        <!-- Lien vers la galerie pour créer un atlas -->
                                         <div class="fr-mt-4w">
-                                            <button class="fr-btn fr-btn--secondary fr-icon-add-line" onclick="alert('Fonctionnalité de création d\'atlas à venir')">
+                                            <a href="galerie/index.html" class="fr-btn fr-btn--secondary fr-icon-add-line">
                                                 Créer un nouvel atlas
-                                            </button>
+                                            </a>
+                                            <p class="fr-text--xs fr-mt-1w" style="opacity: 0.7;">
+                                                Rendez-vous dans la galerie pour sélectionner des cartes et créer un atlas.
+                                            </p>
                                         </div>
 
                                         <p class="fr-text--sm fr-mt-4w" style="opacity: 0.7;">
-                                            <span id="atlas-status-message">Connectez-vous pour gérer vos atlas.</span>
+                                            <span id="atlas-status-message"></span>
                                         </p>
                                     </section>
                                 </div>
@@ -1035,6 +1037,7 @@ function openExternalLink(url) {
     <script src="js/auto-status-correction.js"></script>
     <script src="js/status-monitor.js"></script>
     <script src="js/fix-empty-status.js"></script>
+    <script src="js/diagnose-georeferenced-status.js"></script>
     <script src="js/nakala_test_deposit.js?v=20251002"></script>
     <!-- Scripts de debug disponibles si nécessaires: debug-status-update.js, status-fixer.js, fix-empty-status-guide.js -->
 
@@ -1741,7 +1744,352 @@ function openExternalLink(url) {
         }
     </script>
 
-
+    <script>
+    // === GESTION DES ATLAS ===
+    
+    // Fonction pour récupérer les atlas de l'utilisateur depuis l'API
+    async function loadUserAtlas() {
+        console.log('📦 Chargement des atlas de l\'utilisateur...');
+        
+        const container = document.getElementById('atlas-list-container');
+        const statusMessage = document.getElementById('atlas-status-message');
+        const loadingDiv = document.getElementById('atlas-loading');
+        
+        try {
+            // Vérifier l'authentification
+            const token = window.ptmAuth.getToken();
+            if (!token) {
+                console.warn('⚠️ Utilisateur non authentifié');
+                if (loadingDiv) loadingDiv.style.display = 'none';
+                container.innerHTML = `
+                    <div class="fr-alert fr-alert--warning">
+                        <p class="fr-text--sm">
+                            <span class="fr-icon-warning-line fr-mr-1w" aria-hidden="true"></span>
+                            Vous devez être connecté pour voir vos atlas.
+                        </p>
+                    </div>
+                `;
+                if (statusMessage) statusMessage.textContent = 'Connectez-vous pour voir vos atlas.';
+                return;
+            }
+            
+            // Récupérer le profil pour obtenir l'ORCID
+            const profile = await window.ptmAuth.getUserProfile();
+            const orcidId = profile?.orcid || profile?.orcid_id || profile?.sub;
+            
+            if (!orcidId) {
+                throw new Error('Impossible de récupérer l\'identifiant ORCID');
+            }
+            
+            console.log('🔑 ORCID ID:', orcidId);
+            
+            // Appeler l'API pour récupérer les atlas de l'utilisateur
+            const response = await fetch(`https://api.ptm.huma-num.fr/auth/app/galligeo/atlas?owner=${encodeURIComponent(orcidId)}&include_private=true`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            console.log('📡 Réponse API atlas:', response.status, response.statusText);
+            
+            if (!response.ok) {
+                if (response.status === 401) {
+                    throw new Error('Session expirée. Veuillez vous reconnecter.');
+                }
+                throw new Error(`Erreur ${response.status}: ${response.statusText}`);
+            }
+            
+            const data = await response.json();
+            console.log('✅ Atlas reçus:', data);
+            
+            // Afficher les atlas
+            displayAtlasList(data.atlas || data || []);
+            
+            if (statusMessage) {
+                const count = (data.atlas || data || []).length;
+                statusMessage.textContent = count > 0 
+                    ? `${count} atlas trouvé${count > 1 ? 's' : ''}.` 
+                    : 'Aucun atlas pour le moment.';
+            }
+            
+        } catch (error) {
+            console.error('❌ Erreur lors du chargement des atlas:', error);
+            
+            if (loadingDiv) loadingDiv.style.display = 'none';
+            container.innerHTML = `
+                <div class="fr-alert fr-alert--error">
+                    <p class="fr-text--sm">
+                        <span class="fr-icon-error-line fr-mr-1w" aria-hidden="true"></span>
+                        ${error.message || 'Erreur lors du chargement des atlas.'}
+                    </p>
+                </div>
+            `;
+            
+            if (statusMessage) statusMessage.textContent = 'Erreur de chargement.';
+        }
+    }
+    
+    // Fonction pour afficher la liste des atlas
+    function displayAtlasList(atlasList) {
+        console.log('🖼️ Affichage de', atlasList.length, 'atlas');
+        
+        const container = document.getElementById('atlas-list-container');
+        const loadingDiv = document.getElementById('atlas-loading');
+        
+        // Masquer le message de chargement
+        if (loadingDiv) loadingDiv.style.display = 'none';
+        
+        // Si aucun atlas
+        if (!atlasList || atlasList.length === 0) {
+            container.innerHTML = `
+                <div class="fr-alert fr-alert--info">
+                    <p class="fr-text--sm">
+                        <span class="fr-icon-information-line fr-mr-1w" aria-hidden="true"></span>
+                        Vous n'avez pas encore créé d'atlas. Rendez-vous dans la <a href="galerie/index.html">galerie</a> pour sélectionner des cartes et créer votre premier atlas !
+                    </p>
+                </div>
+            `;
+            return;
+        }
+        
+        // Générer la liste HTML des atlas
+        const atlasListHTML = atlasList.map(atlas => {
+            const displayMode = atlas.display_mode || 'diachronique';
+            const isPublic = atlas.is_public !== false;
+            const createdDate = atlas.created_at ? new Date(atlas.created_at).toLocaleDateString('fr-FR') : 'N/A';
+            const mapCount = atlas.ark_ids ? atlas.ark_ids.length : 0;
+            
+            // Nettoyer l'URL : extraire juste le slug si c'est une URL complète
+            let atlasSlug = atlas.url || '';
+            if (atlasSlug.includes('://')) {
+                atlasSlug = atlasSlug.split('/').filter(Boolean).pop();
+            }
+            
+            // Icône selon le mode
+            const modeIcon = displayMode === 'voisinage' 
+                ? '<span class="fr-icon-layout-grid-line" aria-hidden="true"></span>' 
+                : '<span class="fr-icon-time-line" aria-hidden="true"></span>';
+            
+            // Badge de statut
+            const statusBadge = isPublic 
+                ? '<span class="fr-badge fr-badge--success fr-badge--sm">Public</span>'
+                : '<span class="fr-badge fr-badge--warning fr-badge--sm">Privé</span>';
+            
+            return `
+                <div class="fr-card fr-card--horizontal fr-card--sm fr-mb-2w" data-atlas-id="${atlas.id}">
+                    <div class="fr-card__body">
+                        <div class="fr-card__content">
+                            <h4 class="fr-card__title">
+                                ${modeIcon}
+                                <a href="atlas/?slug=${encodeURIComponent(atlasSlug)}" class="fr-card__link" target="_blank">
+                                    ${atlas.name || 'Sans titre'}
+                                </a>
+                            </h4>
+                            <p class="fr-card__desc fr-text--sm">
+                                <strong>Type :</strong> ${displayMode === 'voisinage' ? 'Voisinage' : 'Diachronique'}
+                                <br>
+                                <strong>Cartes :</strong> ${mapCount} carte${mapCount > 1 ? 's' : ''}
+                                <br>
+                                <strong>Créé le :</strong> ${createdDate}
+                            </p>
+                            <div class="fr-card__footer" style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;">
+                                <div>${statusBadge}</div>
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <a href="atlas/?slug=${encodeURIComponent(atlasSlug)}" 
+                                       class="fr-btn fr-btn--sm fr-btn--secondary fr-icon-eye-line"
+                                       title="Voir l'atlas"
+                                       target="_blank">
+                                        Voir
+                                    </a>
+                                    <button class="fr-btn fr-btn--sm fr-btn--tertiary-no-outline fr-icon-delete-line" 
+                                            onclick="confirmDeleteAtlas('${atlas.id}', \`${atlas.name}\`)"
+                                            title="Supprimer cet atlas"
+                                            aria-label="Supprimer l'atlas ${atlas.name}">
+                                        Supprimer
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="fr-card__header">
+                        <div class="fr-card__img" style="background-color: #f5f5f5; display: flex; align-items: center; justify-content: center; min-height: 100px;">
+                            <span class="fr-icon-map-2-fill" style="font-size: 3rem; color: #ccc;" aria-hidden="true"></span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+        container.innerHTML = atlasListHTML;
+    }
+    
+    // Fonction pour confirmer la suppression d'un atlas
+    function confirmDeleteAtlas(atlasId, atlasName) {
+        console.log('🗑️ Demande de suppression atlas:', atlasId, atlasName);
+        
+        const confirmed = confirm(
+            `Êtes-vous sûr de vouloir supprimer l'atlas "${atlasName}" ?\n\n` +
+            `Cette action est irréversible.`
+        );
+        
+        if (confirmed) {
+            deleteAtlas(atlasId, atlasName);
+        } else {
+            console.log('❌ Suppression annulée par l\'utilisateur');
+        }
+    }
+    
+    // Fonction pour supprimer un atlas
+    async function deleteAtlas(atlasId, atlasName) {
+        console.log('🗑️ Suppression de l\'atlas:', atlasId);
+        
+        try {
+            const token = window.ptmAuth.getToken();
+            if (!token) {
+                alert('Vous devez être connecté pour supprimer un atlas.');
+                return;
+            }
+            
+            // Afficher un indicateur de chargement
+            const atlasCard = document.querySelector(`[data-atlas-id="${atlasId}"]`);
+            if (atlasCard) {
+                atlasCard.style.opacity = '0.5';
+                atlasCard.style.pointerEvents = 'none';
+                
+                const deleteButton = atlasCard.querySelector('.fr-btn--tertiary-no-outline');
+                if (deleteButton) {
+                    deleteButton.innerHTML = '<span class="fr-icon-refresh-line fr-mr-1w" aria-hidden="true"></span>Suppression...';
+                    deleteButton.disabled = true;
+                }
+            }
+            
+            // Appeler l'API DELETE
+            const response = await fetch(`https://api.ptm.huma-num.fr/auth/app/galligeo/atlas/${atlasId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            console.log('📡 Réponse API suppression:', response.status, response.statusText);
+            
+            if (!response.ok) {
+                if (response.status === 401) {
+                    throw new Error('Session expirée. Veuillez vous reconnecter.');
+                } else if (response.status === 403) {
+                    throw new Error('Vous n\'avez pas les droits pour supprimer cet atlas.');
+                } else if (response.status === 404) {
+                    throw new Error('Atlas introuvable.');
+                }
+                
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || `Erreur ${response.status}: ${response.statusText}`);
+            }
+            
+            console.log('✅ Atlas supprimé avec succès');
+            
+            // Animer la suppression
+            if (atlasCard) {
+                atlasCard.style.transition = 'all 0.3s ease-out';
+                atlasCard.style.transform = 'translateX(-100%)';
+                atlasCard.style.opacity = '0';
+                
+                setTimeout(() => {
+                    atlasCard.remove();
+                    
+                    // Vérifier s'il reste des atlas
+                    const container = document.getElementById('atlas-list-container');
+                    const remainingCards = container.querySelectorAll('[data-atlas-id]');
+                    
+                    if (remainingCards.length === 0) {
+                        container.innerHTML = `
+                            <div class="fr-alert fr-alert--info">
+                                <p class="fr-text--sm">
+                                    <span class="fr-icon-information-line fr-mr-1w" aria-hidden="true"></span>
+                                    Vous n'avez pas encore créé d'atlas. Rendez-vous dans la <a href="galerie/index.html">galerie</a> pour sélectionner des cartes et créer votre premier atlas !
+                                </p>
+                            </div>
+                        `;
+                    }
+                    
+                    const statusMessage = document.getElementById('atlas-status-message');
+                    if (statusMessage) {
+                        const count = remainingCards.length;
+                        statusMessage.textContent = count > 0 
+                            ? `${count} atlas trouvé${count > 1 ? 's' : ''}.` 
+                            : 'Aucun atlas pour le moment.';
+                    }
+                    
+                    showAtlasNotification('success', `L'atlas "${atlasName}" a été supprimé avec succès.`);
+                }, 300);
+            }
+            
+        } catch (error) {
+            console.error('❌ Erreur lors de la suppression:', error);
+            
+            // Restaurer la carte en cas d'erreur
+            const atlasCard = document.querySelector(`[data-atlas-id="${atlasId}"]`);
+            if (atlasCard) {
+                atlasCard.style.opacity = '1';
+                atlasCard.style.pointerEvents = 'auto';
+                
+                const deleteButton = atlasCard.querySelector('.fr-btn--tertiary-no-outline');
+                if (deleteButton) {
+                    deleteButton.innerHTML = '<span class="fr-icon-delete-line" aria-hidden="true"></span>Supprimer';
+                    deleteButton.disabled = false;
+                }
+            }
+            
+            showAtlasNotification('error', error.message || 'Erreur lors de la suppression de l\'atlas.');
+        }
+    }
+    
+    // Fonction pour afficher une notification temporaire
+    function showAtlasNotification(type, message) {
+        const container = document.getElementById('atlas-list-container');
+        
+        const alertType = type === 'success' ? 'fr-alert--success' : 'fr-alert--error';
+        const iconType = type === 'success' ? 'fr-icon-checkbox-circle-line' : 'fr-icon-error-line';
+        
+        const notification = document.createElement('div');
+        notification.className = `fr-alert ${alertType} fr-mb-2w`;
+        notification.innerHTML = `
+            <p class="fr-text--sm">
+                <span class="${iconType} fr-mr-1w" aria-hidden="true"></span>
+                ${message}
+            </p>
+        `;
+        
+        container.insertBefore(notification, container.firstChild);
+        
+        setTimeout(() => {
+            notification.style.transition = 'opacity 0.3s ease-out';
+            notification.style.opacity = '0';
+            setTimeout(() => notification.remove(), 300);
+        }, 5000);
+    }
+    
+    // Exposer les fonctions globalement
+    window.loadUserAtlas = loadUserAtlas;
+    window.confirmDeleteAtlas = confirmDeleteAtlas;
+    window.deleteAtlas = deleteAtlas;
+    
+    // Observer l'ouverture de l'onglet atlas dans la modale
+    document.addEventListener('DOMContentLoaded', function() {
+        const atlasTab = document.getElementById('tabpanel-atlas');
+        if (atlasTab) {
+            atlasTab.addEventListener('click', function() {
+                console.log('📋 Onglet Atlas activé - chargement des atlas');
+                setTimeout(() => loadUserAtlas(), 100);
+            });
+        }
+    });
+    
+    // === FIN GESTION DES ATLAS ===
+    </script>
 
     <!-- Matomo -->
     <script>

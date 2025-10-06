@@ -286,21 +286,35 @@ async function georef_api_post(url = urlToAPI, data = {}) {
     setGeoreferencingButtonState('normal');
 
     // Mettre à jour le statut de la carte vers "géoréférencée"
+    console.log(`🔄 Mise à jour du statut de la carte ${window.input_ark} vers 'georeferenced'`);
+    
     // Pour les utilisateurs connectés, utiliser la nouvelle API optimisée
     if (window.ptmAuth && window.ptmAuth.isAuthenticated() && window.input_ark) {
       window.ptmAuth.updateWorkedMap(window.input_ark, 'georeferenced', {
         quality: 2 // Qualité par défaut pour géoréférencement réussi
+      }).then(result => {
+        console.log('✅ Statut mis à jour vers "georeferenced" (utilisateur connecté):', result);
       }).catch(error => {
-        console.error('Erreur lors de la mise à jour du statut de la carte (utilisateur connecté):', error);
+        console.error('❌ Erreur lors de la mise à jour du statut de la carte (utilisateur connecté):', error);
+        // Afficher l'erreur à l'utilisateur
+        console.error('Détails de l\'erreur:', error.message || error);
       });
     } 
     // Pour les utilisateurs anonymes, sauvegarder localement ET en API
     else if (window.input_ark && window.ptmAuth) {
       window.ptmAuth.saveAnonymousMapStatus(window.input_ark, 'georeferenced', { 
         quality: 2  // Qualité par défaut pour géoréférencement réussi
+      }).then(result => {
+        console.log('✅ Statut mis à jour vers "georeferenced" (utilisateur anonyme):', result);
       }).catch(error => {
-        console.error('Erreur lors de la sauvegarde locale du statut de la carte:', error);
+        console.error('❌ Erreur lors de la sauvegarde locale du statut de la carte:', error);
+        console.error('Détails de l\'erreur:', error.message || error);
       });
+    } else {
+      console.warn('⚠️ Impossible de mettre à jour le statut: ptmAuth ou input_ark non disponible');
+      console.warn('  - window.ptmAuth:', !!window.ptmAuth);
+      console.warn('  - ptmAuth.isAuthenticated():', window.ptmAuth?.isAuthenticated());
+      console.warn('  - window.input_ark:', window.input_ark);
     }
 
     // Supprimer l'ancien layer géoréférencé s'il existe
