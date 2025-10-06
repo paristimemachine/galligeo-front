@@ -1,27 +1,331 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr" data-fr-theme>
 <head>
-<title>Galligeo &mdash; Atlas des villes de France</title>
-<style>
-    body {
-        width: 35em;
-        margin: 0 auto;
-        font-family: Tahoma, Verdana, Arial, sans-serif;
-    }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galligeo - Visualiseur d'Atlas</title>
+    
+    <!-- DSFR -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@gouvfr/dsfr@1.11.2/dist/dsfr/dsfr.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@gouvfr/dsfr@1.11.2/dist/utility/icons/icons.min.css">
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" 
+          crossorigin=""/>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../css/atlas.css">
+    
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        
+        .main-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        
+        .atlas-header {
+            flex-shrink: 0;
+            background: var(--background-default-grey);
+            border-bottom: 1px solid var(--border-default-grey);
+            padding: 1rem;
+            z-index: 1000;
+        }
+        
+        .atlas-info-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .atlas-title-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .atlas-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin: 0;
+            color: var(--text-title-grey);
+        }
+        
+        .atlas-type-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.25rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        
+        .atlas-type-badge.diachronique {
+            background: var(--background-contrast-info);
+            color: var(--text-label-blue-france);
+        }
+        
+        .atlas-type-badge.voisinage {
+            background: var(--background-contrast-success);
+            color: var(--text-label-green-emeraude);
+        }
+        
+        .atlas-controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        
+        #sync-toggle-container {
+            margin: 0;
+        }
+        
+        #sync-toggle-container .fr-toggle__label {
+            font-size: 0.875rem;
+        }
+        
+        .content-wrapper {
+            flex: 1;
+            display: flex;
+            min-height: 0;
+            position: relative;
+        }
+        
+        .maps-container {
+            flex: 1;
+            display: flex;
+            position: relative;
+        }
+        
+        .layer-control-panel {
+            width: 320px;
+            flex-shrink: 0;
+            overflow-y: auto;
+            background: white;
+            border-left: 1px solid var(--border-default-grey);
+        }
+        
+        #loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            gap: 1rem;
+        }
+        
+        #loading-overlay.hidden {
+            display: none;
+        }
+        
+        .error-message {
+            max-width: 600px;
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        /* Single View */
+        #single-view {
+            width: 100%;
+            height: 100%;
+            display: block; /* Par défaut visible */
+        }
+        
+        #map-single {
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* Split View */
+        #split-view {
+            display: none; /* Par défaut caché */
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+        
+        #map-left,
+        #map-right {
+            flex: 1;
+            height: 100%;
+        }
+        
+        #map-divider {
+            width: 8px;
+            background: var(--border-default-grey);
+            cursor: col-resize;
+            flex-shrink: 0;
+            position: relative;
+            z-index: 100;
+        }
+        
+        #map-divider:hover {
+            background: var(--border-action-high-blue-france);
+        }
+        
+        @media (max-width: 992px) {
+            .layer-control-panel {
+                width: 280px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .atlas-info-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .layer-control-panel {
+                width: 100%;
+                max-height: 40vh;
+                border-left: none;
+                border-top: 1px solid var(--border-default-grey);
+            }
+            
+            .content-wrapper {
+                flex-direction: column;
+            }
+            
+            #split-view {
+                flex-direction: column;
+            }
+            
+            #map-divider {
+                width: 100%;
+                height: 8px;
+                cursor: row-resize;
+            }
+        }
+    </style>
 </head>
 <body>
-<h1>Galligeo : atlas des villes de France</h1>
-
-<p>
-  <a href="https://app.ptm.huma-num.fr/galligeo/atlas/avignon/" target="_blank">Avignon</a><br/>
-</p>
-
-<p>
-  <a href="https://app.ptm.huma-num.fr/galligeo/atlas/besancon/" target="_blank">Besan&ccedil;on</a><br/>
-</p>
-
-
-<!-- <p><em>Coming soon.</em></p> -->
+    <div class="main-container">
+        <!-- Header -->
+        <header class="atlas-header">
+            <div class="atlas-info-bar">
+                <div class="atlas-title-section">
+                    <a href="../galerie/" class="fr-btn fr-btn--secondary fr-btn--sm fr-icon-arrow-left-line" 
+                       title="Retour à la galerie">
+                        Retour
+                    </a>
+                    <h1 class="atlas-title" id="atlas-title">Chargement...</h1>
+                    <span class="atlas-type-badge" id="atlas-type-badge"></span>
+                </div>
+                
+                <div class="atlas-controls">
+                    <!-- View Mode Toggle -->
+                    <button id="toggle-view-btn" 
+                            class="fr-btn fr-btn--secondary fr-btn--sm fr-icon-layout-grid-line"
+                            title="Basculer en mode éclaté">
+                        Mode éclaté
+                    </button>
+                    
+                    <!-- Sync Toggle DSFR (only visible in split view) -->
+                    <div class="fr-toggle" id="sync-toggle-container" style="display: none;">
+                        <input type="checkbox" 
+                               class="fr-toggle__input" 
+                               id="toggle-sync" 
+                               checked>
+                        <label class="fr-toggle__label" 
+                               for="toggle-sync" 
+                               data-fr-checked-label="Synchronisé" 
+                               data-fr-unchecked-label="Indépendant">
+                            Synchroniser les cartes
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </header>
+        
+        <!-- Content -->
+        <div class="content-wrapper">
+            <div class="maps-container">
+                <!-- Single View -->
+                <div id="single-view">
+                    <div id="map-single"></div>
+                </div>
+                
+                <!-- Split View -->
+                <div id="split-view">
+                    <div id="map-left"></div>
+                    <div id="map-divider"></div>
+                    <div id="map-right"></div>
+                </div>
+                
+                <!-- Loading Overlay -->
+                <div id="loading-overlay">
+                    <div class="fr-loader"></div>
+                    <p class="fr-text--lg">Chargement de l'atlas...</p>
+                    <p id="loading-message" class="fr-text--sm" style="color: var(--text-mention-grey);"></p>
+                </div>
+            </div>
+            
+            <!-- Layer Control Panel -->
+            <aside class="layer-control-panel">
+                <div style="padding: 1rem; border-bottom: 1px solid var(--border-default-grey);">
+                    <h2 class="fr-h6" style="margin: 0;">
+                        <span class="fr-icon-map-2-line" aria-hidden="true"></span>
+                        Contrôle des couches
+                    </h2>
+                </div>
+                
+                <div id="layer-controls">
+                    <!-- Layer controls will be generated here by JavaScript -->
+                </div>
+                
+                <div id="no-layers-message" 
+                     style="padding: 2rem 1rem; text-align: center; color: var(--text-mention-grey);">
+                    <span class="fr-icon-information-line" aria-hidden="true" 
+                          style="font-size: 2rem; display: block; margin-bottom: 0.5rem;"></span>
+                    <p class="fr-text--sm">Aucune couche disponible</p>
+                </div>
+            </aside>
+        </div>
+    </div>
+    
+    <!-- Scripts -->
+    <!-- PTM Auth -->
+    <script src="../js/ptm-auth.js" onerror="console.error('❌ Erreur chargement ptm-auth.js')"></script>
+    
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" 
+            crossorigin=""></script>
+    
+    <!-- Leaflet IIIF -->
+    <script src="../lib/Leaflet.IIIF.js"></script>
+    
+    <!-- Leaflet Sync -->
+    <script src="../lib/L.Map.Sync.js" onload="console.log('✅ Leaflet.Sync chargé')" onerror="console.error('❌ Erreur chargement Leaflet.Sync.js')"></script>
+    
+    <!-- DSFR -->
+    <script src="https://cdn.jsdelivr.net/npm/@gouvfr/dsfr@1.11.2/dist/dsfr/dsfr.module.min.js" type="module"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@gouvfr/dsfr@1.11.2/dist/dsfr/dsfr.nomodule.min.js" type="text/javascript" nomodule></script>
+    
+    <!-- Debug Leaflet.Sync -->
+    <script>
+        console.log('🔍 Vérification Leaflet.Sync:', typeof L !== 'undefined' && typeof L.Map !== 'undefined' && typeof L.Map.prototype.sync);
+        if (typeof L !== 'undefined' && L.Map && typeof L.Map.prototype.sync === 'function') {
+            console.log('✅ Leaflet.Sync est bien chargé et actif');
+        } else {
+            console.error('❌ Leaflet.Sync n\'est pas disponible');
+        }
+    </script>
+    
+    <!-- Atlas Viewer -->
+    <script src="atlas.js"></script>
 </body>
 </html>

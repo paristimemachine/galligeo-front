@@ -1422,13 +1422,13 @@
             // Préparer les données selon le format de l'API
             const selectedArray = Array.from(selectedMaps);
             
-            // Générer l'URL de l'atlas
+            // Générer l'URL de l'atlas (juste le slug, pas l'URL complète)
             const atlasSlug = atlasName.toLowerCase()
                 .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // Retirer les accents
                 .replace(/[^a-z0-9]+/g, '-') // Remplacer les caractères spéciaux par des tirets
                 .replace(/^-+|-+$/g, ''); // Retirer les tirets au début et à la fin
             
-            const atlasUrl = `${window.location.origin}/atlas/${atlasSlug}-${Date.now()}`;
+            const atlasUrl = `${atlasSlug}-${Date.now()}`;
             
             // Construire le payload selon le format de l'API
             const atlasData = {
@@ -3203,7 +3203,7 @@
                 
                 const testPayload = {
                     name: "Test Atlas " + Date.now(),
-                    url: `${window.location.origin}/atlas/test-${Date.now()}`,
+                    url: `test-${Date.now()}`,
                     ark_ids: ["ark:/12148/test1", "ark:/12148/test2"],
                     is_public: true
                 };
@@ -3661,6 +3661,13 @@
                 const createdDate = atlas.created_at ? new Date(atlas.created_at).toLocaleDateString('fr-FR') : 'N/A';
                 const mapCount = atlas.ark_ids ? atlas.ark_ids.length : 0;
                 
+                // Nettoyer l'URL : extraire juste le slug si c'est une URL complète
+                let atlasSlug = atlas.url || '';
+                if (atlasSlug.includes('://')) {
+                    // Si c'est une URL complète, extraire la dernière partie
+                    atlasSlug = atlasSlug.split('/').filter(Boolean).pop();
+                }
+                
                 // Icône selon le mode
                 const modeIcon = displayMode === 'voisinage' 
                     ? '<span class="fr-icon-layout-grid-line" aria-hidden="true"></span>' 
@@ -3677,7 +3684,7 @@
                             <div class="fr-card__content">
                                 <h4 class="fr-card__title">
                                     ${modeIcon}
-                                    <a href="${atlas.url || '#'}" class="fr-card__link" ${atlas.url ? '' : 'onclick="event.preventDefault(); alert(\'Lien non disponible\');"'}>
+                                    <a href="../atlas/?slug=${encodeURIComponent(atlasSlug)}" class="fr-card__link" target="_blank">
                                         ${atlas.name || 'Sans titre'}
                                     </a>
                                 </h4>
@@ -3688,14 +3695,22 @@
                                     <br>
                                     <strong>Créé le :</strong> ${createdDate}
                                 </p>
-                                <div class="fr-card__footer" style="display: flex; justify-content: space-between; align-items: center;">
+                                <div class="fr-card__footer" style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;">
                                     <div>${statusBadge}</div>
-                                    <button class="fr-btn fr-btn--sm fr-btn--tertiary-no-outline fr-icon-delete-line" 
-                                            onclick="confirmDeleteAtlas('${atlas.id}', \`${atlas.name}\`)"
-                                            title="Supprimer cet atlas"
-                                            aria-label="Supprimer l'atlas ${atlas.name}">
-                                        Supprimer
-                                    </button>
+                                    <div style="display: flex; gap: 0.5rem;">
+                                        <a href="../atlas/?slug=${encodeURIComponent(atlasSlug)}" 
+                                           class="fr-btn fr-btn--sm fr-btn--secondary fr-icon-eye-line"
+                                           title="Voir l'atlas"
+                                           target="_blank">
+                                            Voir
+                                        </a>
+                                        <button class="fr-btn fr-btn--sm fr-btn--tertiary-no-outline fr-icon-delete-line" 
+                                                onclick="confirmDeleteAtlas('${atlas.id}', \`${atlas.name}\`)"
+                                                title="Supprimer cet atlas"
+                                                aria-label="Supprimer l'atlas ${atlas.name}">
+                                            Supprimer
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>

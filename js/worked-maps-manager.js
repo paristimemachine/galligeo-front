@@ -378,7 +378,8 @@ class WorkedMapsManager {
             
             if (window.ptmAuth && window.ptmAuth.isAuthenticated()) {
                 // Utilisateur connecté : utiliser l'API
-                await window.ptmAuth.updateWorkedMap(arkId, mapData, 'en-cours');
+                // CORRECTION: ordre des paramètres (arkId, status, additionalData)
+                await window.ptmAuth.updateWorkedMap(arkId, 'en-cours', mapData);
             } else {
                 // Utilisateur anonyme : sauvegarder localement
                 await window.ptmAuth.saveAnonymousMapStatus(arkId, 'en-cours', mapData);

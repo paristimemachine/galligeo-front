@@ -1,5 +1,72 @@
 # Changelog Galligeo
 
+## [2025-10-06] - Correction des statuts vides dans la base de données
+
+### 🐛 Corrections critiques (Critical Bugfixes)
+
+- **Statuts vides en base de données** : Correction du bug créant des objets `status: {}` au lieu de chaînes
+  - **Cause** : Ordre incorrect des paramètres dans `worked-maps-manager.js` ligne 381
+  - **Avant** : `updateWorkedMap(arkId, mapData, 'en-cours')` ❌ 
+  - **Après** : `updateWorkedMap(arkId, 'en-cours', mapData)` ✅
+  - **Impact** : Les cartes ajoutées avaient un statut vide `{}` au lieu de `"en-cours"`
+
+### 🛡️ Prévention (Protection)
+
+- **Validation stricte des statuts** dans `ptm-auth.js` :
+  - Vérifie que le statut est défini et non vide
+  - Vérifie que le statut est une chaîne de caractères
+  - Vérifie que le statut fait partie des valeurs autorisées : `'en-cours'`, `'georeferenced'`, `'deposee'`
+  - Lance une erreur explicite si le statut est invalide
+  - **Résultat** : Impossible de créer de nouveaux statuts vides
+
+### 🔧 Outils de correction (Migration Tools)
+
+- **Nouveau script** : `js/fix-empty-status.js`
+  - `diagnose()` : Identifie les cartes avec statut vide (sans modification)
+  - `checkAndFix()` : Correction automatique intelligente basée sur la présence sur le serveur de tuiles
+  - `quickFix()` : Correction rapide vers un statut par défaut
+  
+- **Commandes console** :
+  ```javascript
+  await window.diagnoseEmptyStatus()    // Diagnostic
+  await window.fixAllEmptyStatus()      // Correction automatique
+  ```
+
+### 🧪 Tests (Testing)
+
+- **Nouveau script** : `js/test-status-validation.js`
+  - Teste l'acceptation des statuts valides
+  - Teste le rejet des statuts invalides (vides, incorrects, mauvais type)
+  - Teste l'ordre correct des paramètres
+  - **Commande** : `await window.testStatus()`
+
+### 📝 Documentation
+
+- **Nouveau document** : `doc/FIX_EMPTY_STATUS.md`
+  - Explication détaillée du problème et de sa cause
+  - Guide d'utilisation du script de correction
+  - Exemples de sortie console
+  - Instructions de vérification post-correction
+
+### 📦 Fichiers modifiés
+
+1. `js/worked-maps-manager.js` - Correction ordre des paramètres
+2. `js/ptm-auth.js` - Validation stricte des statuts
+3. `js/fix-empty-status.js` - Script de migration (nouveau)
+4. `js/fix-empty-status-guide.js` - Guide rapide (nouveau)
+5. `js/test-status-validation.js` - Tests de validation (nouveau)
+6. `index.html` - Chargement du script fix-empty-status.js
+7. `doc/FIX_EMPTY_STATUS.md` - Documentation complète (nouveau)
+
+### ⚠️ Action requise
+
+Les utilisateurs ayant des cartes avec statut vide doivent exécuter le script de correction :
+1. Se connecter avec ORCID
+2. Ouvrir la console (F12)
+3. Exécuter : `await window.fixAllEmptyStatus()`
+
+---
+
 ## [2025-10-04] - Menu utilisateur déroulant dans la galerie (v2)
 
 ### ✨ Nouvelles fonctionnalités (Added)

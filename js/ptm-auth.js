@@ -475,13 +475,22 @@ class PTMAuthFixed {
 
         // Gérer rec_ark selon la doc backend
         if (data.rec_ark && Array.isArray(data.rec_ark)) {
-            validated.rec_ark = data.rec_ark.map(item => ({
-                ark: item.ark,                                    // OBLIGATOIRE
-                status: item.status,                              // OBLIGATOIRE
-                quality: item.quality || 2,                      // Optionnel: 1-4
-                firstWorked: item.firstWorked || new Date().toISOString(),  // Optionnel
-                lastUpdated: item.lastUpdated || new Date().toISOString()   // Optionnel
-            }));
+            validated.rec_ark = data.rec_ark.map(item => {
+                const validatedItem = {
+                    ark: item.ark,                                    // OBLIGATOIRE
+                    status: item.status,                              // OBLIGATOIRE
+                    quality: item.quality || 2,                      // Optionnel: 1-4
+                    firstWorked: item.firstWorked || new Date().toISOString(),  // Optionnel
+                    lastUpdated: item.lastUpdated || new Date().toISOString()   // Optionnel
+                };
+                
+                // Conserver le DOI si présent (pour les cartes déposées)
+                if (item.doi) {
+                    validatedItem.doi = item.doi;
+                }
+                
+                return validatedItem;
+            });
         }
 
         // Gérer les settings
@@ -496,6 +505,13 @@ class PTMAuthFixed {
      * Sauvegarde le statut d'une carte ARK spécifique
      */
     async saveMapStatus(arkId, status, additionalData = {}) {
+        // Validation du statut
+        const validStatuses = ['en-cours', 'georeferenced', 'deposee'];
+        if (!status || typeof status !== 'string' || !validStatuses.includes(status)) {
+            console.error(`❌ Statut invalide: "${status}". Doit être l'un de: ${validStatuses.join(', ')}`);
+            throw new Error(`Statut invalide: "${status}". Les valeurs valides sont: ${validStatuses.join(', ')}`);
+        }
+        
         const mapData = {
             ark: arkId,
             status: status,
@@ -503,6 +519,11 @@ class PTMAuthFixed {
             firstWorked: additionalData.firstWorked || new Date().toISOString(),
             lastUpdated: new Date().toISOString()
         };
+        
+        // Ajouter le DOI si fourni (pour les cartes déposées sur Nakala)
+        if (additionalData.doi) {
+            mapData.doi = additionalData.doi;
+        }
 
         try {
             // Récupérer les données existantes
