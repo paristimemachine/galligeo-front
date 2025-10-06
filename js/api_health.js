@@ -150,7 +150,7 @@ class APIHealthMonitor {
     
     async checkGallicaHealth() {
         try {
-            console.log('Vérification de l\'état de l\'API Gallica IIIF...');
+            // console.log('Vérification de l\'état de l\'API Gallica IIIF...');
             
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), this.timeoutDuration);
@@ -172,7 +172,7 @@ class APIHealthMonitor {
                     if (data && (data['@context'] || data.protocol)) {
                         this.gallicaStatus = 'healthy';
                         this.updateIndicator('gallica', 'healthy');
-                        console.log('API Gallica IIIF: OK');
+                        // console.log('API Gallica IIIF: OK');
                     } else {
                         this.gallicaStatus = 'warning';
                         this.updateIndicator('gallica', 'warning', 'Réponse inattendue');
@@ -204,7 +204,7 @@ class APIHealthMonitor {
     
     async checkPTMTileHealth() {
         try {
-            console.log('Vérification de l\'état du serveur PTM...');
+            // console.log('Vérification de l\'état du serveur PTM...');
             
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), this.timeoutDuration);
@@ -230,7 +230,7 @@ class APIHealthMonitor {
                             (data.name || data.type || data.bounds || data.maxzoom || data.tiles || data.tileInfo || data.layers || data.status)) {
                             this.ptmTileStatus = 'healthy';
                             this.updateIndicator('ptm', 'healthy');
-                            console.log('Serveur PTM (info_tiles): OK');
+                            // console.log('Serveur PTM (info_tiles): OK');
                         } else {
                             this.ptmTileStatus = 'warning';
                             this.updateIndicator('ptm', 'warning', 'Réponse inattendue');

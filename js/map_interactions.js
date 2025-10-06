@@ -235,6 +235,16 @@ function add_wms_layers(map) {
 
     //available layers
 
+    var OpenStreetMap_classique = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+        maxZoom: 21,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Tiles style by <a href="https://www.hotosm.org/" target="_blank">Humanitarian OpenStreetMap Team</a> hosted by <a href="https://openstreetmap.fr/" target="_blank">OpenStreetMap France</a>'
+    });
+
+    var OpenStreetMap_France = L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
+        maxZoom: 20,
+        attribution: '&copy; OpenStreetMap France | &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    });
+
     var OpenStreetMap_HOT = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
         maxZoom: 21,
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Tiles style by <a href="https://www.hotosm.org/" target="_blank">Humanitarian OpenStreetMap Team</a> hosted by <a href="https://openstreetmap.fr/" target="_blank">OpenStreetMap France</a>'
@@ -337,6 +347,8 @@ function add_wms_layers(map) {
       )
 
     var baseLayers = {
+        "OSM Classique" : OpenStreetMap_classique,
+        "OSM France" : OpenStreetMap_France,
         "Humanitarian" : OpenStreetMap_HOT,
         "Black" : OpenStreetMap_BLK,
         "OpenTopoMap" : OpenTopoMap,
@@ -354,7 +366,7 @@ function add_wms_layers(map) {
     };
 
     //set active and default layer
-    baseLayers['Humanitarian'].addTo(map);
+    baseLayers['OSM Classique'].addTo(map);
 
     map.zoomControl.setPosition('topright');
 

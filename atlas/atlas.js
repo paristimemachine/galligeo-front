@@ -204,37 +204,139 @@ async function loadMapsMetadata() {
     await tryToFitBounds();
 }
 
+// Fonction pour récupérer les informations de tuiles pour une carte
+async function fetchTileInfo(arkId) {
+    try {
+        const infoUrl = `https://tile.ptm.huma-num.fr/tiles/ark/info_tiles/12148/${arkId}`;
+        const response = await fetch(infoUrl);
+        
+        if (!response.ok) {
+            console.warn(`⚠️ Impossible de récupérer les info_tiles pour ${arkId}`);
+            return null;
+        }
+        
+        const info = await response.json();
+        
+        // Parser les bounds (format: "minLng,minLat,maxLng,maxLat")
+        if (info.bounds) {
+            const [minLng, minLat, maxLng, maxLat] = info.bounds.split(',').map(parseFloat);
+            return {
+                arkId: arkId,
+                bounds: {
+                    minLng: minLng,
+                    minLat: minLat,
+                    maxLng: maxLng,
+                    maxLat: maxLat
+                },
+                minzoom: parseInt(info.minzoom) || 11,
+                maxzoom: parseInt(info.maxzoom) || 16,
+                name: info.name
+            };
+        }
+        
+        return null;
+    } catch (error) {
+        console.warn(`⚠️ Erreur lors de la récupération des info_tiles pour ${arkId}:`, error);
+        return null;
+    }
+}
+
+// Fonction pour calculer l'emprise maximale de plusieurs cartes
+function calculateCombinedBounds(tilesInfoArray) {
+    if (!tilesInfoArray || tilesInfoArray.length === 0) {
+        return null;
+    }
+    
+    // Filtrer les résultats valides
+    const validInfos = tilesInfoArray.filter(info => info && info.bounds);
+    
+    if (validInfos.length === 0) {
+        return null;
+    }
+    
+    // Calculer l'emprise maximale
+    let minLng = validInfos[0].bounds.minLng;
+    let minLat = validInfos[0].bounds.minLat;
+    let maxLng = validInfos[0].bounds.maxLng;
+    let maxLat = validInfos[0].bounds.maxLat;
+    
+    for (let i = 1; i < validInfos.length; i++) {
+        const bounds = validInfos[i].bounds;
+        minLng = Math.min(minLng, bounds.minLng);
+        minLat = Math.min(minLat, bounds.minLat);
+        maxLng = Math.max(maxLng, bounds.maxLng);
+        maxLat = Math.max(maxLat, bounds.maxLat);
+    }
+    
+    return {
+        minLng: minLng,
+        minLat: minLat,
+        maxLng: maxLng,
+        maxLat: maxLat
+    };
+}
+
+// Fonction pour centrer la carte sur l'emprise des tuiles
+async function fitToTilesBounds() {
+    try {
+        updateLoadingMessage('Calcul de l\'emprise des tuiles...');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        loadingOverlay.classList.remove('hidden');
+        
+        // Récupérer les informations de toutes les cartes en parallèle
+        const tilesInfoPromises = mapsData.map(mapData => fetchTileInfo(mapData.arkId));
+        const tilesInfoArray = await Promise.all(tilesInfoPromises);
+        
+        // Calculer l'emprise combinée
+        const combinedBounds = calculateCombinedBounds(tilesInfoArray);
+        
+        if (!combinedBounds) {
+            console.warn('⚠️ Aucune information de bounds disponible');
+            loadingOverlay.classList.add('hidden');
+            return;
+        }
+        
+        // Créer un objet Leaflet bounds
+        const bounds = L.latLngBounds(
+            [combinedBounds.minLat, combinedBounds.minLng],
+            [combinedBounds.maxLat, combinedBounds.maxLng]
+        );
+        
+        // Centrer la/les carte(s) sur les bounds
+        if (currentView === 'single') {
+            maps.single.fitBounds(bounds, { padding: [20, 20] });
+        } else {
+            maps.left.fitBounds(bounds, { padding: [20, 20] });
+            maps.right.fitBounds(bounds, { padding: [20, 20] });
+        }
+        
+        console.log('📍 Vue centrée sur l\'emprise des tuiles:', combinedBounds);
+        console.log(`📊 ${tilesInfoArray.filter(i => i).length} carte(s) traitée(s)`);
+        
+        loadingOverlay.classList.add('hidden');
+        
+    } catch (error) {
+        console.error('❌ Erreur lors du centrage sur les tuiles:', error);
+        document.getElementById('loading-overlay').classList.add('hidden');
+    }
+}
+
 // Fonction pour ajuster la vue sur les tuiles
 async function tryToFitBounds() {
     try {
-        // Tenter de récupérer les métadonnées depuis l'API PTM si elle existe
-        const firstArkId = mapsData[0].arkId;
-        const metadataUrl = `https://api.ptm.huma-num.fr/tiles/ark/12148/${firstArkId}/metadata.json`;
-        
-        const response = await fetch(metadataUrl);
-        if (response.ok) {
-            const metadata = await response.json();
-            if (metadata.bounds) {
-                const bounds = L.latLngBounds(
-                    [metadata.bounds.south, metadata.bounds.west],
-                    [metadata.bounds.north, metadata.bounds.east]
-                );
-                maps.single.fitBounds(bounds);
-                console.log('📍 Bounds ajustés depuis métadonnées:', bounds);
-                return;
-            }
-        }
+        // Utiliser la nouvelle API info_tiles
+        await fitToTilesBounds();
     } catch (error) {
         console.warn('⚠️ Impossible de récupérer les bounds, utilisation des bounds par défaut');
+        
+        // Bounds par défaut pour la France
+        const franceBounds = L.latLngBounds(
+            [41.3, -5.2],  // Sud-Ouest (Perpignan)
+            [51.1, 9.6]    // Nord-Est (Strasbourg)
+        );
+        maps.single.fitBounds(franceBounds);
+        console.log('📍 Bounds par défaut (France) appliqués');
     }
-    
-    // Bounds par défaut pour la France
-    const franceBounds = L.latLngBounds(
-        [41.3, -5.2],  // Sud-Ouest (Perpignan)
-        [51.1, 9.6]    // Nord-Est (Strasbourg)
-    );
-    maps.single.fitBounds(franceBounds);
-    console.log('📍 Bounds par défaut (France) appliqués');
 }
 
 // Cette fonction n'est plus utilisée avec le serveur PTM

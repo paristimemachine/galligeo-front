@@ -94,14 +94,12 @@ class GalerieManager {
      * Initialise la page
      */
     async init() {
-        console.log('Initialisation de la galerie des cartes géoréférencées');
-        
         try {
             await this.loadAllGeoreferencedMaps();
             this.updateStatistics();
             this.displayMaps();
         } catch (error) {
-            console.error('Erreur lors de l\'initialisation:', error);
+            console.error('Erreur initialisation galerie:', error);
             this.displayError('Erreur lors du chargement des cartes géoréférencées');
         }
     }
@@ -110,32 +108,25 @@ class GalerieManager {
      * Charge toutes les cartes géoréférencées depuis l'API
      */
     async loadAllGeoreferencedMaps() {
-        console.log('Chargement de toutes les cartes géoréférencées...');
         this.isLoading = true;
         
         try {
-            // Utiliser l'API PTM pour récupérer toutes les cartes géoréférencées
             const maps = await window.ptmAuth.getAllGeoreferencedMaps();
-            console.log('Cartes géoréférencées récupérées:', maps);
             
             // Enrichir les données avec les métadonnées Gallica
             for (const map of maps) {
                 try {
                     const metadata = await this.getGallicaMetadata(map.ark);
                     if (metadata && !metadata.error) {
-                        // Enrichir avec les métadonnées Gallica
                         map.title = metadata.metadata['Titre'] || map.title;
                         map.creator = metadata.metadata['Créateur'] || map.creator;
                         map.date = metadata.metadata['Date'] || map.date;
                         map.thumbnailUrl = metadata.thumbnailUrl;
                         map.gallicaUrl = metadata.gallicaUrl;
                     }
-                    
-                    // Déterminer la période à partir de la date
                     map.period = this.determinePeriodFromDate(map.date);
-                    
                 } catch (error) {
-                    console.error(`Erreur lors du chargement des métadonnées pour ${map.ark}:`, error);
+                    // Métadonnées non critiques, continuer silencieusement
                 }
             }
             
@@ -143,10 +134,7 @@ class GalerieManager {
             this.filteredMaps = [...this.allMaps];
             
         } catch (error) {
-            console.error('Erreur lors du chargement depuis l\'API:', error);
-            
-            // Fallback: utiliser des données d'exemple si l'API n'est pas disponible
-            console.log('Utilisation de données d\'exemple en fallback');
+            console.error('Erreur chargement API:', error);
             await this.loadExampleMaps();
         }
         
@@ -157,7 +145,6 @@ class GalerieManager {
      * Charge des cartes d'exemple en cas d'indisponibilité de l'API
      */
     async loadExampleMaps() {
-        // Données d'exemple pour le développement/démonstration
         const exampleMaps = [
             {
                 ark: 'btv1b53121232b',
@@ -191,12 +178,11 @@ class GalerieManager {
             }
         ];
 
-        // Enrichir les données d'exemple avec les métadonnées Gallica
+        // Enrichir avec les métadonnées Gallica
         for (const map of exampleMaps) {
             try {
                 const metadata = await this.getGallicaMetadata(map.ark);
                 if (metadata && !metadata.error) {
-                    // Préférer les métadonnées Gallica si disponibles
                     map.title = metadata.metadata['Titre'] || map.title;
                     map.creator = metadata.metadata['Créateur'] || map.creator;
                     map.date = metadata.metadata['Date'] || map.date;
@@ -204,7 +190,7 @@ class GalerieManager {
                     map.gallicaUrl = metadata.gallicaUrl;
                 }
             } catch (error) {
-                console.error(`Erreur lors du chargement des métadonnées pour ${map.ark}:`, error);
+                // Continuer silencieusement
             }
         }
 
@@ -223,11 +209,10 @@ class GalerieManager {
 
         try {
             const manifestUrl = `https://openapi.bnf.fr/iiif/presentation/v3/ark:/12148/${arkId}/manifest.json`;
-            console.log(`Chargement des métadonnées pour ${arkId}`);
             
             const response = await fetch(manifestUrl);
             if (!response.ok) {
-                throw new Error(`Erreur HTTP: ${response.status}`);
+                throw new Error(`HTTP ${response.status}`);
             }
             
             const data = await response.json();
@@ -312,7 +297,6 @@ class GalerieManager {
             return result;
             
         } catch (error) {
-            console.error(`Erreur lors du chargement des métadonnées pour ${arkId}:`, error);
             const errorResult = {
                 arkId,
                 metadata: {
@@ -416,7 +400,7 @@ class GalerieManager {
                 }
             }
         } catch (error) {
-            console.log('Statistiques avancées non disponibles, utilisation des données locales');
+            // Utiliser les statistiques locales
         }
     }
 

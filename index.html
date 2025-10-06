@@ -1046,9 +1046,6 @@ function openExternalLink(url) {
     // INITIALISATION GLOBALE DES MODULES
     // =======================================================
     
-    // PTMAuth est déjà initialisé par js/ptm-auth.js (window.ptmAuth)
-    console.log('✅ PTMAuth disponible:', typeof window.ptmAuth !== 'undefined');
-    
     // Variable globale pour suivre l'état d'initialisation
     let settingsFormInitialized = false;
 
@@ -1070,9 +1067,8 @@ function openExternalLink(url) {
         try {
             await window.settingsManager.init('settings-form-container');
             settingsFormInitialized = true;
-            console.log('Formulaire de paramètres initialisé avec succès');
         } catch (error) {
-            console.error('Erreur lors de l\'initialisation du formulaire de paramètres:', error);
+            console.error('Erreur initialisation formulaire paramètres:', error);
             
             // Afficher un message d'erreur à l'utilisateur
             const container = document.getElementById('settings-form-container');
@@ -1136,45 +1132,9 @@ function openExternalLink(url) {
     function setupSettingsListener() {
         document.addEventListener('settingsUpdated', function(event) {
             const settings = event.detail.settings;
-            console.log('Paramètres mis à jour:', settings);
             
-            // Ici vous pouvez ajouter la logique pour appliquer les nouveaux paramètres
-            // Par exemple:
-            
-            // Mettre à jour l'algorithme de géoréférencement par défaut
-            if (settings['select-algo']) {
-                console.log('Nouvel algorithme par défaut:', settings['select-algo']);
-                // TODO: Appliquer l'algorithme dans votre logique de géoréférencement
-            }
-            
-            // Mettre à jour la méthode de rééchantillonage
-            if (settings['select-resample']) {
-                console.log('Nouvelle méthode de rééchantillonage:', settings['select-resample']);
-                // TODO: Appliquer la méthode dans votre logique
-            }
-            
-            // Mettre à jour la qualité des images Gallica
-            if (settings['select-quality']) {
-                console.log('Nouvelle qualité image:', settings['select-quality']);
-                // TODO: Appliquer la qualité dans vos appels API Gallica
-            }
-            
-            // Gérer les options de compression, transparence, etc.
-            if (settings['checkbox-compression']) {
-                console.log('Compression activée:', settings['checkbox-compression']);
-            }
-            
-            if (settings['checkbox-transparent']) {
-                console.log('Transparence activée:', settings['checkbox-transparent']);
-            }
-            
-            if (settings['checkbox-matrice']) {
-                console.log('Sauvegarde matrice activée:', settings['checkbox-matrice']);
-            }
-            
-            if (settings['input-scale']) {
-                console.log('Échelle de démarrage:', settings['input-scale']);
-            }
+            // Appliquer les nouveaux paramètres
+            // (La logique métier n'a pas besoin de logs verbeux)
             
             // Afficher une notification de succès
             showNotification('Paramètres mis à jour avec succès', 'success');
@@ -1183,7 +1143,6 @@ function openExternalLink(url) {
         // Écouter les événements de chargement de paramètres
         document.addEventListener('settingsLoaded', function(event) {
             const { settings, source } = event.detail;
-            console.log(`Paramètres chargés depuis ${source}:`, settings);
             
             let message = '';
             switch(source) {

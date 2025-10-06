@@ -39,6 +39,18 @@
             z-index: 1000;
         }
         
+        .atlas-header-brand {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .atlas-logo {
+            height: 50px;
+            width: auto;
+        }
+        
         .atlas-info-bar {
             display: flex;
             justify-content: space-between;
@@ -188,6 +200,10 @@
                 align-items: stretch;
             }
             
+            .atlas-logo {
+                height: 40px;
+            }
+            
             .layer-control-panel {
                 width: 100%;
                 max-height: 40vh;
@@ -215,6 +231,13 @@
     <div class="main-container">
         <!-- Header -->
         <header class="atlas-header">
+            <!-- Logo Galligeo -->
+            <div class="atlas-header-brand">
+                <a href="../index.html" title="Retour à l'accueil - Galligeo">
+                    <img class="atlas-logo" src="../img/logo_galligeo.png" alt="Galligeo">
+                </a>
+            </div>
+            
             <div class="atlas-info-bar">
                 <div class="atlas-title-section">
                     <a href="../galerie/" class="fr-btn fr-btn--secondary fr-btn--sm fr-icon-arrow-left-line" 
@@ -226,6 +249,14 @@
                 </div>
                 
                 <div class="atlas-controls">
+                    <!-- Fit to Bounds Button -->
+                    <button id="fit-bounds-btn" 
+                            class="fr-btn fr-btn--secondary fr-btn--sm fr-icon-focus-3-line"
+                            title="Centrer sur l'emprise des tuiles"
+                            onclick="fitToTilesBounds()">
+                        Centrer sur les cartes
+                    </button>
+                    
                     <!-- View Mode Toggle -->
                     <button id="toggle-view-btn" 
                             class="fr-btn fr-btn--secondary fr-btn--sm fr-icon-layout-grid-line"

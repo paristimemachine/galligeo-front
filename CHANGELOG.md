@@ -1,5 +1,71 @@
 # Changelog Galligeo
 
+## [2025-10-06] - Centrage automatique sur l'emprise des tuiles dans l'atlas
+
+### ✨ Nouvelles fonctionnalités (New Features)
+
+- **Centrage automatique sur l'emprise des tuiles** : Les atlas se centrent maintenant automatiquement sur la zone géographique réelle couverte par les cartes
+  - **API info_tiles** : Utilisation de `https://tile.ptm.huma-num.fr/tiles/ark/info_tiles/12148/{arkid}` pour récupérer les bounds
+  - **Calcul d'emprise combinée** : Pour les atlas multi-cartes, calcul de l'emprise maximale (min/max x/y)
+  - **Centrage automatique** : Application au chargement de l'atlas
+  - **Bouton manuel** : Nouveau bouton "Centrer sur les cartes" pour recentrer à tout moment
+  - **Gestion multi-modes** : Fonctionne en mode simple et en mode éclaté
+
+- **Logo Galligeo dans le header** : Ajout du logo dans le header de l'atlas pour la cohérence visuelle
+  - **Position** : En haut du header, au-dessus de la barre d'informations
+  - **Lien** : Cliquable, retour à l'accueil de Galligeo
+  - **Responsive** : 50px sur desktop, 40px sur mobile
+  - **Accessibilité** : Alt text et tooltip
+
+- **Fonctions JavaScript ajoutées** :
+  - `fetchTileInfo(arkId)` : Récupère les informations de tuiles depuis l'API PTM
+  - `calculateCombinedBounds(tilesInfoArray)` : Calcule l'emprise maximale pour plusieurs cartes
+  - `fitToTilesBounds()` : Centre la vue sur l'emprise calculée avec gestion du loading
+
+### 🎨 Interface utilisateur (UI/UX)
+
+- **Nouveau bouton** : "Centrer sur les cartes" dans la barre de contrôle de l'atlas
+  - Style DSFR avec icône focus/centrage
+  - Positionné avant le bouton de basculement de vue
+  - Tooltip explicatif
+  - Indicateur de chargement pendant le calcul
+
+- **Logo dans le header** :
+  - Design cohérent avec l'application principale
+  - Navigation intuitive vers l'accueil
+  - Branding Galligeo maintenu dans toute l'application
+
+### 🔧 Technique (Technical)
+
+- **Requêtes parallèles** : Utilisation de `Promise.all()` pour récupérer les infos de toutes les cartes simultanément
+- **Gestion d'erreur robuste** : 
+  - Cartes sans données de bounds ignorées
+  - Fallback sur vue France par défaut si aucune donnée disponible
+  - Logs console informatifs
+- **Padding intelligent** : Marge de 20px pour éviter que les cartes touchent les bords
+- **Format de données** : Parsing des bounds au format `"minLng,minLat,maxLng,maxLat"`
+
+### 📊 Performance
+
+- **Optimisation** : Requêtes API parallèles pour réduire le temps d'attente
+- **Mise en cache** : Les informations de tuiles pourraient être mises en cache (évolution future)
+- **Responsive** : Fonctionne correctement sur tous les formats d'écran
+
+### 📚 Documentation (Documentation)
+
+- **Nouveau** : `doc/ATLAS_TILES_BOUNDS_FEATURE.md` - Documentation technique complète
+- **Nouveau** : `doc/ATLAS_TILES_BOUNDS_TESTING.md` - Guide de test de la fonctionnalité
+
+### 🔮 Évolutions possibles
+
+- Mémorisation de la vue préférée de l'utilisateur
+- Animation de transition lors du centrage
+- Affichage visuel des bounds de chaque carte
+- Export des coordonnées de l'emprise
+- Zoom intelligent selon la densité des cartes
+
+---
+
 ## [2025-10-06] - Onglet "Mes atlas" fonctionnel dans l'application principale
 
 ### ✨ Nouvelles fonctionnalités (New Features)

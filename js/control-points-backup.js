@@ -446,7 +446,7 @@ class ControlPointsBackup {
     getBackupsForArk(arkId = null) {
         const currentArk = arkId || this.getCurrentArk();
         if (!currentArk) {
-            console.log('Aucun ARK spécifié, retour de toutes les sauvegardes');
+            // console.log('Aucun ARK spécifié, retour de toutes les sauvegardes');
             return this.getAllBackups();
         }
 
