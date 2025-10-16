@@ -15,7 +15,6 @@ window.autoStatusCorrection = {
                 return;
             }
             
-            // Récupérer les données de l'API galerie pour voir les cartes géoréférencées
             const response = await fetch('https://api.ptm.huma-num.fr/auth/admin/galligeo/georeferenced-maps-by-users');
             
             if (!response.ok) {
@@ -28,7 +27,6 @@ window.autoStatusCorrection = {
                 return;
             }
             
-            // Trouver l'utilisateur actuel
             const userProfile = await window.ptmAuth.getUserProfile();
             const userOrcid = userProfile?.orcid || userProfile?.orcid_id;
             
@@ -40,16 +38,13 @@ window.autoStatusCorrection = {
                 return;
             }
             
-            // Récupérer les cartes travaillées localement
             const localMaps = await window.ptmAuth.getWorkedMaps();
             const localArks = localMaps.map(map => map.ark);
             
             let correctionsMade = 0;
             
-            // Pour chaque carte de l'API, vérifier qu'elle existe localement
             for (const apiMap of currentUser.georeferenced_maps) {
                 if (!localArks.includes(apiMap.ark)) {
-                    // Carte manquante localement, l'ajouter
                     try {
                         await window.ptmAuth.saveMapStatus(apiMap.ark, apiMap.status, {
                             firstWorked: apiMap.firstWorked,
@@ -63,7 +58,6 @@ window.autoStatusCorrection = {
                         console.error(`❌ Erreur lors de l'ajout automatique de ${apiMap.ark}:`, error);
                     }
                 } else {
-                    // Carte existante, vérifier le statut
                     const localMap = localMaps.find(map => map.ark === apiMap.ark);
                     if (localMap && localMap.status !== apiMap.status) {
                         try {
@@ -83,7 +77,6 @@ window.autoStatusCorrection = {
             }
             
             if (correctionsMade > 0) {
-                // Recharger l'affichage si nécessaire
                 if (window.workedMapsManager && document.getElementById('worked-maps-container')) {
                     setTimeout(() => {
                         window.workedMapsManager.displayWorkedMaps();
@@ -92,14 +85,11 @@ window.autoStatusCorrection = {
             }
             
         } catch (error) {
-            // Erreur silencieuse pour l'auto-correction
         }
     }
 };
 
-// Écouter les événements de connexion pour déclencher l'auto-correction
 document.addEventListener('userLoggedIn', async function(event) {
-    // Attendre un peu que tout soit bien initialisé
     setTimeout(() => {
         window.autoStatusCorrection.performAutoCorrection();
     }, 2000);

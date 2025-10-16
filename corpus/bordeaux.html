@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bordeaux - Corpus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .spin {
+            animation: spin 1s linear infinite;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="flex justify-between items-center mb-8">
+            <div class="flex items-center space-x-4">
+                <h1 class="text-2xl font-bold text-gray-800">Bordeaux : plans de ville</h1>
+            </div>
+            <div class="text-sm text-gray-500">
+                <i class="fas fa-info-circle mr-1"></i> Lesquels sont géoréférencés ?
+            </div>
+        </header>
+
+        <!-- Table -->
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Identifiant</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Géoréférencement</th>
+                    </tr>
+                </thead>
+                <tbody id="recordsTable" class="bg-white divide-y divide-gray-200">
+                    <!-- Rows will be added by JS -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Loading indicator -->
+        <div id="loading" class="flex justify-center items-center mt-8">
+            <div class="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full spin"></div>
+        </div>
+    </div>
+
+    <script>
+        // Your JSON data
+        const records = [
+            {"date": "1450", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b53030004x"},
+            {"date": "169x", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b8440866p"},
+            {"date": "1729", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b55008486z"},
+            {"date": "1733", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b53189948q"},
+            {"date": "1755", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b53052686q"},
+            {"date": "1758", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b71005389"},
+            {"date": "1764", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b85922233"},
+            {"date": "1764", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b8592222p"},
+            {"date": "1777", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b84405249"},
+            {"date": "1791", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b10678993q"},
+            {"date": "1791", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b530294136"},
+            {"date": "1791", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b53063775w"},
+            {"date": "18..", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b8442452w"},
+            {"date": "18..", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b530279337"},
+            {"date": "18..", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b8444193d"},
+            {"date": "1800", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b530291958"},
+            {"date": "1804-1805", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b53060596c"},
+            {"date": "1818", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b53030220q"},
+            {"date": "1818", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b106789945"},
+            {"date": "1819", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b532508618"},
+            {"date": "1820", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b53062112f"},
+            {"date": "1822", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b53027947f"},
+            {"date": "1824", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b53063348g"},
+            {"date": "1830", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b84438122"},
+            {"date": "1832", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b8441642w"},
+            {"date": "1835", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b53035151r"},
+            {"date": "1835", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b53084948q"},
+            {"date": "1836", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b530849495"},
+            {"date": "1837", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b53035450f"},
+            {"date": "1837", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b53035183w"},
+            {"date": "1839", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b530849510"},
+            {"date": "1839", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b53084950j"},
+            {"date": "1842", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b53084953w"},
+            {"date": "1842", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b53084952f"},
+            {"date": "1845", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b53084954b"},
+            {"date": "1845", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b53087740d"},
+            {"date": "1848", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b530877607"},
+            {"date": "1850", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b8445475t"},
+            {"date": "1850", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b530880655"},
+            {"date": "1850", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b53088138n"},
+            {"date": "1851", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b53223810v"},
+            {"date": "1851", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b53084955s"},
+            {"date": "1853", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b531364000"},
+            {"date": "1853", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b53136393p"},
+            {"date": "1853", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b53136399c"},
+            {"date": "1854", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b53084957p"},
+            {"date": "1854", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b530849567"},
+            {"date": "1857", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b53084959k"},
+            {"date": "1857", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b530849584"},
+            {"date": "1862", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b53245550p"},
+            {"date": "1866", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b8445916p"},
+            {"date": "1871", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b531000226"},
+            {"date": "1873", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b530603258"},
+            {"date": "1877", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b530249281"},
+            {"date": "1879", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b53021215k"},
+            {"date": "1884", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b53192662m"},
+            {"date": "1886", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b8439443t"},
+            {"date": "1888", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b84406378"},
+            {"date": "1891", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b8440291p"},
+            {"date": "1894", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b8441016b"},
+            {"date": "1925", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b530651776"},
+            {"date": "1926", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b53065151p"},
+            {"date": "1927", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b530652156"},
+            {"date": "1943", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b531214234"},
+            {"date": "1944", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b53121541f"},
+            {"date": "1948", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b531896474"},
+            {"date": "1949", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b53189648k"}
+        ];
+
+        // DOM elements
+        const tableBody = document.getElementById('recordsTable');
+        const loading = document.getElementById('loading');
+
+        // Check if info exists
+        async function checkInfoJson(btvId) {
+            const url = `https://tile.ptm.huma-num.fr/tiles/ark/info_tiles/12148/${btvId}`;
+            try {
+                const response = await fetch(url, { method: 'GET' });
+                return response.ok;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        // Extract btvId from URL
+        function extractBtvId(url) {
+            const match = url.match(/btv1b([a-z0-9]+)/i);
+            return match ? match[0] : null;
+        }
+
+        // Update UI for a row
+        function updateRow(row, exists, arkid) {
+            const statusCell = row.querySelector('.status-cell');
+            statusCell.innerHTML = exists
+                ? `<i class="fas fa-check-circle text-green-500"></i> <a class="text-blue-600" href="https://app.ptm.huma-num.fr/galligeo/georef/?ark=${arkid}" target="_blank">Géoréférencé</a>`
+                : `<i class="fas fa-times-circle text-red-500"></i> <a class="text-blue-600" href="https://app.ptm.huma-num.fr/galligeo?ark=${arkid}" target="_blank">Non géoréférencé</a>`;
+        }
+
+        // Process all records
+        async function processRecords() {
+            loading.classList.remove('hidden');
+            tableBody.innerHTML = '';
+
+            for (const record of records) {
+                const btvId = extractBtvId(record.identifier);
+                if (!btvId) continue;
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${record.date}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-600">
+                        <a href="${record.identifier}" target="_blank" class="hover:underline">${btvId}</a>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm status-cell">
+                        <div class="w-4 h-4 border-2 border-gray-300 border-t-transparent rounded-full spin mx-auto"></div>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+
+                const exists = await checkInfoJson(btvId);
+                updateRow(row, exists, btvId);
+            }
+
+            loading.classList.add('hidden');
+        }
+
+        // Start processing
+        processRecords();
+    </script>
+</body>
+</html>

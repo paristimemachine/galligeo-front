@@ -283,7 +283,7 @@ class GalerieManager {
 
             // Générer l'URL de la vignette
             const thumbnailUrl = `https://openapi.bnf.fr/iiif/image/v3/ark:/12148/${arkId}/f1/full/,480/0/default.webp`;
-            
+ 
             const result = {
                 arkId,
                 metadata,

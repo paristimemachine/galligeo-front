@@ -126,9 +126,7 @@
                     </h1>
                     
                     <p class="fr-text--lg fr-mb-4w">
-                        Découvrez les cartes historiques géoréférencées par les utilisateurs de Galligeo. 
-                        Ces cartes proviennent des collections de <a href="https://gallica.bnf.fr" target="_blank" rel="noopener">Gallica (BnF)</a> 
-                        et ont été géolocalisées avec précision par notre communauté.
+                        Découvrez les cartes et plans issus des collections de <a href="https://gallica.bnf.fr" target="_blank" rel="noopener">Gallica (BnF)</a>  et géoréférencés par la communauté Galligeo.
                     </p>
                 </div>
             </div>
@@ -1191,6 +1189,7 @@
         // Fonction pour générer l'URL de la vignette Gallica IIIF
         function generateGallicaThumbnail(arkId) {
             return `https://openapi.bnf.fr/iiif/image/v3/ark:/12148/${arkId}/f1/full/,480/0/default.webp`;
+            // return `https://gallica.bnf.fr/ark:/12148/${arkId}.thumbnail`;
         }
         
         // Fonction pour générer l'URL Gallica (fallback si pas dans manifest)

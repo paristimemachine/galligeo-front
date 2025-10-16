@@ -2,19 +2,11 @@ showLegend = true;
 
 input = document.getElementById('search-784-input');
 
-// when the btn is clicked print info in console 
-// input.addEventListener('click', (ev)=>{
-//     // console.log("Btn clicked");
-//   });
-
 input.addEventListener('keypress', (event)=>{
 
-// event.keyCode or event.which  property will have the code of the pressed key
 let keyCode = event.keyCode ? event.keyCode : event.which;
 
-// 13 points the enter key
 if(keyCode === 13) {
-    // call click function of the button
     load_ark_picture();
 }
     
@@ -25,46 +17,37 @@ function toggleLegend(){
     var toggle_right = document.getElementById("toggle-right-map");
 
     if(showLegend){
-        //when hiding
         document.getElementById("sidebar").hidden = true;
-        //rotate img
         document.getElementById("nav-tools-bar-inner-legend-filter-icon2-inner").style.transform = "rotate(180deg)";
 
         showLegend = false;
 
-        // if(toggle_right.checked){
-            document.getElementById("map-container-left").className = "fr-col-6";// fr-col-lg-10 fr-col-md-12 fr-col-sm-12";
-            document.getElementById("map-container-right").className = "fr-col-6";// fr-col-lg-10 fr-col-md-12 fr-col-sm-12";
-            document.getElementById("map-container-right").hidden = false;// fr-col-lg-10 fr-col-md-12 fr-col-sm-12";
-            
-            document.getElementById("map-container-left-at-startup").className = "fr-col-6";
-
-            
-            document.getElementById("map-container-left-at-startup").className = "fr-col-6";
+        document.getElementById("map-container-left").className = "fr-col-6";
+        document.getElementById("map-container-right").className = "fr-col-6";
+        document.getElementById("map-container-right").hidden = false;
+        
+        document.getElementById("map-container-left-at-startup").className = "fr-col-6";
+        document.getElementById("map-container-left-at-startup").className = "fr-col-6";
 
     }
     else
     {
-        //when showing
         document.getElementById("sidebar").hidden = false;
         document.getElementById("sidebar").className = "fr-col-2";
         
-        //rotate img
         document.getElementById("nav-tools-bar-inner-legend-filter-icon2-inner").style.transform = "rotate(0deg)";
         showLegend = true;
 
-        // if(toggle_right.checked){
-            document.getElementById("map-container-left").className = "fr-col-5";// fr-col-lg-10 fr-col-md-12 fr-col-sm-12";
-            document.getElementById("map-container-right").className = "fr-col-5";// fr-col-lg-10 fr-col-md-12 fr-col-sm-12";
-            document.getElementById("map-container-right").hidden = false;// fr-col-lg-10 fr-col-md-12 fr-col-sm-12";
+        document.getElementById("map-container-left").className = "fr-col-5";
+        document.getElementById("map-container-right").className = "fr-col-5";
+        document.getElementById("map-container-right").hidden = false;
 
-            document.getElementById("map-container-left-at-startup").className = "fr-col-5";
-            document.getElementById("map-container-left-at-startup").className = "fr-col-5";
+        document.getElementById("map-container-left-at-startup").className = "fr-col-5";
+        document.getElementById("map-container-left-at-startup").className = "fr-col-5";
 
     }
     setTimeout(function(){ left_map.invalidateSize()}, 200);
     setTimeout(function(){ right_map.invalidateSize()}, 200);
-    // document.getElementById("nav-tools-bar-inner-legend-filter-icon2-inner").className = "nav-tools-bar-inner-legend-filter-icon2-inner-rotate";
 }
 
 var stringToHTML = function (str) {
@@ -83,7 +66,6 @@ function setGeoreferencingButtonState(state, customText = null, customTitle = nu
     const btnGeorefs = document.getElementById('btn_georef');
     if (!btnGeorefs) return;
     
-    // Sauvegarder la largeur initiale si pas encore fait
     if (!btnGeorefs.dataset.originalWidth) {
         btnGeorefs.dataset.originalWidth = window.getComputedStyle(btnGeorefs).width;
     }
@@ -96,8 +78,8 @@ function setGeoreferencingButtonState(state, customText = null, customTitle = nu
             btnGeorefs.style.color = '#ffffff';
             btnGeorefs.textContent = customText || 'Géoref en cours...';
             btnGeorefs.style.cursor = 'not-allowed';
-            btnGeorefs.style.width = btnGeorefs.dataset.originalWidth; // Maintenir la largeur
-            btnGeorefs.style.minWidth = btnGeorefs.dataset.originalWidth; // Force la largeur minimale
+            btnGeorefs.style.width = btnGeorefs.dataset.originalWidth;
+            btnGeorefs.style.minWidth = btnGeorefs.dataset.originalWidth;
             btnGeorefs.classList.add('fr-btn--loading');
             btnGeorefs.title = customTitle || 'Traitement en cours, veuillez patienter...';
             break;
@@ -109,8 +91,8 @@ function setGeoreferencingButtonState(state, customText = null, customTitle = nu
             btnGeorefs.style.color = '';
             btnGeorefs.textContent = customText || 'Géoréférencer';
             btnGeorefs.style.cursor = '';
-            btnGeorefs.style.width = ''; // Retour à la largeur automatique
-            btnGeorefs.style.minWidth = ''; // Retour à la largeur minimale automatique
+            btnGeorefs.style.width = '';
+            btnGeorefs.style.minWidth = '';
             btnGeorefs.classList.remove('fr-btn--loading');
             btnGeorefs.title = customTitle || 'Géoréférencer cette carte';
             break;
@@ -122,8 +104,8 @@ function setGeoreferencingButtonState(state, customText = null, customTitle = nu
             btnGeorefs.style.color = '';
             btnGeorefs.textContent = customText || 'Géoréférencer';
             btnGeorefs.style.cursor = 'not-allowed';
-            btnGeorefs.style.width = ''; // Retour à la largeur automatique
-            btnGeorefs.style.minWidth = ''; // Retour à la largeur minimale automatique
+            btnGeorefs.style.width = '';
+            btnGeorefs.style.minWidth = '';
             btnGeorefs.classList.remove('fr-btn--loading');
             btnGeorefs.title = customTitle || 'Action non disponible';
             break;
@@ -137,25 +119,19 @@ function click_georef(image, points, polygon, input_ark) {
     console.log(points)
     console.log(polygon)
     
-    // Vérifier le statut d'authentification et informer l'utilisateur
     const isAuthenticated = window.ptmAuth && window.ptmAuth.isAuthenticated();
     console.log(`🔐 Géoréférencement demandé - Authentifié: ${isAuthenticated}`);
     
     if (!isAuthenticated) {
         console.log('⚠️ Mode anonyme - le géoréférencement pourrait ne pas fonctionner selon la configuration serveur');
-        // Note: On continue quand même, l'erreur sera gérée dans georef_api_post si nécessaire
     }
 
-    // Bloquer le bouton et le passer en état de chargement
     setGeoreferencingButtonState('loading');
 
     var urlToRessource = base_url + input_ark;
-    // var points_serialized = JSON.stringify(points);
 
-    //waiting animation on map
     right_map.fire('dataloading');
 
-    // Vérifier que les dimensions de l'image sont définies
     const imageWidth = document.image_width_scaled || document.width_image;
     const imageHeight = document.image_height_scaled || document.height_image;
     
@@ -177,20 +153,16 @@ function click_georef(image, points, polygon, input_ark) {
      "clipping_polygon": polygon
    }).then((data) => {
      console.log(data);
-     // Le bouton sera réactivé dans georef_api_post en cas de succès
    }).catch((error) => {
      console.error('Erreur lors du géoréférencement:', error);
-     right_map.fire('dataload'); // Arrêter l'animation de chargement
+     right_map.fire('dataload');
      
-     // Réactiver le bouton en cas d'erreur
      setGeoreferencingButtonState('normal');
      
-     // Message d'erreur adapté selon le type d'erreur
      let userMessage = 'Erreur lors du géoréférencement.';
      
      if (error.message) {
        if (error.message.includes('422') || error.message.includes('authentification')) {
-         // Erreur d'authentification - proposer la connexion
          const isAnonymous = !window.ptmAuth || !window.ptmAuth.isAuthenticated();
          if (isAnonymous) {
            userMessage = `⚠️ Géoréférencement actuellement limité aux utilisateurs connectés.
@@ -217,7 +189,6 @@ function display_result(input_ark) {
 }
 
 async function georef_api_post(url = urlToAPI, data = {}) {
-  // Préparer les headers avec authentification si disponible
   const headers = {
     "Content-Type": "application/json",
   };
@@ -225,25 +196,20 @@ async function georef_api_post(url = urlToAPI, data = {}) {
   const isAuthenticated = window.ptmAuth && window.ptmAuth.isAuthenticated();
   console.log(`🔐 Géoréférencement - Utilisateur authentifié: ${isAuthenticated}`);
   
-  // Préparer les données avec l'utilisateur approprié
   const apiData = { ...data };
   
-  // Ajouter le token d'authentification si l'utilisateur est connecté
   if (isAuthenticated) {
     const token = window.ptmAuth.getToken();
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
       console.log('🎫 Token d\'authentification ajouté');
     }
-    // L'API utilisera l'utilisateur authentifié depuis le token
   } else {
-    // Pour les utilisateurs anonymes, forcer l'utilisateur anonyme dans les données
     console.log('🔓 Utilisateur anonyme - préparation des headers et données...');
     
     // IMPORTANT: Ajouter l'utilisateur anonyme dans les données pour l'écriture en base
     apiData.user_orcid_id = '0000-GALLI-ANONY-ME00';
     
-    // Headers pour identifier la requête anonyme
     const anonymousSession = 'anonymous-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
     headers['X-Anonymous-Session'] = anonymousSession;
     headers['X-Anonymous-Mode'] = 'true';
@@ -257,9 +223,8 @@ async function georef_api_post(url = urlToAPI, data = {}) {
   console.log(`📦 Données:`, apiData);
   console.log(`📋 Headers:`, headers);
 
-  // Créer un AbortController pour gérer le timeout
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minutes
+  const timeoutId = setTimeout(() => controller.abort(), 300000);
 
   try {
     const response = await fetch(url, {
@@ -282,21 +247,18 @@ async function georef_api_post(url = urlToAPI, data = {}) {
 
       console.log(input_ark)
 
-    // Réactiver le bouton de géoréférencement après succès
     setGeoreferencingButtonState('normal');
 
-    // Mettre à jour le statut de la carte vers "géoréférencée"
     console.log(`🔄 Mise à jour du statut de la carte ${window.input_ark} vers 'georeferenced'`);
     
     // Pour les utilisateurs connectés, utiliser la nouvelle API optimisée
     if (window.ptmAuth && window.ptmAuth.isAuthenticated() && window.input_ark) {
       window.ptmAuth.updateWorkedMap(window.input_ark, 'georeferenced', {
-        quality: 2 // Qualité par défaut pour géoréférencement réussi
+        quality: 2
       }).then(result => {
         console.log('✅ Statut mis à jour vers "georeferenced" (utilisateur connecté):', result);
       }).catch(error => {
         console.error('❌ Erreur lors de la mise à jour du statut de la carte (utilisateur connecté):', error);
-        // Afficher l'erreur à l'utilisateur
         console.error('Détails de l\'erreur:', error.message || error);
       });
     } 
@@ -345,23 +307,18 @@ async function georef_api_post(url = urlToAPI, data = {}) {
 
     // https://a.tile.ptm.huma-num.fr/tiles/ark/12148/btv1b530293076/17/66031/47651.png
 
-    // Créer le nouveau layer avec un timestamp pour forcer le refresh du cache
+    
     const timestamp = new Date().getTime();
     let galligeoLayer = L.tileLayer(URL_TILE_SERVER_SUB + '12148/' + input_ark + '/{z}/{x}/{y}.png?t=' + timestamp, {
-      // minNativeZoom: parseInt(json.minzoom),
-      // maxNativeZoom: parseInt(json.maxzoom),
       minZoom: 10,
       maxZoom: 19,
-      // bounds: tile_bounds,
       attribution: '&copy; Gallica / PTM - Galligeo'
     }).addTo(right_map);
 
     galligeoLayer.bringToFront();
     
-    // Stocker la référence du layer pour pouvoir le supprimer plus tard
     window.currentGeoreferencedLayer = galligeoLayer;
     
-    // Afficher le contrôle d'opacité
     if (window.opacityControl) {
       console.log("🎨 Affichage du contrôle de transparence");
       window.opacityControl.show();
@@ -369,19 +326,15 @@ async function georef_api_post(url = urlToAPI, data = {}) {
 
     document.getElementById('btn_deposit').disabled = false;
 
-    // add stepper
     document.getElementById('titre-etape-georef').textContent = "Consulter la carte géoréférencée";
-    // document.getElementById('etape-georef').textContent = "Étape 2 sur 4";
     document.getElementById('etape-suite').textContent = "Déposer le résultat sur Nakala";
     document.getElementById('steps').setAttribute('data-fr-current-step', '3');
 
     return response.json();
   } else {
-    // En cas d'erreur HTTP, gérer spécifiquement selon le statut
     setGeoreferencingButtonState('normal');
     right_map.fire('dataload');
     
-    // Récupérer le détail de l'erreur depuis la réponse
     let errorMessage = `Erreur serveur: ${response.status}`;
     try {
       const errorData = await response.json();

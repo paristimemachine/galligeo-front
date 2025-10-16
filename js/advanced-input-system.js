@@ -1,8 +1,3 @@
-// =====================================================================
-// NOUVEAU SYSTÈME DE SAISIE AMÉLIORÉ - UI/UX OPTIMISÉ
-// =====================================================================
-
-// Nouvelle structure pour les points appariés
 function ControlPointPair(id, leftPoint = null, rightPoint = null) {
     this.id = id;
     this.leftPoint = leftPoint; // {lat, lng, marker, originalCoords}
@@ -18,47 +13,32 @@ function ControlPointPair(id, leftPoint = null, rightPoint = null) {
 function initializeControlPointsTable() {
     const tableSection = document.getElementById('table-control-points');
     
-    // Masquer la table au démarrage si pas de points
     if (tableSection && (!window.pointPairs || window.pointPairs.length === 0)) {
         tableSection.setAttribute('hidden', '');
     }
     
-    // Mettre à jour la table pour refléter l'état actuel
     updateControlPointsTable();
 }
 
 function setupAdvancedInputSystem() {
-    // Supprimer les anciens contrôles Leaflet Draw
     removeOldDrawControls();
-    
-    // Configurer les événements des contrôles
     setupControlEvents();
-    
-    // Configurer les événements de clic sur les cartes
     setupMapClickEvents();
-    
-    // Configurer le survol et déplacement des points
     setupPointInteractions();
     
     // S'assurer que l'emprise existante n'interfère pas avec la saisie de points
     if (window.currentPolygon && window.currentPolygon.layer) {
-        // Désactiver l'édition par défaut au démarrage
         disableEmpriseEditing();
     }
     
-    // Initialiser l'état
     updateInputState();
-    
-    // Initialiser l'état de la table des points de contrôle
     initializeControlPointsTable();
 }
 
 function removeOldDrawControls() {
-    // Cette application utilise son propre système de saisie
-    // Leaflet Draw n'est pas utilisé dans cette application
-    console.log('🗑️ Nettoyage des anciens contrôles (système de saisie personnalisé)');
-    
-    // Nettoyer les éventuels layers de dessin personnalisés
+
+    // on utilise un draw sur mesure ici ;-)
+
     if (typeof left_map !== 'undefined' && left_map) {
         // Pas de nettoyage nécessaire - système de saisie géré ailleurs
     }
@@ -69,7 +49,6 @@ function removeOldDrawControls() {
 }
 
 function setupControlEvents() {
-    // Événement pour le toggle principal (Saisie/Verrouillé)
     const toggleInput = document.getElementById('toggle');
     if (toggleInput) {
         toggleInput.addEventListener('change', function() {
@@ -78,7 +57,6 @@ function setupControlEvents() {
         });
     }
     
-    // Événements pour les contrôles segmentés
     const pointsRadio = document.getElementById('segmented-1');
     const empriseRadio = document.getElementById('segmented-2');
     
@@ -117,12 +95,10 @@ function updateInputState() {
             disableEmpriseEditing();
         } else if (window.inputMode === 'emprise') {
             setMapCursors('crosshair');
-            // Activer l'édition de l'emprise uniquement en mode emprise
             enableEmpriseEditing();
         }
     }
     
-    // Mettre à jour l'interface
     updateUIForInputMode();
 }
 
@@ -145,7 +121,6 @@ function disableEmpriseEditing() {
     if (window.currentPolygon && window.currentPolygon.layer && window.currentPolygon.layer.editing) {
         try {
             window.currentPolygon.layer.editing.disable();
-            // Forcer le curseur de la carte à être une croix en mode saisie
             if (window.inputMode === 'points' && typeof left_map !== 'undefined') {
                 left_map.getContainer().style.cursor = 'crosshair';
             }
@@ -169,24 +144,19 @@ function enableEmpriseEditing() {
 }
 
 function setupMapClickEvents() {
-    // Événements de clic pour la carte gauche
     if (typeof left_map !== 'undefined') {
-        // Enlever tous les anciens listeners d'abord
         left_map.off('click');
         left_map.off('dblclick');
         
         left_map.on('click', function(e) {
-            // S'assurer que le mode saisie de points a la priorité
             if (window.inputMode === 'points') {
-                // Arrêter la propagation pour empêcher l'interaction avec l'emprise
                 e.originalEvent && e.originalEvent.stopPropagation && e.originalEvent.stopPropagation();
                 handleMapClick(e, 'left');
                 return;
             }
             handleMapClick(e, 'left');
-        }, true); // Utiliser la phase de capture pour prendre priorité
+        }, true);
         
-        // Double-clic pour finaliser l'emprise
         left_map.on('dblclick', function(e) {
             if (window.inputMode === 'emprise' && window.currentPolygon && window.currentPolygon.points.length >= 3) {
                 finalizeEmprise();
@@ -195,7 +165,6 @@ function setupMapClickEvents() {
         });
     }
     
-    // Événements de clic pour la carte droite
     if (typeof right_map !== 'undefined') {
         right_map.off('click');
         right_map.on('click', function(e) {
@@ -209,7 +178,6 @@ function handleMapClick(event, mapSide) {
         return;
     }
     
-    // Vérifier que les variables globales sont disponibles
     if (!window.layer_img_pts_left || !window.layer_img_pts_right) {
         console.warn('⚠️ Variables layer non disponibles, attente de l\'initialisation...');
         return;
@@ -236,22 +204,18 @@ function handleMapClick(event, mapSide) {
 function handlePointClick(event, mapSide, map, layer) {
     const latLng = event.latlng;
     
-    // Créer un nouveau marqueur
     const marker = L.marker(latLng, {
         icon: new customMarker(),
         draggable: true
     });
     
-    // Trouver ou créer la paire de points appropriée
     let pointPair = findOrCreatePointPair(mapSide);
     
-    // Convertir les coordonnées si nécessaire (pour la carte gauche)
     let processedCoords = latLng;
     if (mapSide === 'left') {
         processedCoords = L.latLng(-latLng.lat/10, (latLng.lng / ratio_wh_img) / 10);
     }
     
-    // Ajouter le point à la paire
     if (mapSide === 'left') {
         pointPair.leftPoint = {
             lat: processedCoords.lat,
@@ -268,20 +232,16 @@ function handlePointClick(event, mapSide, map, layer) {
         };
     }
     
-    // Configurer le tooltip avec le numéro
     marker.bindTooltip(pointPair.id.toString(), {
         permanent: true,
         direction: 'auto',
         className: "labels-points"
     });
     
-    // Ajouter le marqueur à la carte
     layer.addLayer(marker);
     
-    // Configurer les événements de drag
     setupMarkerDragEvents(marker, pointPair, mapSide);
     
-    // Marquer qu'il y a des changements non sauvegardés
     if (window.controlPointsBackup && typeof window.controlPointsBackup.markUnsavedChanges === 'function') {
         window.controlPointsBackup.markUnsavedChanges();
     }

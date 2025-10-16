@@ -32,9 +32,7 @@ let ratio_wh_img = 0
 
 let temp_row;
 
-let base_url = 'https://gallica.bnf.fr/ark:/12148/';
-
-// var urlToAPI = 'http://127.0.0.1:8000/georef/';
+const base_url = 'https://gallica.bnf.fr/ark:/12148/';
 const urlToAPI = "https://api.ptm.huma-num.fr/galligeo/georef/";
 
 let height_image;
@@ -43,13 +41,10 @@ let width_image;
 let image_width_scaled;
 let image_height_scaled;
 
-// const URL_TILE_SERVER = "https://api.ptm.huma-num.fr/tiles/";
-
 const URL_TILE_SERVER = "https://tile.ptm.huma-num.fr/tiles/ark/";
 const URL_TILE_SERVER_SUB = "https://{s}.tile.ptm.huma-num.fr/tiles/ark/";
 
 // Variables globales pour le nouveau système de saisie
-// Déclarées ici pour être disponibles dans tous les fichiers
 window.inputMode = 'disabled';
 window.currentInputMode = 'points';
 window.activeMap = 'left';
@@ -59,7 +54,6 @@ window.pointPairs = [];
 window.currentPolygon = null;
 window.isDragging = false;
 
-// Variable globale pour stocker les métadonnées
 window.metadataDict = {};
 
 // Variable globale pour stocker le layer géoréférencé actuel

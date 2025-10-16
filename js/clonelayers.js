@@ -1,4 +1,4 @@
-//from https://github.com/jieter/leaflet-clonelayer
+// From https://github.com/jieter/leaflet-clonelayer
 
 function cloneOptions (options) {
     var ret = {};
@@ -26,8 +26,7 @@ function cloneInnerLayers (layer) {
 function cloneLayer (layer) {
     var options = cloneOptions(layer.options);
 
-    // we need to test for the most specific class first, i.e.
-    // Circle before CircleMarker
+    // Test for the most specific class first, i.e. Circle before CircleMarker
 
     // Renderers
     if (layer instanceof L.SVG) {

@@ -279,13 +279,11 @@
         },
         
         initializeMapsIfAvailable() {
-            // Vérifier que initializeMaps n'a pas déjà été appelée
             if (window.maps_initialized) {
                 console.log('ℹ️ Les cartes sont déjà initialisées');
                 return;
             }
             
-            // Tentative d'initialisation des cartes
             if (typeof initializeMaps === 'function') {
                 console.log('🗺️ Initialisation des cartes');
                 window.maps_initialized = true;
@@ -303,14 +301,12 @@
         },
         
         exposeGlobalUtilities() {
-            // API publique simple
             window.LeafletLoader = {
                 whenReady: (callback, name) => LeafletQueue.add(callback, name),
                 isReady: () => LeafletQueue.ready && LeafletQueue.isLeafletAvailable(),
                 getNetworkContext: () => ({ ...NetworkContext })
             };
             
-            // Compatibilité avec l'ancien système
             window.whenLeafletReady = window.LeafletLoader.whenReady;
         }
     };
@@ -326,10 +322,8 @@
         InitManager.initialize();
     }
     
-    // Surveillance pour les nouveaux éléments Leaflet
     document.addEventListener('leafletMapsReady', function(event) {
         if (event.detail) {
-            // Exposer les cartes globalement pour compatibilité
             Object.assign(window, event.detail);
             console.log('🔗 Variables de cartes exposées globalement');
         }

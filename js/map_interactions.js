@@ -1,10 +1,6 @@
-// var cloneLayer = require('leaflet-clonelayer');
-// import { OpenStreetMapProvider } from 'leaflet-geosearch';
-
 const POLYGON_FILL_COLOR = 'rgba(255, 0, 0, 0)';
 const POLYGON_STROKE_COLOR = 'rgba(0, 55, 255)';
 
-// Variables globales pour les cartes (définies après chargement de Leaflet)
 var left_map, right_map, customMarker;
 
 /**
@@ -13,19 +9,16 @@ var left_map, right_map, customMarker;
 function initializeMaps() {
     console.log('🗺️ Initialisation des cartes Leaflet');
     
-    // Protection double initialisation globale
     if (window.maps_initialized) {
         console.log('⚠️ Les cartes sont déjà initialisées (marqueur global)');
         return;
     }
     
-    // Vérifier si les cartes sont déjà initialisées
     if (typeof left_map !== 'undefined' && left_map !== null) {
         console.log('⚠️ Cartes déjà initialisées, ignoré la double initialisation');
         return;
     }
     
-    // Vérifier si les conteneurs existent
     const leftContainer = document.getElementById('map-left');
     const rightContainer = document.getElementById('map-right');
     
@@ -34,10 +27,8 @@ function initializeMaps() {
         return;
     }
     
-    // Vérifier si les conteneurs ont déjà une instance Leaflet
     if (leftContainer._leaflet_id || rightContainer._leaflet_id) {
         console.warn('⚠️ Conteneurs déjà utilisés par Leaflet, nettoyage nécessaire');
-        // Nettoyer les références existantes
         if (leftContainer._leaflet_id) {
             delete leftContainer._leaflet_id;
         }
@@ -51,9 +42,7 @@ function initializeMaps() {
         zoomSnap: 0.1,
         zoomDelta: 0.25,
         zoom: 6.2,
-        // laoding control
         loadingControl: true,
-        // Activer la rotation avec le plugin leaflet-rotate
         rotate: true,
         bearing: 0
     });
@@ -63,7 +52,6 @@ function initializeMaps() {
         zoomSnap: 0.1,
         zoomDelta: 0.25,
         zoom: 6.2,
-        // laoding control
         loadingControl: true
     });
 

@@ -195,10 +195,10 @@ nav.fr-nav .fr-grid-row {
 }
 
 /* Réduction de l'espacement dans la navigation */
-#nav-tools4 .fr-toggle,
-#nav-tools4 .fr-segmented {
-    margin: 4px 0;
-}
+/* #nav-tools4 .fr-toggle, */
+/* #nav-tools4 .fr-segmented { */
+    /* margin: 4px 0; */
+/* } */
 
 /* Styles pour le contrôle de métadonnées sur la carte */
 .leaflet-control-metadata-info {
