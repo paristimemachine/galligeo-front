@@ -20,7 +20,6 @@ class GeorefWorkflowTester {
         return entry;
     }
 
-    // Test du workflow complet de géoréférencement
     async testGeorefWorkflow() {
         this.log('🗺️ === TEST WORKFLOW GÉORÉFÉRENCEMENT ===');
         
@@ -30,23 +29,13 @@ class GeorefWorkflowTester {
         }
 
         try {
-            // Générer un ARK de test unique
             this.testArk = `btv1b${Date.now()}_test_georef`;
             this.log(`Test avec ARK: ${this.testArk}`);
 
-            // Étape 1: Marquer la carte comme en cours de travail
             await this.testMarkAsWorked();
-
-            // Étape 2: Simuler l'ajout de points de contrôle
             await this.testAddControlPoints();
-
-            // Étape 3: Marquer comme géoréférencée
             await this.testMarkAsGeoreferenced();
-
-            // Étape 4: Vérifier la sauvegarde
             await this.testVerifySave();
-
-            // Étape 5: Test de récupération
             await this.testDataRetrieval();
 
             this.log('✅ Workflow de géoréférencement terminé avec succès', 'success');

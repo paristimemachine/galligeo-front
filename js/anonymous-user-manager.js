@@ -8,7 +8,6 @@ class AnonymousUserManager {
     }
 
     async init() {
-        // Vérifier si l'utilisateur est anonyme et afficher les informations appropriées
         this.updateUIForAnonymousUser();
         this.addAnonymousUserNotifications();
     }
@@ -18,7 +17,6 @@ class AnonymousUserManager {
      */
     updateUIForAnonymousUser() {
         if (window.ptmAuth && !window.ptmAuth.isAuthenticated()) {
-            // Plus de bannière - seulement les tooltips discrets
             this.addTooltipsForAnonymousFeatures();
         }
     }
@@ -28,7 +26,6 @@ class AnonymousUserManager {
      * DÉSACTIVÉE - Causait des problèmes de layout
      */
     showAnonymousUserBanner() {
-        // Fonction désactivée pour éviter les problèmes de sticky footer
         console.log('🔕 Bannière anonyme désactivée (problèmes de layout)');
         return;
     }
@@ -37,17 +34,14 @@ class AnonymousUserManager {
      * Ajoute des tooltips explicatifs pour les fonctionnalités disponibles en mode anonyme
      */
     addTooltipsForAnonymousFeatures() {
-        // Tooltip pour le bouton de géoréférencement - informatif uniquement
         const georefButton = document.getElementById('btn_georef');
         if (georefButton && !georefButton.disabled) {
-            // Seulement ajouter une mention discrète dans le tooltip existant
             const originalTitle = georefButton.title;
             if (originalTitle && !originalTitle.includes('Mode anonyme')) {
                 georefButton.title = `${originalTitle} (Mode anonyme - sauvegarde locale)`;
             }
         }
 
-        // Tooltip pour le bouton de dépôt
         const depositButton = document.getElementById('btn_deposit');
         if (depositButton) {
             const originalTitle = depositButton.title || 'Déposer sur Nakala';
@@ -61,7 +55,6 @@ class AnonymousUserManager {
      * Ajoute des notifications contextuelles pour les utilisateurs anonymes
      */
     addAnonymousUserNotifications() {
-        // Notification après géoréférencement réussi
         this.addPostGeorefNotification();
     }
 
@@ -69,7 +62,6 @@ class AnonymousUserManager {
      * Notification affichée après un géoréférencement réussi pour les utilisateurs anonymes
      */
     addPostGeorefNotification() {
-        // Écouter les événements de géoréférencement réussi
         document.addEventListener('georeferencing-success', (event) => {
             if (window.ptmAuth && !window.ptmAuth.isAuthenticated()) {
                 this.showPostGeorefMessage();
@@ -97,12 +89,10 @@ class AnonymousUserManager {
                class="fr-link">connectez-vous avec ORCID</a>.</p>
         `;
 
-        // Insérer après le bouton de géoréférencement
         const georefButton = document.getElementById('btn_georef');
         if (georefButton && georefButton.parentNode) {
             georefButton.parentNode.insertBefore(message, georefButton.nextSibling);
             
-            // Supprimer le message après 10 secondes
             setTimeout(() => {
                 if (message.parentNode) {
                     message.remove();
@@ -129,7 +119,6 @@ class AnonymousUserManager {
                 </p>
             `;
 
-            // Ajouter l'information dans la section appropriée
             const container = document.getElementById('worked-maps-container');
             if (container) {
                 container.insertBefore(infoElement, container.firstChild);
@@ -158,10 +147,7 @@ class AnonymousUserManager {
                 }
                 
                 if (migratedCount > 0) {
-                    // Supprimer les données anonymes après migration réussie
                     localStorage.removeItem('galligeo_anonymous_maps');
-                    
-                    // Afficher une notification de migration réussie
                     this.showMigrationSuccessMessage(migratedCount);
                 }
             }
@@ -182,7 +168,6 @@ class AnonymousUserManager {
         const mainContent = document.querySelector('main') || document.body;
         mainContent.insertBefore(message, mainContent.firstChild);
         
-        // Supprimer le message après 8 secondes
         setTimeout(() => {
             if (message.parentNode) {
                 message.remove();
@@ -194,14 +179,11 @@ class AnonymousUserManager {
 // Instance globale
 window.anonymousUserManager = new AnonymousUserManager();
 
-// Écouter les événements de connexion pour migrer les données
 document.addEventListener('userLoggedIn', async () => {
     await window.anonymousUserManager.migrateAnonymousData();
 });
 
-// Écouter les changements d'état d'authentification
 document.addEventListener('DOMContentLoaded', () => {
-    // Vérifier périodiquement l'état d'authentification pour mettre à jour l'UI
     setInterval(() => {
         window.anonymousUserManager.updateUIForAnonymousUser();
     }, 5000);

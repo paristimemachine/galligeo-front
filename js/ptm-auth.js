@@ -34,17 +34,14 @@ class PTMAuthFixed {
             return this.token;
         }
 
-        // DIAGNOSTIC : Afficher l'URL complète au chargement
         console.log('🔍 Recherche token dans URL:', {
             href: window.location.href,
             hash: window.location.hash,
             search: window.location.search
         });
 
-        // Vérifier le hash (format: #token=... ou ##token=...)
         const hash = window.location.hash;
         if (hash.includes('token=')) {
-            // Support du double hash ## (bug backend)
             const cleanHash = hash.replace(/^#+/, '#');
             const tokenMatch = cleanHash.match(/token=([^&]+)/);
             if (tokenMatch) {
@@ -56,20 +53,17 @@ class PTMAuthFixed {
             }
         }
 
-        // Vérifier les query params (format: ?token=...)
         const urlParams = new URLSearchParams(window.location.search);
         const tokenFromQuery = urlParams.get('token') || urlParams.get('access_token');
         if (tokenFromQuery) {
             this.token = tokenFromQuery;
             localStorage.setItem('ptm_auth_token', this.token);
-            // Nettoyer l'URL sans recharger la page
             const cleanUrl = window.location.pathname + window.location.hash;
             window.history.replaceState({}, document.title, cleanUrl);
             console.log('✅ Token ORCID extrait des query params');
             return this.token;
         }
 
-        // Vérifier le localStorage
         const localToken = localStorage.getItem('ptm_auth_token');
         if (localToken) {
             this.token = localToken;

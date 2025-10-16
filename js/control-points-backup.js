@@ -8,25 +8,16 @@ class ControlPointsBackup {
         this.storageKey = 'galligeo-control-points-backup';
         this.autosaveInterval = null;
         this.isEnabled = true;
-        this.maxBackups = 10; // Sera mis à jour par les paramètres
-        this.autosaveFrequency = 120000; // 2 minutes par défaut (recommandé)
+        this.maxBackups = 10;
+        this.autosaveFrequency = 120000;
         this.lastSaveTime = null;
-        this.lastSavedStateHash = null; // Pour détecter les changements
-        this.hasUnsavedChanges = false; // Indicateur de changements
+        this.lastSavedStateHash = null;
+        this.hasUnsavedChanges = false;
         
-        // Écouter les changements de paramètres
         this.setupSettingsListener();
-        
-        // Charger les paramètres initiaux
         this.loadSettingsAndApply();
-        
-        // Démarrer la sauvegarde automatique
         this.startAutosave();
-        
-        // Écouter les événements de fermeture de page
         this.setupPageUnloadHandler();
-        
-        // Écouter les changements de points de contrôle
         this.setupControlPointsListener();
     }
 
@@ -39,7 +30,6 @@ class ControlPointsBackup {
         }
         
         if (this.isEnabled) {
-            // Utiliser la fréquence configurée
             this.autosaveInterval = setInterval(() => {
                 this.saveCurrentStateIfChanged();
             }, this.autosaveFrequency);

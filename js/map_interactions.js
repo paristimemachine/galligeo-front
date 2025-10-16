@@ -92,15 +92,12 @@ L.Control.CompassRotation = L.Control.extend({
         this._resetBtn = resetBtn;
         this._northLabel = northLabel;
         
-        // Événements pour la rotation
         L.DomEvent.on(compassDiv, 'mousedown', this._onMouseDown, this);
         L.DomEvent.on(resetBtn, 'click', this._resetRotation, this);
         
-        // Empêcher la propagation des événements de la carte
         L.DomEvent.disableClickPropagation(container);
         L.DomEvent.disableScrollPropagation(container);
         
-        // Mettre à jour l'affichage selon la rotation actuelle
         this._updateCompassDisplay();
         
         return container;
@@ -129,7 +126,6 @@ L.Control.CompassRotation = L.Control.extend({
         var deltaAngle = currentAngle - this._startAngle;
         var newBearing = this._startBearing + deltaAngle;
         
-        // Utiliser la méthode setBearing du plugin leaflet-rotate
         this._map.setBearing(newBearing);
         this._updateCompassDisplay();
     },
@@ -166,25 +162,20 @@ L.Control.CompassRotation = L.Control.extend({
     },
 
     onRemove: function() {
-        // Nettoyage si nécessaire
     }
 });
 
-// Factory function
 L.control.compassRotation = function(options) {
     return new L.Control.CompassRotation(options);
 };
 
-// appel des layers neutres
 var { points: layer_img_pts_left, emprise: layer_img_emprise_left } = add_neutral_control_layer(left_map);
 var layer_img_pts_right = add_wms_layers(right_map);
 
-// Exposer ces variables globalement pour les autres scripts
 window.layer_img_pts_left = layer_img_pts_left;
 window.layer_img_pts_right = layer_img_pts_right;
 window.layer_img_emprise_left = layer_img_emprise_left;
 
-// Ajouter le contrôle rose des vents uniquement à la carte gauche
 var compassControl = L.control.compassRotation({
     position: 'bottomright'
 });

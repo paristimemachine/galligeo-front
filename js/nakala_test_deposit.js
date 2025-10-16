@@ -1,7 +1,6 @@
 async function deposerSurNakala(apiKey_in, collection_id_in) {
 
-    // Configuration
-    const API_URL_TEST = 'https://apitest.nakala.fr'; // ou production 'https://api.nakala.fr'
+    const API_URL_TEST = 'https://apitest.nakala.fr';
     const API_URL_PROD = 'https://api.nakala.fr';
 
     const API_URL = API_URL_PROD
@@ -9,15 +8,13 @@ async function deposerSurNakala(apiKey_in, collection_id_in) {
     const UPLOAD_EP = API_URL + '/datas/uploads';
     const CREATE_EP = API_URL + '/datas';
 
-    const COLLECTION_ID = collection_id_in || '10.34847/nkl.f8eev8l7'; // par défaut, la collection de test
-    const apiKey = apiKey_in || '01234567-89ab-cdef-0123-456789abcdef' // par défaut, la clé d'API de test
+    const COLLECTION_ID = collection_id_in || '10.34847/nkl.f8eev8l7';
+    const apiKey = apiKey_in || '01234567-89ab-cdef-0123-456789abcdef'
 
-    // Utiliser les données de l'utilisateur connecté ou les champs du formulaire
     let nom, prenom, institution;
     let isLoggedIn = false;
     let userData = null;
     
-    // Vérifier si l'utilisateur est connecté
     if (window.ptmAuth && window.ptmAuth.isAuthenticated()) {
         isLoggedIn = true;
         try {
@@ -29,12 +26,10 @@ async function deposerSurNakala(apiKey_in, collection_id_in) {
     }
     
     if (isLoggedIn && userData) {
-        // Utiliser les données de l'utilisateur connecté et préremplir les champs
         nom = userData.name ? userData.name.split(' ').pop() : document.getElementById('input-family-name-1').value;
         prenom = userData.name ? userData.name.split(' ').slice(0, -1).join(' ') : document.getElementById('input-firstname-1').value;
         institution = userData.institution || document.getElementById('input-institution').value;
         
-        // Préremplir les champs du formulaire si ils sont vides
         if (!document.getElementById('input-family-name-1').value && nom) {
             document.getElementById('input-family-name-1').value = nom;
         }
@@ -45,7 +40,6 @@ async function deposerSurNakala(apiKey_in, collection_id_in) {
             document.getElementById('input-institution').value = institution;
         }
     } else {
-        // Utiliser les valeurs des champs du formulaire
         nom = document.getElementById('input-family-name-1').value;
         prenom = document.getElementById('input-firstname-1').value;
         institution = document.getElementById('input-institution').value;

@@ -1,17 +1,13 @@
 async function load_ark_picture() {
         console.log("load ark picture");
 
-        //var string_url = document.querySelector('#ark_url').value + '/f1/0,0,15000,10000/full/0/native.jpg';
-
         var map = left_map;
 
-        //waiting animation on map
         map.fire('dataloading');
 
         var input = document.querySelector('#search-784-input').value;
 
         if (input == '' | input == null) {
-            // document.querySelector('#search-784-input').style = 'background-color : red';
             document.querySelector('#search-784-input').value = '!!!! Entrer une url Ark Gallica !!!!';
             return;
         }
@@ -31,30 +27,10 @@ async function load_ark_picture() {
             input_ark = splitUrl[5];
         }
 
-        // Assurer que window.input_ark est aussi défini pour le système de sauvegarde
         window.input_ark = input_ark;
 
         console.log(input_ark)
 
-        var splitUrl = input.split('/');
-        
-        console.log(splitUrl);
-        console.log(splitUrl[5]);
-        if( splitUrl[5].length > 13) {
-            temp_string = splitUrl[5]
-            temp_string2 = temp_string.split(".");
-            console.log(' . ' +temp_string2);
-            input_ark = temp_string2[0];
-        }else{
-            input_ark = splitUrl[5];
-        }
-
-        // Assurer que window.input_ark est aussi défini pour le système de sauvegarde
-        window.input_ark = input_ark;
-
-        console.log(input_ark)
-
-        //first get metadata
         try {
             const wait = await load_oai_metada(input_ark);
             
@@ -62,7 +38,6 @@ async function load_ark_picture() {
             console.log('document.height_image:', document.height_image);
             console.log('document.width_image:', document.width_image);
             
-            // Si les dimensions ne sont pas disponibles dans le manifest, utiliser l'API Image IIIF
             if (!document.height_image || !document.width_image) {
                 console.log('⚠️ Dimensions non disponibles dans le manifest, tentative avec l\'API Image IIIF...');
                 const dimensions = await load_image_dimensions_from_iiif_image_api(input_ark);
@@ -75,7 +50,6 @@ async function load_ark_picture() {
                 }
             }
             
-            // S'assurer que le contrôle de métadonnées est disponible après le chargement
             if (window.ensureMetadataControlAvailable && !window.metadataControl) {
                 console.log('Tentative d\'initialisation du contrôle de métadonnées après chargement');
                 try {
@@ -91,7 +65,6 @@ async function load_ark_picture() {
             return;
         }
         
-        // Vérification finale des dimensions
         if (!document.height_image || !document.width_image) {
             console.error('❌ Les dimensions de l\'image n\'ont pas pu être récupérées');
             alert('Erreur: Impossible de récupérer les dimensions de l\'image. Veuillez réessayer.');
@@ -120,26 +93,9 @@ async function load_ark_picture() {
         document.image_height_scaled = height_temp;
         
         console.log(`📐 Dimensions scalées calculées: ${document.image_width_scaled} x ${document.image_height_scaled}`);
-
-        // console.log("width : " + document.width_image )
-        // console.log("heigth : " + document.height_image )
-        // console.log("ratio calc : " + ratio_img )
-        // console.log("heigth calc : " + height_temp )
         
-        // High resolution image using IIIF v3 API
-
-        //var string_url = 'https://gallica.bnf.fr/ark:/12148/' + input_ark + '/highres';
         var string_url = 'https://openapi.bnf.fr/iiif/image/v3/ark:/12148/'+input_ark+'/f1/full/3200,/0/default.webp';
-        // https://gallica.bnf.fr/iiif/ark:/12148/btv1b84460142/f1/full/full/0/native.jpg (old API)
-        // var string_url = 'https://gallica.bnf.fr/iiif/ark:/12148/'+input_ark+'/f1/full/full/0/native.jpg';
-        // var string_url = 'https://gallica.bnf.fr/ark:/12148/' + input_ark + '/f1.highres';
         
-        // Doesn't work
-        // var string_url = 'https://gallica.bnf.fr/view3if/ga/ark:/12148/btv1b84434526';
-
-        // Native resolution
-        // var string_url = 'https://gallica.bnf.fr/iiif/ark:/12148/btv1b84434526/f1/full/3335,/0/native.jpg';
-        // var string_url = 'https://gallica.bnf.fr/iiif/ark:/12148/btv1b84434526/f1/full/full/0/native.jpg';
         console.log(string_url);
 
         imageUrl = string_url;
@@ -153,7 +109,6 @@ async function load_ark_picture() {
 
             var map_width = img.width * 10 / img.height;
             ratio_wh_img = img.width / img.height;
-            // console.log(map_width)
             var bounds = [[0,0], [-10,map_width]];
 
             map.setView([-5, map_width/2], 6);
@@ -179,27 +134,18 @@ async function load_ark_picture() {
         document.getElementById('map-container-left').style.visibility = 'visible';
         left_map.invalidateSize();
 
-        // L'élément metadata a été déplacé vers le contrôle sur la carte
-        // Plus besoin de le rendre visible ici
-
-        // L'ancienne fonction activateDrawButton n'existe plus avec le nouveau système
-        // Le système de saisie avancé est maintenant géré par les contrôles toggle et segmentés
-
         document.getElementById('titre-etape-georef').textContent = "Créer au moins 3 points de contrôle";
-        // document.getElementById('etape-georef').textContent = "Étape 2 sur 4";
         document.getElementById('etape-suite').textContent = "Puis cliquer sur Géoréférencer";
         document.getElementById('steps').setAttribute('data-fr-current-step', '2');
 
-        // Vérifier s'il y a des sauvegardes à restaurer pour cet ARK
         if (window.controlPointsBackup && input_ark) {
             setTimeout(() => {
                 window.controlPointsBackup.checkForAutoRestore();
                 
-                // Mettre à jour l'état des boutons de sauvegarde
                 if (typeof updateBackupButtonsState === 'function') {
                     updateBackupButtonsState();
                 }
-            }, 500); // Petit délai pour s'assurer que tout est initialisé
+            }, 500);
         }
     
 }

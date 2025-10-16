@@ -1,5 +1,13 @@
 /**
- * Générateur de formulaire dynamique basé sur une configuration JSON
+ * Générateur de formulaire dynamiqu        select.id = field.id;
+        select.name = field.name;
+
+        if (field.placeholder) {
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.disabled = true;
+            defaultOption.textContent = field.placeholder;
+            if (!field.default) {une configuration JSON
  */
 class FormGenerator {
     constructor(configPath) {
@@ -12,7 +20,6 @@ class FormGenerator {
      */
     async loadConfig() {
         try {
-            // Ajouter un timestamp pour éviter le cache du navigateur
             const timestamp = new Date().getTime();
             const response = await fetch(`${this.configPath}?v=${timestamp}`);
             if (!response.ok) {
@@ -48,19 +55,16 @@ class FormGenerator {
             defaultOption.value = '';
             defaultOption.disabled = true;
             defaultOption.textContent = field.placeholder;
-            // Sélectionner cette option seulement s'il n'y a pas de valeur par défaut
             if (!field.defaultValue) {
                 defaultOption.selected = true;
             }
             select.appendChild(defaultOption);
         }
 
-        // Options du select
         field.options.forEach(option => {
             const optionElement = document.createElement('option');
             optionElement.value = option.value;
             
-            // Gérer les options non disponibles
             if (option.available === false) {
                 optionElement.textContent = `${option.label} (bientôt disponible)`;
                 optionElement.disabled = true;
@@ -70,12 +74,10 @@ class FormGenerator {
                 optionElement.textContent = option.label;
             }
             
-            // Sélectionner l'option par défaut seulement si elle est disponible
             if (field.defaultValue && option.value === field.defaultValue && option.available !== false) {
                 optionElement.selected = true;
             }
             
-            // Ajouter la description comme attribut title pour l'accessibilité
             if (option.description) {
                 if (option.available === false) {
                     optionElement.title = `${option.description} (Non disponible actuellement)`;
