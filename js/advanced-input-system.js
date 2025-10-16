@@ -21,7 +21,6 @@ function initializeControlPointsTable() {
 }
 
 function setupAdvancedInputSystem() {
-    removeOldDrawControls();
     setupControlEvents();
     setupMapClickEvents();
     setupPointInteractions();
@@ -33,19 +32,6 @@ function setupAdvancedInputSystem() {
     
     updateInputState();
     initializeControlPointsTable();
-}
-
-function removeOldDrawControls() {
-
-    // on utilise un draw sur mesure ici ;-)
-
-    if (typeof left_map !== 'undefined' && left_map) {
-        // Pas de nettoyage nécessaire - système de saisie géré ailleurs
-    }
-    
-    if (typeof right_map !== 'undefined' && right_map) {
-        // Pas de nettoyage nécessaire - système de saisie géré ailleurs
-    }
 }
 
 function setupControlEvents() {
