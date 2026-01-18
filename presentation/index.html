@@ -1,0 +1,617 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="../node_modules/@gouvfr/dsfr/dist/dsfr.min.css">
+    <link href="../node_modules/@gouvfr/dsfr/dist/core/core.min.css" rel="stylesheet">
+    <link href="../node_modules/@gouvfr/dsfr/dist/component/link/link.min.css" rel="stylesheet">
+    <link href="../node_modules/@gouvfr/dsfr/dist/component/card/card.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../node_modules/@gouvfr/dsfr/dist/utility/icons/icons.min.css">
+
+    <meta name="theme-color" content="#000091">
+
+    <!-- Favicon -->
+    <link rel="apple-touch-icon" href="../img/favicon.png">
+    <link rel="icon" href="../img/favicon.png" type="image/png">
+    <title>Galligeo - Géoréférencement de cartes et plans anciens</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="../css/main.css"/>
+
+    <style>
+        /* Layout global - page complète sans scroll sur desktop */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            background-image: url('../img/georef_transform_img.png');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+        }
+
+        /* Main content wrapper */
+        .main-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch; /* Scroll fluide sur iOS */
+        }
+
+        /* Hero Section - couleurs du logo Galligeo */
+        .hero {
+            /*background: linear-gradient(135deg, #8B1538 0%, #E67E22 50%, #F39C12 100%);*/
+            color: white;
+            padding: 4rem 2rem 2rem;
+            padding-top: 5rem; /* Espace pour le bouton fixe Applications PTM */
+            text-align: center;
+            position: relative;
+            overflow: visible;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .hero-logo {
+            max-width: 400px;
+            width: 80%;
+            height: auto;
+            margin: 0 auto 2rem;
+            display: block;
+            filter: drop-shadow(2px 2px 8px rgba(0,0,0,0.3));
+        }
+
+        .hero-subtitle {
+            color: #8B1538;
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            line-height: 1.4;
+        }
+
+        .hero-subtitle a {
+            color: rgb(66, 28, 14);
+            text-decoration: underline;
+            text-decoration-thickness: 2px;
+        }
+
+        .hero-tagline {
+            color: black;
+            font-size: 1.1rem;
+            margin-bottom: 0;
+            opacity: 0.95;
+            font-weight: 400;
+        }
+
+        /* Content Section */
+        .content-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            padding: 2rem 1.5rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* App Cards container */
+        .app-cards-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+            margin-bottom: 1.5rem;
+            max-width: 1000px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* App Card - compact */
+        .app-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            padding: 2rem;
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .app-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(0,0,0,0.15);
+        }
+
+        .app-card-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .app-card h2 {
+            font-size: 1.5rem;
+            color: #8B1538;
+            margin-bottom: 0.75rem;
+        }
+
+        .app-card p {
+            font-size: 0.95rem;
+            color: #666;
+            margin-bottom: 1.5rem;
+        }
+
+        .btn-launch {
+            display: inline-block;
+            background: linear-gradient(135deg, #8B1538 0%, #E67E22 100%);
+            color: white;
+            padding: 1rem 2.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 50px;
+            text-decoration: none;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 15px rgba(139, 21, 56, 0.3);
+        }
+
+        .btn-launch:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(139, 21, 56, 0.4);
+            color: white;
+        }
+
+        /* Features - compact */
+        .features {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .feature {
+            text-align: center;
+            padding: 1rem;
+        }
+
+        .feature-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .feature h3 {
+            font-size: 1rem;
+            color: #8B1538;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .feature p {
+            color: #666;
+            font-size: 0.85rem;
+            line-height: 1.3;
+        }
+
+        /* Links Section - compact */
+        .links-section {
+            background: #f6f6f6;
+            padding: 1.5rem;
+            border-radius: 12px;
+        }
+
+        .links-section h2 {
+            text-align: center;
+            margin-bottom: 1rem;
+            color: #8B1538;
+            font-size: 1.2rem;
+        }
+
+        .links-container {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 0.8rem;
+            max-width: 100%;
+        }
+
+        .link-card {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        }
+
+        .link-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+        }
+
+        .link-card a {
+            text-decoration: none;
+            color: #8B1538;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .link-card-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Footer sticky */
+        .footer {
+            background: #f8f8f8;
+            border-top: 1px solid #e0e0e0;
+            padding: 1rem;
+            margin-top: 0;
+            flex-shrink: 0;
+        }
+
+        .footer p {
+            margin: 0;
+            font-size: 0.85rem;
+        }
+
+        /* Flèche de retour */
+        .back-arrow {
+            position: fixed;
+            top: 1.5rem;
+            left: 1.5rem;
+            z-index: 1000;
+            background: rgba(139, 21, 56, 0.9);
+            color: white;
+            padding: 0.75rem 1.25rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .back-arrow:hover {
+            background: rgba(139, 21, 56, 1);
+            transform: translateX(-3px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+            color: white;
+        }
+
+        .back-arrow-icon {
+            font-size: 1.2rem;
+        }
+
+        /* Desktop: afficher le bouton fixe, cacher le bouton mobile */
+        .back-arrow-desktop {
+            display: flex;
+        }
+        .back-arrow-mobile {
+            display: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .features {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .links-container {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .hero {
+                padding: 1.5rem 1rem 1.5rem;
+                padding-top: 1rem;
+            }
+            .hero-logo {
+                max-width: 250px;
+                width: 60%;
+                margin-bottom: 1rem;
+            }
+            .hero-subtitle {
+                font-size: 0.95rem;
+                padding: 0 0.5rem;
+                margin-bottom: 0.5rem;
+            }
+            .hero-tagline {
+                font-size: 0.85rem;
+            }
+            .app-cards-container {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+            .features {
+                grid-template-columns: 1fr;
+                display: none; /* Cacher les features sur mobile pour économiser l'espace */
+            }
+            .links-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .links-section {
+                margin-top: 1rem;
+                padding: 1rem;
+            }
+            .links-section h2 {
+                font-size: 1rem;
+                margin-bottom: 0.75rem;
+            }
+            /* Cacher le bouton fixe, afficher le bouton dans le flux */
+            .back-arrow-desktop {
+                display: none;
+            }
+            .back-arrow-mobile {
+                display: inline-flex;
+                position: relative;
+                top: auto;
+                left: auto;
+                margin: 0 auto 1rem;
+                font-size: 0.8rem;
+                padding: 0.5rem 1rem;
+            }
+            .back-arrow-mobile:hover {
+                transform: scale(1.02);
+            }
+            .hero-content {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+            .content-section {
+                padding: 1rem;
+                flex: none; /* Permettre au contenu de prendre sa taille naturelle */
+            }
+            /* Permettre le scroll sur mobile */
+            html, body {
+                overflow-x: hidden;
+                overflow-y: auto !important;
+                height: auto !important;
+                min-height: 100vh;
+            }
+            .main-wrapper {
+                flex: none;
+                overflow: visible;
+                min-height: auto;
+            }
+            .footer {
+                position: relative;
+                flex-shrink: 0;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hero {
+                padding: 0.75rem 0.5rem 1rem;
+            }
+            .hero-logo {
+                max-width: 180px;
+                width: 55%;
+                margin-bottom: 0.75rem;
+            }
+            .hero-subtitle {
+                font-size: 0.85rem;
+                margin-bottom: 0.4rem;
+            }
+            .hero-tagline {
+                font-size: 0.8rem;
+            }
+            .back-arrow-mobile {
+                font-size: 0.75rem;
+                padding: 0.4rem 0.8rem;
+                margin-bottom: 0.75rem;
+            }
+            .back-arrow-icon {
+                font-size: 0.9rem;
+            }
+            .content-section {
+                padding: 0.75rem;
+            }
+            .app-card {
+                padding: 1.25rem;
+            }
+            .app-card h2 {
+                font-size: 1.1rem;
+            }
+            .app-card p {
+                font-size: 0.85rem;
+                margin-bottom: 1rem;
+            }
+            .btn-launch {
+                padding: 0.7rem 1.25rem;
+                font-size: 0.9rem;
+            }
+            .app-card-icon {
+                font-size: 2rem;
+                margin-bottom: 0.5rem;
+            }
+            .links-container {
+                grid-template-columns: 1fr;
+                gap: 0.5rem;
+            }
+            .links-section {
+                padding: 0.75rem;
+            }
+            .links-section h2 {
+                font-size: 0.95rem;
+            }
+            .link-card {
+                padding: 0.75rem;
+            }
+            .link-card a {
+                font-size: 0.8rem;
+            }
+            .link-card-icon {
+                font-size: 1.2rem;
+                margin-bottom: 0.3rem;
+            }
+        }
+    </style>
+  </head>
+  <body>
+
+    <!-- Flèche de retour (visible uniquement sur desktop) -->
+    <a href="https://app.ptm.huma-num.fr/" class="back-arrow back-arrow-desktop" title="Retour aux applications PTM">
+        <span class="back-arrow-icon">←</span>
+        <span>Applications PTM</span>
+    </a>
+
+    <!-- Main wrapper for content -->
+    <div class="main-wrapper">
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="hero-content">
+                <!-- Flèche de retour mobile (dans le flux) -->
+                <a href="https://app.ptm.huma-num.fr/" class="back-arrow back-arrow-mobile" title="Retour aux applications PTM">
+                    <span class="back-arrow-icon">←</span>
+                    <span>Applications PTM</span>
+                </a>
+                <img src="../img/logo_galligeo.png" alt="Galligeo" class="hero-logo">
+                <p class="hero-subtitle">
+                    Donner de l'espace aux cartes et plans de <a href="https://gallica.bnf.fr/" target="_blank" rel="noopener" title="Accéder à Gallica">Gallica</a>
+                </p>
+                <p class="hero-tagline">
+                    Géoréférencement en ligne, création d'atlas et dépôt
+                </p>
+            </div>
+        </section>
+
+        <!-- Content Section -->
+        <div class="content-section">
+            <!-- App Cards -->
+            <div class="app-cards-container">
+                <div class="app-card">
+                    <div class="app-card-icon">🗺️</div>
+                    <h2>Accéder à l'application</h2>
+                    <p>Géoréférencer des cartes et planshistoriques, créez des atlas thématiques et partagez vos créations</p>
+                    <a href="https://app.ptm.huma-num.fr/galligeo/" class="btn-launch">
+                        Lancer l'application →
+                    </a>
+                </div>
+                <div class="app-card">
+                    <div class="app-card-icon">🗃️</div>
+                    <h2>Cartes géoréférencées</h2>
+                    <p>Découvrer la galerie des cartes déjà géoréférencées et explorez les atlas thématiques</p>
+                    <a href="../galerie/index.html" class="btn-launch">
+                        Voir la galerie →
+                    </a>
+                </div>
+            </div>
+
+            <!-- Features -->
+            <div class="features">
+                <div class="feature">
+                    <div class="feature-icon">📍</div>
+                    <h3>Géoréférencement</h3>
+                    <p>Positionner des cartes et plans anciens de Gallica sur des cartes modernes grâce à des points de contrôle et définissez l'emprise utile.</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🗂️</div>
+                    <h3>Création d'atlas</h3>
+                    <p>Assembler vos cartes géoréférencées en atlas thématiques personnalisés. Organisez, visualisez et partagez vos collections cartographiques selon vos besoins de recherche.</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">💾</div>
+                    <h3>Dépôt pérenne</h3>
+                    <p>Archiver vos travaux de géoréférencement et vos atlas sur Nakala, l'entrepôt de données d'Huma-Num, pour une conservation durable et une diffusion scientifique.</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🔓</div>
+                    <h3>Open Source</h3>
+                    <p>Code source ouvert sur GitHub, documentation complète et données accessibles. Pour contribuer au projet ou réutiliser les outils pour vos propres besoins.</p>
+                </div>
+            </div>
+
+            <!-- Links Section -->
+            <section class="links-section">
+                <h2>Ressources & Documentation</h2>
+                <div class="links-container">
+                    <div class="link-card">
+                        <div class="link-card-icon"><img src="https://upload.wikimedia.org/wikipedia/commons/c/c2/Gallica_logo.svg" alt="Gallica" style="width: 5rem;"></div>
+                        <a href="https://gallica.bnf.fr/" target="_blank" rel="noopener">Gallica BnF</a>
+                    </div>
+                    <div class="link-card">
+                        <div class="link-card-icon"><img src="https://api.bnf.fr/themes/custom/bnf_api_design/logo.svg" alt="API BnF" style="width: 3rem;"></div>
+                        <a href="https://api.bnf.fr/fr" target="_blank" rel="noopener">API BnF</a>
+                    </div>
+                    <div class="link-card">
+                        <div class="link-card-icon"><img src="https://api.nakala.fr/data/10.34847/nkl.76269h22/123c8bafb489117e6621e0ad46b5590ac5e2b416" alt="Nakala" style="width: 5rem;"></div>
+                        <a href="https://www.nakala.fr/collection/10.34847/nkl.febfl1v2" target="_blank" rel="noopener">Nakala</a>
+                    </div>
+                    <div class="link-card">
+                        <div class="link-card-icon">📖</div>
+                        <a href="https://doc.ptm.huma-num.fr/galligeo/" target="_blank" rel="noopener">Docs</a>
+                    </div>
+                    <div class="link-card">
+                        <div class="link-card-icon">📄</div>
+                        <a href="../contents/Poster - Galligeo - PTM BnF Datalab - janvier 2026 - v2.pdf" target="_blank" rel="noopener">Poster</a>
+                    </div>
+                    <div class="link-card">
+                        <div class="link-card-icon"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/Github-desktop-logo-symbol.svg/250px-Github-desktop-logo-symbol.svg.png" alt="GitHub" style="width: 1.5rem; height: 1.5rem;"></div>
+                        <a href="https://github.com/paristimemachine/galligeo-front" target="_blank" rel="noopener">GitHub</a>
+                    </div>
+                    <div class="link-card">
+                        <div class="link-card-icon"><img src="https://app.ptm.huma-num.fr/cartoquete/img/logo_cartoquete.webp" alt="Cartoquête" style="width: 1.5rem; height: 1.5rem;"></div>
+                        <a href="https://cartoquete.huma-num.fr/" target="_blank" rel="noopener">Cartoquête</a>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <p>Made with
+            <svg class="heart-icon" aria-hidden="true" focusable="false" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                <path fill="currentColor" d="M462.3 62.6C407.5 15.9 326 24.3 275.7 76.2L256 96.5l-19.7-20.3C186.1 24.3 104.5 15.9 49.7 62.6c-62.8 53.6-66.1 149.8-9.9 207.9l193.5 199.8c12.5 12.9 32.8 12.9 45.3 0l193.5-199.8c56.3-58.1 53-154.3-9.8-207.9z">
+                </path>
+            </svg>
+            &nbsp by <img class="fr-responsive-img footer-logo" style="width:auto; height:28px; cursor: pointer;" src="../img/logo_ptm_small.png" alt="PTM" onclick="openExternalLink('https://ptm.huma-num.fr/')" title="Projets Time Machine">
+            
+           <img class="fr-responsive-img footer-logo" style="width:auto; height:16px; cursor: pointer;" src="../img/logo_hn.png" alt="Huma-Num" onclick="openExternalLink('https://www.huma-num.fr/')" title="Huma-Num">
+           &nbsp;+&nbsp;
+           <img class="fr-responsive-img footer-logo" style="width:auto; height:16px; cursor: pointer;" src="../img/logo_bnf_datalab.png" alt="BnF / Datalab" onclick="openExternalLink('https://www.bnf.fr/fr/bnf-datalab')" title="BnF / Datalab">
+           &nbsp;—&nbsp;
+           <span style="cursor: pointer; text-decoration: underline;" onclick="openExternalLink('https://github.com/paristimemachine/galligeo-front')" title="Code & Documentation">Code &amp; Documentation</span>
+           &nbsp;—&nbsp;
+           
+           <!-- Zone de contact -->
+           <span class="footer-contact">
+               <svg style="width: 16px; height: 16px; vertical-align: text-bottom; margin-right: 4px;" fill="currentColor" viewBox="0 0 24 24">
+                   <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+               </svg>
+               <a href="mailto:ptm-galligeo@listes.huma-num.fr" style="color: inherit;" title="Contact par email">Contact</a>
+               &nbsp;•&nbsp;
+               <svg style="width: 16px; height: 16px; vertical-align: text-bottom; margin-right: 4px;" fill="currentColor" viewBox="0 0 24 24">
+                   <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515a.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0a12.64 12.64 0 0 0-.617-1.25a.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057a19.9 19.9 0 0 0 5.993 3.03a.078.078 0 0 0 .084-.028a14.09 14.09 0 0 0 1.226-1.994a.076.076 0 0 0-.041-.106a13.107 13.107 0 0 1-1.872-.892a.077.077 0 0 1-.008-.128a10.2 10.2 0 0 0 .372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127a12.299 12.299 0 0 1-1.873.892a.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028a19.839 19.839 0 0 0 6.002-3.03a.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.956-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.955-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.946 2.418-2.157 2.418z"/>
+               </svg>
+               <a href="https://discord.com/channels/813801921407877140/1387808139780554794" target="_blank" rel="noopener" style="color: inherit;" title="Rejoindre notre serveur Discord">Discord</a>
+           </span>
+        </p>
+      </footer>
+    <!-- END FOOTER -->
+
+    <!-- Scripts -->
+    <script>
+        function openExternalLink(url) {
+            window.open(url, '_blank', 'noopener,noreferrer');
+        }
+    </script>
+
+    <!-- DSFR JS -->
+    <script src="../node_modules/@gouvfr/dsfr/dist/dsfr.module.min.js" type="module"></script>
+
+  </body>
+</html>
