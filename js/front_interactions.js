@@ -144,6 +144,23 @@ function click_georef(image, points, polygon, input_ark) {
     }
     
     console.log(`📐 Dimensions de l'image: ${imageWidth} x ${imageHeight}`);
+    
+    // Validation du polygone avant envoi
+    if (polygon && polygon.length > 0) {
+        const invalidPoints = polygon.filter(p => 
+            !p || 
+            p.lat === undefined || p.lat === null || !isFinite(p.lat) ||
+            p.long === undefined || p.long === null || !isFinite(p.long)
+        );
+        
+        if (invalidPoints.length > 0) {
+            console.error('❌ Polygone invalide détecté:', invalidPoints);
+            alert('Erreur: Le polygone d\'emprise contient des données invalides. Veuillez redessiner l\'emprise après le chargement complet de l\'image.');
+            setGeoreferencingButtonState('normal');
+            right_map.fire('dataload');
+            return;
+        }
+    }
 
    georef_api_post(urlToAPI, { 
      "gallica_ark_url": urlToRessource,

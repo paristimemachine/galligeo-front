@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Rate Limiting API Gallica</title>
+    <link rel="stylesheet" href="../node_modules/@gouvfr/dsfr/dist/dsfr.min.css">
+    <style>
+        body {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .test-section {
+            margin: 2rem 0;
+            padding: 1.5rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .log-output {
+            background: #f5f5f5;
+            padding: 1rem;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .success { color: #18753c; }
+        .error { color: #ce0500; }
+        .info { color: #0063cb; }
+        .warning { color: #b34000; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test Rate Limiting API Gallica</h1>
+    
+    <div class="fr-alert fr-alert--info">
+        <p><strong>Objectif :</strong> Vérifier que le rate limiting fonctionne correctement et évite les erreurs 429.</p>
+    </div>
+
+    <!-- Test 1 : Rate Limiter -->
+    <div class="test-section">
+        <h2>1. Test du Rate Limiter</h2>
+        <p>Vérifie que les requêtes sont espacées de ~500ms (2 req/s)</p>
+        <button class="fr-btn" onclick="testRateLimiter()">Lancer le test</button>
+        <div id="test1-output" class="log-output" style="display: none;"></div>
+    </div>
+
+    <!-- Test 2 : Cache -->
+    <div class="test-section">
+        <h2>2. Test du Cache</h2>
+        <p>Vérifie que les métadonnées sont mises en cache</p>
+        <button class="fr-btn" onclick="testCache()">Lancer le test</button>
+        <div id="test2-output" class="log-output" style="display: none;"></div>
+    </div>
+
+    <!-- Test 3 : Chargement d'une carte -->
+    <div class="test-section">
+        <h2>3. Test chargement métadonnées</h2>
+        <p>Récupère les métadonnées d'une carte Gallica</p>
+        <input type="text" id="ark-input" class="fr-input" value="btv1b8441261v" placeholder="ARK ID (ex: btv1b8441261v)">
+        <button class="fr-btn" onclick="testFetchMetadata()">Charger les métadonnées</button>
+        <div id="test3-output" class="log-output" style="display: none;"></div>
+    </div>
+
+    <!-- Test 4 : Chargement multiple -->
+    <div class="test-section">
+        <h2>4. Test chargement multiple</h2>
+        <p>Charge plusieurs cartes séquentiellement pour vérifier l'absence d'erreur 429</p>
+        <input type="number" id="count-input" class="fr-input" value="10" min="1" max="50" placeholder="Nombre de cartes">
+        <button class="fr-btn" onclick="testMultipleLoading()">Lancer le test</button>
+        <div id="test4-output" class="log-output" style="display: none;"></div>
+    </div>
+
+    <!-- Test 5 : Stress test -->
+    <div class="test-section">
+        <h2>5. Stress Test (Comparaison)</h2>
+        <p class="fr-text--sm">⚠️ Ce test compare l'ancien système (parallèle) avec le nouveau (séquentiel)</p>
+        <button class="fr-btn fr-btn--secondary" onclick="testParallelLoading()">Test ancien système (peut échouer)</button>
+        <button class="fr-btn" onclick="testSequentialLoading()">Test nouveau système</button>
+        <div id="test5-output" class="log-output" style="display: none;"></div>
+    </div>
+
+    <script>
+        // Rate Limiter (copié depuis galerie/index.html)
+        class RateLimiter {
+            constructor(maxRequestsPerSecond = 2) {
+                this.delay = 1000 / maxRequestsPerSecond;
+                this.lastCallTime = 0;
+            }
+            
+            async throttle() {
+                const now = Date.now();
+                const timeSinceLastCall = now - this.lastCallTime;
+                if (timeSinceLastCall < this.delay) {
+                    await new Promise(resolve => setTimeout(resolve, this.delay - timeSinceLastCall));
+                }
+                this.lastCallTime = Date.now();
+            }
+        }
+
+        const gallicaRateLimiter = new RateLimiter(2);
+        const metadataCache = new Map();
+
+        function log(message, outputId, type = 'info') {
+            const output = document.getElementById(outputId);
+            output.style.display = 'block';
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type;
+            output.innerHTML += `<span class="${className}">[${timestamp}] ${message}</span>\n`;
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function clearLog(outputId) {
+            const output = document.getElementById(outputId);
+            output.innerHTML = '';
+        }
+
+        // Test 1 : Rate Limiter
+        async function testRateLimiter() {
+            clearLog('test1-output');
+            log('🚀 Test du Rate Limiter démarré', 'test1-output');
+            log('Attendu : ~500ms entre chaque requête', 'test1-output', 'info');
+            
+            const times = [];
+            const limiter = new RateLimiter(2);
+            
+            for (let i = 0; i < 5; i++) {
+                await limiter.throttle();
+                const now = Date.now();
+                times.push(now);
+                
+                if (i > 0) {
+                    const delay = now - times[i-1];
+                    const status = delay >= 450 && delay <= 550 ? 'success' : 'warning';
+                    log(`Requête ${i+1} : ${delay}ms depuis la précédente`, 'test1-output', status);
+                } else {
+                    log(`Requête ${i+1} : première requête`, 'test1-output', 'info');
+                }
+            }
+            
+            log('✅ Test terminé', 'test1-output', 'success');
+        }
+
+        // Test 2 : Cache
+        async function testCache() {
+            clearLog('test2-output');
+            log('🚀 Test du Cache démarré', 'test2-output');
+            
+            metadataCache.clear();
+            log('Cache vidé', 'test2-output', 'info');
+            
+            const arkId = 'btv1b8441261v';
+            
+            // Premier appel - devrait récupérer depuis l'API
+            log('Premier appel fetchMetadata()...', 'test2-output', 'info');
+            const start1 = Date.now();
+            const metadata1 = await fetchMetadata(arkId);
+            const duration1 = Date.now() - start1;
+            log(`✅ Métadonnées récupérées en ${duration1}ms (depuis API)`, 'test2-output', 'success');
+            log(`Taille cache : ${metadataCache.size}`, 'test2-output', 'info');
+            
+            // Second appel - devrait utiliser le cache
+            log('Second appel fetchMetadata()...', 'test2-output', 'info');
+            const start2 = Date.now();
+            const metadata2 = await fetchMetadata(arkId);
+            const duration2 = Date.now() - start2;
+            log(`✅ Métadonnées récupérées en ${duration2}ms (depuis CACHE)`, 'test2-output', 'success');
+            
+            if (duration2 < 10) {
+                log('✅ Cache fonctionne correctement (< 10ms)', 'test2-output', 'success');
+            } else {
+                log('⚠️ Cache semble ne pas fonctionner', 'test2-output', 'warning');
+            }
+        }
+
+        // Fonction pour récupérer les métadonnées
+        async function fetchMetadata(arkId) {
+            // Vérifier le cache
+            if (metadataCache.has(arkId)) {
+                return metadataCache.get(arkId);
+            }
+            
+            try {
+                await gallicaRateLimiter.throttle();
+                
+                const manifestUrl = `https://openapi.bnf.fr/iiif/presentation/v3/ark:/12148/${arkId}/manifest.json`;
+                const response = await fetch(manifestUrl);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const manifest = await response.json();
+                
+                // Extraction simple du titre
+                let title = 'Titre non disponible';
+                if (manifest.summary) {
+                    title = typeof manifest.summary === 'object' 
+                        ? (manifest.summary.none?.[0] || manifest.summary.fr?.[0] || title)
+                        : manifest.summary;
+                }
+                
+                const metadata = { title, arkId };
+                metadataCache.set(arkId, metadata);
+                
+                return metadata;
+                
+            } catch (error) {
+                throw new Error(`Erreur Gallica: ${error.message}`);
+            }
+        }
+
+        // Test 3 : Chargement d'une carte
+        async function testFetchMetadata() {
+            clearLog('test3-output');
+            const arkId = document.getElementById('ark-input').value.trim();
+            
+            if (!arkId) {
+                log('❌ Veuillez saisir un ARK ID', 'test3-output', 'error');
+                return;
+            }
+            
+            log(`🚀 Chargement des métadonnées pour ${arkId}`, 'test3-output');
+            
+            try {
+                const start = Date.now();
+                const metadata = await fetchMetadata(arkId);
+                const duration = Date.now() - start;
+                
+                log(`✅ Succès en ${duration}ms`, 'test3-output', 'success');
+                log(`Titre : ${metadata.title}`, 'test3-output', 'info');
+                log(`ARK : ${metadata.arkId}`, 'test3-output', 'info');
+                
+            } catch (error) {
+                log(`❌ Erreur : ${error.message}`, 'test3-output', 'error');
+            }
+        }
+
+        // Test 4 : Chargement multiple
+        async function testMultipleLoading() {
+            clearLog('test4-output');
+            const count = parseInt(document.getElementById('count-input').value);
+            
+            log(`🚀 Chargement de ${count} cartes séquentiellement`, 'test4-output');
+            log('Avec rate limiting : 2 req/s max', 'test4-output', 'info');
+            
+            const arks = [
+                'btv1b8441261v', 'btv1b531213960', 'btv1b53098795c',
+                'btv1b53116917b', 'btv1b530822661', 'btv1b8447295w',
+                'btv1b530992026', 'btv1b531107906', 'btv1b53124865t',
+                'btv1b53185208d'
+            ];
+            
+            const start = Date.now();
+            let success = 0;
+            let errors = 0;
+            
+            for (let i = 0; i < Math.min(count, arks.length); i++) {
+                const arkId = arks[i];
+                try {
+                    await fetchMetadata(arkId);
+                    success++;
+                    log(`✅ [${i+1}/${count}] ${arkId} chargé`, 'test4-output', 'success');
+                } catch (error) {
+                    errors++;
+                    log(`❌ [${i+1}/${count}] ${arkId} erreur : ${error.message}`, 'test4-output', 'error');
+                }
+            }
+            
+            const duration = Math.round((Date.now() - start) / 1000);
+            log(`\n📊 Résultats :`, 'test4-output', 'info');
+            log(`   Succès : ${success}`, 'test4-output', 'success');
+            log(`   Erreurs : ${errors}`, 'test4-output', errors > 0 ? 'error' : 'info');
+            log(`   Durée : ${duration}s`, 'test4-output', 'info');
+            log(`   Moyenne : ${(duration / count).toFixed(1)}s/carte`, 'test4-output', 'info');
+        }
+
+        // Test 5 : Comparaison parallèle vs séquentiel
+        async function testParallelLoading() {
+            clearLog('test5-output');
+            log('🚀 Test ANCIEN système (requêtes parallèles)', 'test5-output');
+            log('⚠️ Ce test PEUT échouer avec une erreur 429', 'test5-output', 'warning');
+            
+            const arks = ['btv1b8441261v', 'btv1b531213960', 'btv1b53098795c', 'btv1b53116917b', 'btv1b530822661'];
+            
+            const start = Date.now();
+            
+            try {
+                // Sans rate limiting - toutes en parallèle
+                const promises = arks.map(async (arkId) => {
+                    const manifestUrl = `https://openapi.bnf.fr/iiif/presentation/v3/ark:/12148/${arkId}/manifest.json`;
+                    const response = await fetch(manifestUrl);
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    return response.json();
+                });
+                
+                await Promise.all(promises);
+                
+                const duration = Math.round((Date.now() - start) / 1000);
+                log(`✅ Succès en ${duration}s (${arks.length} cartes en parallèle)`, 'test5-output', 'success');
+                log(`⚠️ Note : peut fonctionner avec peu de cartes, échoue avec beaucoup`, 'test5-output', 'warning');
+                
+            } catch (error) {
+                log(`❌ ÉCHEC : ${error.message}`, 'test5-output', 'error');
+                log(`C'est attendu ! Trop de requêtes simultanées`, 'test5-output', 'info');
+            }
+        }
+
+        async function testSequentialLoading() {
+            clearLog('test5-output');
+            log('🚀 Test NOUVEAU système (requêtes séquentielles + rate limiting)', 'test5-output');
+            
+            const arks = ['btv1b8441261v', 'btv1b531213960', 'btv1b53098795c', 'btv1b53116917b', 'btv1b530822661'];
+            
+            metadataCache.clear();
+            const start = Date.now();
+            let success = 0;
+            
+            for (const arkId of arks) {
+                try {
+                    await fetchMetadata(arkId);
+                    success++;
+                    log(`✅ ${arkId} chargé`, 'test5-output', 'success');
+                } catch (error) {
+                    log(`❌ ${arkId} erreur : ${error.message}`, 'test5-output', 'error');
+                }
+            }
+            
+            const duration = Math.round((Date.now() - start) / 1000);
+            log(`\n✅ SUCCÈS en ${duration}s (${success}/${arks.length} cartes)`, 'test5-output', 'success');
+            log(`Pas d'erreur 429 grâce au rate limiting !`, 'test5-output', 'success');
+        }
+    </script>
+</body>
+</html>

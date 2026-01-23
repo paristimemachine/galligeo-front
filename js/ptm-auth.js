@@ -483,6 +483,23 @@ class PTMAuthFixed {
                     validatedItem.doi = item.doi;
                 }
                 
+                // Conserver les métadonnées Gallica si présentes (NOUVEAU)
+                if (item.gallica_title) {
+                    validatedItem.gallica_title = item.gallica_title;
+                }
+                if (item.gallica_producer) {
+                    validatedItem.gallica_producer = item.gallica_producer;
+                }
+                if (item.gallica_date) {
+                    validatedItem.gallica_date = item.gallica_date;
+                }
+                if (item.gallica_thumbnail_url) {
+                    validatedItem.gallica_thumbnail_url = item.gallica_thumbnail_url;
+                }
+                if (item.metadata_fetched_at) {
+                    validatedItem.metadata_fetched_at = item.metadata_fetched_at;
+                }
+                
                 return validatedItem;
             });
         }

@@ -199,6 +199,12 @@ function handlePointClick(event, mapSide, map, layer) {
     
     let processedCoords = latLng;
     if (mapSide === 'left') {
+        // Vérifier que ratio_wh_img est valide
+        if (!ratio_wh_img || ratio_wh_img === 0 || !isFinite(ratio_wh_img)) {
+            console.error('❌ ratio_wh_img invalide:', ratio_wh_img, '- Impossible de créer le point');
+            alert('Erreur: L\'image n\'est pas complètement chargée. Veuillez attendre le chargement complet de l\'image.');
+            return;
+        }
         processedCoords = L.latLng(-latLng.lat/10, (latLng.lng / ratio_wh_img) / 10);
     }
     
@@ -319,6 +325,12 @@ function setupMarkerDragEvents(marker, pointPair, mapSide) {
         // Mettre à jour les coordonnées dans la paire
         let processedCoords = newLatLng;
         if (mapSide === 'left') {
+            // Vérifier que ratio_wh_img est valide
+            if (!ratio_wh_img || ratio_wh_img === 0 || !isFinite(ratio_wh_img)) {
+                console.error('❌ ratio_wh_img invalide:', ratio_wh_img, '- Impossible de déplacer le point');
+                alert('Erreur: Ratio d\'image invalide. Veuillez recharger l\'image.');
+                return;
+            }
             processedCoords = L.latLng(-newLatLng.lat/10, (newLatLng.lng / ratio_wh_img) / 10);
         }
         
@@ -484,11 +496,36 @@ function syncPolygonDataFromLayer() {
 function updatePolygonData() {
     if (!window.currentPolygon || window.currentPolygon.points.length < 3) return;
     
+    // Vérifier que ratio_wh_img est valide avant de l'utiliser
+    if (!ratio_wh_img || ratio_wh_img === 0 || !isFinite(ratio_wh_img)) {
+        console.warn('⚠️ ratio_wh_img invalide:', ratio_wh_img, '- Impossible de calculer le polygone');
+        return;
+    }
+    
     const polygonArray = [];
     window.currentPolygon.points.forEach(function(point) {
+        // Vérifier que le point a des coordonnées valides
+        if (!point || point.lat === undefined || point.lng === undefined) {
+            console.warn('⚠️ Point invalide:', point);
+            return;
+        }
+        
         const convertedPoint = L.latLng(-point.lat/10, (point.lng / ratio_wh_img) / 10);
+        
+        // Vérifier que la conversion a produit des valeurs valides
+        if (!isFinite(convertedPoint.lat) || !isFinite(convertedPoint.lng)) {
+            console.warn('⚠️ Conversion invalide:', {original: point, converted: convertedPoint});
+            return;
+        }
+        
         polygonArray.push([convertedPoint.lng, convertedPoint.lat]);
     });
+    
+    // Vérifier qu'on a assez de points après filtrage
+    if (polygonArray.length < 3) {
+        console.warn('⚠️ Pas assez de points valides après filtrage:', polygonArray.length);
+        return;
+    }
     
     // Fermer le polygone
     polygonArray.push(polygonArray[0]);

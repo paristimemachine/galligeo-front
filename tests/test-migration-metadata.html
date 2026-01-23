@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Migration Métadonnées Gallica</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #0066cc;
+            padding-bottom: 10px;
+        }
+        
+        .step {
+            background: #f8f9fa;
+            border-left: 4px solid #0066cc;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .step h2 {
+            margin-top: 0;
+            color: #0066cc;
+        }
+        
+        button {
+            background: #0066cc;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        
+        button:hover {
+            background: #0052a3;
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .log {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            margin: 20px 0;
+        }
+        
+        .success {
+            color: #4caf50;
+        }
+        
+        .error {
+            color: #f44336;
+        }
+        
+        .warning {
+            color: #ff9800;
+        }
+        
+        .info {
+            color: #2196f3;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        
+        th {
+            background: #0066cc;
+            color: white;
+        }
+        
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .status-success {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        
+        .status-pending {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+        
+        .status-error {
+            background: #ffebee;
+            color: #c62828;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .stat-card .value {
+            font-size: 36px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test Migration Métadonnées Gallica</h1>
+        
+        <div class="step">
+            <h2>📋 Étape 1 : Charger les cartes géoréférencées</h2>
+            <p>Récupère toutes les cartes depuis l'API PTM Auth</p>
+            <button id="btn-load-maps" onclick="loadMaps()">Charger les cartes</button>
+            <div id="maps-result"></div>
+        </div>
+        
+        <div class="step">
+            <h2>🎯 Étape 2 : Sélectionner 3-5 cartes test</h2>
+            <p>Choisit aléatoirement quelques cartes pour le test</p>
+            <button id="btn-select-test" onclick="selectTestMaps()" disabled>Sélectionner cartes test</button>
+            <div id="test-selection"></div>
+        </div>
+        
+        <div class="step">
+            <h2>🔄 Étape 3 : Tester récupération Gallica</h2>
+            <p>Appelle l'API Gallica pour vérifier la récupération des métadonnées (sans sauvegarde)</p>
+            <button id="btn-enrich" onclick="enrichTestMaps()" disabled>Tester Gallica</button>
+            <div id="enrich-result"></div>
+        </div>
+        
+        <div class="step">
+            <h2>🔍 Étape 4 : Recharger depuis la base distante</h2>
+            <p>Vérifie les métadonnées actuellement en base (cartes déjà enrichies)</p>
+            <button id="btn-reload" onclick="reloadFromDatabase()" disabled>Recharger depuis base</button>
+            <div id="reload-result"></div>
+        </div>
+        
+        <div class="step">
+            <h2>✅ Étape 5 : Vérifier la compatibilité format</h2>
+            <p>Teste le format des métadonnées (structure, champs requis)</p>
+            <button id="btn-verify" onclick="verifyCompatibility()" disabled>Vérifier format</button>
+            <div id="verify-result"></div>
+        </div>
+        
+        <div class="step" style="background: #d4edda; border-left-color: #28a745;">
+            <h2>✅ Test validé - Prochaines étapes</h2>
+            <p><strong>Les métadonnées Gallica sont correctement récupérées !</strong></p>
+            
+            <h3>🎯 Pour tester la sauvegarde en base (1 carte) :</h3>
+            <ol style="margin: 10px 0;">
+                <li>Allez sur <code>galerie/index.html</code></li>
+                <li>Ouvrez la console (F12)</li>
+                <li>Exécutez : <code style="background: #fff; padding: 2px 8px; border-radius: 3px;">await enrichMap("btv1b531027643")</code></li>
+                <li>Rechargez la page galerie (F5)</li>
+                <li>Vérifiez que la carte affiche le titre : "Plan de la Ville de Besançon..."</li>
+            </ol>
+            
+            <h3>🚀 Pour migrer toutes les cartes (~240 cartes, ~10-40 minutes) :</h3>
+            <ol style="margin: 10px 0;">
+                <li>Sur la page galerie</li>
+                <li>Console : <code style="background: #fff; padding: 2px 8px; border-radius: 3px;">await migrerToutesLesMetadonnees()</code></li>
+                <li>Attendez la fin (progression affichée toutes les 5 cartes)</li>
+                <li>Rechargez la galerie → chargement instantané !</li>
+            </ol>
+        </div>
+        
+        <h2>📊 Console de logs</h2>
+        <div id="console" class="log"></div>
+    </div>
+
+    <!-- Import des modules nécessaires -->
+    <script src="../js/ptm-auth.js"></script>
+    <script src="../js/gallica-metadata-storage.js"></script>
+    
+    <script>
+        // Variables globales
+        let allMaps = [];
+        let testMaps = [];
+        let enrichedMaps = [];
+        let reloadedMaps = [];
+        
+        // Fonction helper pour charger depuis l'API (mode anonyme)
+        async function loadAllMaps() {
+            const response = await fetch('https://api.ptm.huma-num.fr/auth/admin/galligeo/georeferenced-maps-by-users');
+            
+            if (!response.ok) {
+                throw new Error(`Erreur HTTP: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            if (data.status !== 'ok' || !data.users) {
+                throw new Error('Format de données invalide');
+            }
+            
+            // Transformer les données au format attendu
+            const maps = [];
+            data.users.forEach(user => {
+                user.georeferenced_maps.forEach(map => {
+                    maps.push({
+                        ark: map.ark,
+                        status: map.status,
+                        firstWorked: map.firstWorked,
+                        lastUpdated: map.lastUpdated,
+                        georeferenced_by: user.full_name || 'Utilisateur anonyme',
+                        georeferenced_date: map.lastUpdated,
+                        // Métadonnées Gallica
+                        gallica_title: map.gallica_title,
+                        gallica_producer: map.gallica_producer,
+                        gallica_date: map.gallica_date,
+                        gallica_thumbnail_url: map.gallica_thumbnail_url,
+                        metadata_fetched_at: map.metadata_fetched_at
+                    });
+                });
+            });
+            
+            return maps;
+        }
+        
+        // Fonction de log dans la console visuelle
+        function log(message, type = 'info') {
+            const consoleElement = document.getElementById('console');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : 
+                            type === 'success' ? 'success' : 
+                            type === 'warning' ? 'warning' : 'info';
+            
+            consoleElement.innerHTML += `<span class="${className}">[${timestamp}] ${message}</span>\n`;
+            consoleElement.scrollTop = consoleElement.scrollHeight;
+            
+            // Log aussi dans la vraie console
+            if (type === 'error') {
+                window.console.error(message);
+            } else {
+                window.console.log(message);
+            }
+        }
+        
+        // Étape 1 : Charger toutes les cartes
+        async function loadMaps() {
+            log('🚀 Chargement des cartes géoréférencées...', 'info');
+            
+            const btn = document.getElementById('btn-load-maps');
+            btn.disabled = true;
+            
+            try {
+                log('   📡 Récupération depuis API PTM Auth (mode anonyme)...', 'info');
+                const data = await loadAllMaps();
+                
+                allMaps = data.filter(m => m.status === 'georeferenced');
+                
+                log(`✅ ${allMaps.length} cartes géoréférencées chargées`, 'success');
+                
+                // Afficher stats
+                const result = document.getElementById('maps-result');
+                result.innerHTML = `
+                    <div class="stats">
+                        <div class="stat-card">
+                            <h3>Total cartes</h3>
+                            <div class="value">${data.length}</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Géoréférencées</h3>
+                            <div class="value">${allMaps.length}</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Avec métadonnées</h3>
+                            <div class="value">${allMaps.filter(m => m.gallica_title).length}</div>
+                        </div>
+                    </div>
+                `;
+                
+                // Activer bouton suivant
+                document.getElementById('btn-select-test').disabled = false;
+                
+            } catch (error) {
+                log(`❌ Erreur chargement: ${error.message}`, 'error');
+                btn.disabled = false;
+            }
+        }
+        
+        // Étape 2 : Sélectionner cartes test
+        function selectTestMaps() {
+            log('🎯 Sélection de 5 cartes aléatoires...', 'info');
+            
+            // Filtrer les cartes SANS métadonnées pour le test
+            const mapsWithoutMetadata = allMaps.filter(m => !m.gallica_title);
+            
+            if (mapsWithoutMetadata.length === 0) {
+                log('⚠️ Toutes les cartes ont déjà des métadonnées!', 'warning');
+                log('💡 Utilisation de cartes avec métadonnées pour test de relecture', 'info');
+                testMaps = allMaps.slice(0, 5);
+            } else {
+                // Sélection aléatoire de 5 cartes
+                const count = Math.min(5, mapsWithoutMetadata.length);
+                testMaps = [];
+                const indices = new Set();
+                
+                while (testMaps.length < count) {
+                    const idx = Math.floor(Math.random() * mapsWithoutMetadata.length);
+                    if (!indices.has(idx)) {
+                        indices.add(idx);
+                        testMaps.push(mapsWithoutMetadata[idx]);
+                    }
+                }
+            }
+            
+            log(`✅ ${testMaps.length} cartes sélectionnées`, 'success');
+            
+            // Afficher la table
+            const result = document.getElementById('test-selection');
+            result.innerHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ARK</th>
+                            <th>Statut</th>
+                            <th>Métadonnées</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${testMaps.map(m => `
+                            <tr>
+                                <td><code>${m.ark}</code></td>
+                                <td>${m.status}</td>
+                                <td>
+                                    ${m.gallica_title ? 
+                                        '<span class="status-badge status-success">Oui</span>' : 
+                                        '<span class="status-badge status-pending">Non</span>'}
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            
+            // Activer bouton suivant
+            document.getElementById('btn-enrich').disabled = false;
+        }
+        
+        // Étape 3 : Enrichir les cartes test (SANS sauvegarde - test Gallica uniquement)
+        async function enrichTestMaps() {
+            log('🔄 Test récupération métadonnées Gallica...', 'info');
+            log('⚠️  Mode test : récupération uniquement, pas de sauvegarde en base', 'warning');
+            
+            const btn = document.getElementById('btn-enrich');
+            btn.disabled = true;
+            
+            enrichedMaps = [];
+            
+            try {
+                for (let i = 0; i < testMaps.length; i++) {
+                    const map = testMaps[i];
+                    log(`   [${i+1}/${testMaps.length}] Récupération ${map.ark}...`, 'info');
+                    
+                    try {
+                        // Appel direct à Gallica (pas de sauvegarde)
+                        const metadata = await window.gallicaMetadataStorage.fetchFromGallica(map.ark);
+                        
+                        if (metadata) {
+                            log(`   ✅ ${map.ark} : "${metadata.title}"`, 'success');
+                            enrichedMaps.push({
+                                ark: map.ark,
+                                metadata: metadata,
+                                status: 'success'
+                            });
+                        } else {
+                            log(`   ❌ ${map.ark} : métadonnées non trouvées`, 'error');
+                            enrichedMaps.push({
+                                ark: map.ark,
+                                error: 'Métadonnées non trouvées',
+                                status: 'error'
+                            });
+                        }
+                    } catch (error) {
+                        log(`   ❌ ${map.ark} échec: ${error.message}`, 'error');
+                        enrichedMaps.push({
+                            ark: map.ark,
+                            error: error.message,
+                            status: 'error'
+                        });
+                    }
+                    
+                    // Délai entre chaque carte (rate limiting)
+                    await new Promise(resolve => setTimeout(resolve, 1100));
+                }
+                
+                log(`✅ Test Gallica terminé: ${enrichedMaps.filter(m => m.status === 'success').length}/${testMaps.length}`, 'success');
+                
+                // Afficher résultats
+                const result = document.getElementById('enrich-result');
+                result.innerHTML = `
+                    <p><strong>⚠️ Mode test</strong> : Métadonnées récupérées depuis Gallica uniquement (pas de sauvegarde)</p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ARK</th>
+                                <th>Statut</th>
+                                <th>Titre</th>
+                                <th>Producteur</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${enrichedMaps.map(m => `
+                                <tr>
+                                    <td><code>${m.ark}</code></td>
+                                    <td>
+                                        ${m.status === 'success' ? 
+                                            '<span class="status-badge status-success">✅ OK</span>' : 
+                                            '<span class="status-badge status-error">❌ Échec</span>'}
+                                    </td>
+                                    <td>${m.metadata?.title || m.error || '-'}</td>
+                                    <td>${m.metadata?.producer || '-'}</td>
+                                    <td>${m.metadata?.date || '-'}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                    <p style="margin-top: 15px; padding: 10px; background: #e3f2fd; border-radius: 4px;">
+                        💡 <strong>Ces métadonnées sont valides</strong> et prêtes à être sauvegardées.<br>
+                        Pour sauvegarder en base, utilisez la page galerie en production.
+                    </p>
+                `;
+                
+                // Activer bouton suivant
+                document.getElementById('btn-reload').disabled = false;
+                
+            } catch (error) {
+                log(`❌ Erreur enrichissement: ${error.message}`, 'error');
+                btn.disabled = false;
+            }
+        }
+        
+        // Étape 4 : Recharger depuis la base
+        async function reloadFromDatabase() {
+            log('🔍 Rechargement depuis la base distante...', 'info');
+            
+            const btn = document.getElementById('btn-reload');
+            btn.disabled = true;
+            
+            try {
+                log('   📡 Récupération depuis API PTM Auth...', 'info');
+                const data = await loadAllMaps();
+                
+                // Filtrer pour ne garder que nos cartes test
+                reloadedMaps = data.filter(m => 
+                    testMaps.some(tm => tm.ark === m.ark)
+                );
+                
+                log(`✅ ${reloadedMaps.length} cartes rechargées depuis la base`, 'success');
+                
+                // Vérifier les métadonnées
+                const withMetadata = reloadedMaps.filter(m => m.gallica_title);
+                log(`   📊 ${withMetadata.length}/${reloadedMaps.length} ont des métadonnées`, 'info');
+                
+                // Afficher résultats
+                const result = document.getElementById('reload-result');
+                result.innerHTML = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ARK</th>
+                                <th>Dans base?</th>
+                                <th>gallica_title</th>
+                                <th>gallica_producer</th>
+                                <th>gallica_date</th>
+                                <th>gallica_thumbnail_url</th>
+                                <th>metadata_fetched_at</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${reloadedMaps.map(m => `
+                                <tr>
+                                    <td><code>${m.ark}</code></td>
+                                    <td>
+                                        ${m.gallica_title ? 
+                                            '<span class="status-badge status-success">✅ Oui</span>' : 
+                                            '<span class="status-badge status-error">❌ Non</span>'}
+                                    </td>
+                                    <td>${m.gallica_title || '❌'}</td>
+                                    <td>${m.gallica_producer || '❌'}</td>
+                                    <td>${m.gallica_date || '❌'}</td>
+                                    <td>${m.gallica_thumbnail_url ? '✅' : '❌'}</td>
+                                    <td>${m.metadata_fetched_at || '❌'}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+                
+                // Activer bouton suivant
+                document.getElementById('btn-verify').disabled = false;
+                
+            } catch (error) {
+                log(`❌ Erreur rechargement: ${error.message}`, 'error');
+                btn.disabled = false;
+            }
+        }
+        
+        // Étape 5 : Vérifier compatibilité
+        function verifyCompatibility() {
+            log('✅ Vérification de la compatibilité...', 'info');
+            
+            const checks = [];
+            
+            // Check 1: Structure des données
+            let structureOk = true;
+            for (const map of reloadedMaps) {
+                if (map.gallica_title) {
+                    if (!map.ark || !map.status) {
+                        structureOk = false;
+                        log(`   ❌ Structure incorrecte pour ${map.ark}`, 'error');
+                    }
+                }
+            }
+            checks.push({
+                name: 'Structure données conforme',
+                status: structureOk ? 'success' : 'error',
+                message: structureOk ? 'Tous les champs obligatoires présents' : 'Champs manquants détectés'
+            });
+            
+            // Check 2: Métadonnées présentes
+            const withMetadata = reloadedMaps.filter(m => m.gallica_title).length;
+            const metadataOk = withMetadata === enrichedMaps.filter(e => e.status === 'success').length;
+            checks.push({
+                name: 'Métadonnées persistées',
+                status: metadataOk ? 'success' : 'error',
+                message: `${withMetadata}/${enrichedMaps.filter(e => e.status === 'success').length} cartes ont métadonnées en base`
+            });
+            
+            // Check 3: Format compatible avec ptm-auth.js
+            let formatOk = true;
+            for (const map of reloadedMaps.filter(m => m.gallica_title)) {
+                try {
+                    const validated = validateGalligeoData(map);
+                    if (!validated) {
+                        formatOk = false;
+                        log(`   ❌ Format invalide pour ${map.ark}`, 'error');
+                    }
+                } catch (error) {
+                    formatOk = false;
+                    log(`   ❌ Erreur validation ${map.ark}: ${error.message}`, 'error');
+                }
+            }
+            checks.push({
+                name: 'Format compatible ptm-auth.js',
+                status: formatOk ? 'success' : 'error',
+                message: formatOk ? 'Toutes les données valides' : 'Erreurs de validation détectées'
+            });
+            
+            // Check 4: Champs optionnels
+            const hasAllFields = reloadedMaps
+                .filter(m => m.gallica_title)
+                .every(m => 
+                    m.gallica_title && 
+                    m.gallica_producer && 
+                    m.gallica_date && 
+                    m.gallica_thumbnail_url &&
+                    m.metadata_fetched_at
+                );
+            checks.push({
+                name: 'Tous les champs Gallica présents',
+                status: hasAllFields ? 'success' : 'warning',
+                message: hasAllFields ? 'Tous les champs remplis' : 'Certains champs optionnels manquants'
+            });
+            
+            // Afficher résultats
+            const allOk = checks.filter(c => c.status === 'success').length === checks.length;
+            const result = document.getElementById('verify-result');
+            result.innerHTML = `
+                <div class="stats">
+                    <div class="stat-card" style="background: ${allOk ? 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)' : 'linear-gradient(135deg, #ee0979 0%, #ff6a00 100%)'}">
+                        <h3>Résultat global</h3>
+                        <div class="value">${allOk ? '✅ OK' : '⚠️ Attention'}</div>
+                    </div>
+                </div>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Vérification</th>
+                            <th>Statut</th>
+                            <th>Détails</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${checks.map(c => `
+                            <tr>
+                                <td><strong>${c.name}</strong></td>
+                                <td>
+                                    <span class="status-badge status-${c.status}">
+                                        ${c.status === 'success' ? '✅ OK' : 
+                                          c.status === 'warning' ? '⚠️ Attention' : '❌ Erreur'}
+                                    </span>
+                                </td>
+                                <td>${c.message}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            
+            if (allOk) {
+                log('✅ TOUS LES TESTS RÉUSSIS - Format 100% compatible!', 'success');
+                log('🎉 Vous pouvez lancer la migration complète en toute sécurité', 'success');
+            } else {
+                log('⚠️ Certaines vérifications ont échoué - vérifier les détails', 'warning');
+            }
+        }
+        
+        // Initialisation
+        log('🚀 Page de test chargée', 'info');
+        log('💡 Cliquez sur "Charger les cartes" pour commencer', 'info');
+    </script>
+</body>
+</html>

@@ -126,7 +126,7 @@
                     </h1>
                     
                     <p class="fr-text--lg fr-mb-4w">
-                        Découvrez les cartes et plans issus des collections de <a href="https://gallica.bnf.fr" target="_blank" rel="noopener">Gallica (BnF)</a>  et géoréférencés par la communauté Galligeo.
+                        Découvrir les cartes et plans issus des collections de <a href="https://gallica.bnf.fr" target="_blank" rel="noopener">Gallica (BnF)</a>  et géoréférencés par la communauté Galligeo.
                     </p>
                 </div>
             </div>
@@ -144,7 +144,7 @@
                                             <span class="fr-icon-loader-line" aria-hidden="true"></span>
                                             Chargement...
                                         </h3>
-                                        <p class="fr-card__desc">Cartes géoréférencées</p>
+                                        <p class="fr-card__desc">Cartes et plans géoréférencés</p>
                                     </div>
                                 </div>
                             </div>
@@ -320,7 +320,7 @@
                                         <label for="select-all" class="fr-checkbox-label">Titre</label>
                                     </th>
                                     <th scope="col">Attribution</th>
-                                    <th scope="col">Identifiant</th>
+                                    <th scope="col">Date</th>
                                     <th scope="col">Géoréférencé par</th>
                                     <th scope="col">Géoréférencé le</th>
                                     <th scope="col">Actions</th>
@@ -657,6 +657,8 @@
     <script src="../js/version.js"></script>
     <!-- Système d'authentification PTM (avec support JWT anonyme) -->
     <script src="../js/ptm-auth.js"></script>
+    <!-- Système de stockage local des métadonnées Gallica -->
+    <script src="../js/gallica-metadata-storage.js"></script>
     <script src="../js/cartes-georeferencees.js"></script>
 
     <script>
@@ -1159,21 +1161,79 @@
                 
                 if (data.status === 'ok' && data.users) {
                     // Transformer les données pour notre format
-                    realMapsData = [];
+                    const allMaps = [];
                     
                     data.users.forEach(user => {
                         user.georeferenced_maps.forEach(map => {
-                            realMapsData.push({
+                            const mapData = {
                                 ark: map.ark,
                                 status: map.status,
                                 firstWorked: map.firstWorked,
                                 lastUpdated: map.lastUpdated,
                                 georeferenced_by: user.full_name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Utilisateur anonyme',
                                 georeferenced_date: map.lastUpdated,
-                                orcid_id: user.orcid_id
-                            });
+                                orcid_id: user.orcid_id,
+                                // Métadonnées Gallica si disponibles en base
+                                gallica_title: map.gallica_title,
+                                gallica_producer: map.gallica_producer,
+                                gallica_date: map.gallica_date,
+                                gallica_thumbnail_url: map.gallica_thumbnail_url,
+                                metadata_fetched_at: map.metadata_fetched_at
+                            };
+                            
+                            allMaps.push(mapData);
                         });
                     });
+                    
+                    console.log(`📊 Total cartes brutes de l'API : ${allMaps.length}`);
+                    
+                    // DÉDUPLICATION : Garder une seule version de chaque ARK
+                    // Priorité : avec métadonnées > plus récente
+                    const mapsByArk = {};
+                    let duplicatesCount = 0;
+                    
+                    allMaps.forEach(map => {
+                        if (!mapsByArk[map.ark]) {
+                            mapsByArk[map.ark] = map;
+                        } else {
+                            duplicatesCount++;
+                            const existing = mapsByArk[map.ark];
+                            
+                            // Garder la version avec métadonnées si possible
+                            const mapHasMeta = !!map.gallica_title;
+                            const existingHasMeta = !!existing.gallica_title;
+                            
+                            if (mapHasMeta && !existingHasMeta) {
+                                // Nouvelle version a des métadonnées, l'ancienne non → remplacer
+                                mapsByArk[map.ark] = map;
+                                console.log(`🔄 ${map.ark} : remplacement par version avec métadonnées`);
+                            } else if (!mapHasMeta && existingHasMeta) {
+                                // Garder l'existante qui a des métadonnées
+                                // Ne rien faire
+                            } else {
+                                // Soit les deux ont des métadonnées, soit aucune → garder la plus récente
+                                const mapDate = new Date(map.lastUpdated || map.firstWorked || 0);
+                                const existingDate = new Date(existing.lastUpdated || existing.firstWorked || 0);
+                                
+                                if (mapDate > existingDate) {
+                                    mapsByArk[map.ark] = map;
+                                }
+                            }
+                        }
+                    });
+                    
+                    realMapsData = Object.values(mapsByArk);
+                    
+                    if (duplicatesCount > 0) {
+                        console.warn(`⚠️  ${duplicatesCount} doublons détectés et fusionnés`);
+                    }
+                    
+                    // Statistiques sur les métadonnées
+                    const withMetadata = realMapsData.filter(m => m.gallica_title).length;
+                    const withoutMetadata = realMapsData.length - withMetadata;
+                    console.log(`📊 Cartes uniques : ${realMapsData.length}`);
+                    console.log(`   ✅ Avec métadonnées : ${withMetadata}`);
+                    console.log(`   ⚠️  Sans métadonnées : ${withoutMetadata} (seront récupérées depuis Gallica)`);
                     
                     return { success: true, data: realMapsData, stats: data };
                 } else {
@@ -1183,6 +1243,52 @@
             } catch (error) {
                 console.error('Erreur récupération cartes géoréférencées:', error);
                 return { success: false, error: error.message };
+            }
+        }
+        
+        // Fonction pour afficher un avertissement quota dépassé
+        function showQuotaExceededWarning(nextAccessTime) {
+            const cardsGrid = document.getElementById('cards-grid');
+            if (!cardsGrid) return;
+            
+            const nextAccess = new Date(nextAccessTime);
+            const now = new Date();
+            const minutesRemaining = Math.ceil((nextAccess - now) / 60000);
+            const hoursRemaining = Math.floor(minutesRemaining / 60);
+            const minsRemaining = minutesRemaining % 60;
+            
+            let timeText = '';
+            if (hoursRemaining > 0) {
+                timeText = `${hoursRemaining}h ${minsRemaining}min`;
+            } else {
+                timeText = `${minsRemaining} minutes`;
+            }
+            
+            const warningHTML = `
+                <div class="fr-col-12">
+                    <div class="fr-alert fr-alert--warning" style="margin-bottom: 2rem;">
+                        <h3 class="fr-alert__title">⏳ Quota API Gallica dépassé</h3>
+                        <p>L'API de Gallica a atteint sa limite de requêtes.</p>
+                        <p><strong>Prochaine tentative possible :</strong> ${nextAccess.toLocaleString('fr-FR')}</p>
+                        <p><strong>Temps d'attente :</strong> environ ${timeText}</p>
+                        <p class="fr-text--sm">
+                            Les cartes sont affichées avec des informations minimales. 
+                            Les métadonnées complètes (titres, dates) seront chargées après réinitialisation du quota.
+                        </p>
+                        <p class="fr-text--sm">
+                            💡 <strong>Solution recommandée :</strong> Le stockage des métadonnées en base de données 
+                            permettrait d'éviter complètement ce problème.
+                        </p>
+                    </div>
+                </div>
+            `;
+            
+            // Insérer l'alerte en haut de la galerie
+            const firstCard = cardsGrid.querySelector('.fr-col');
+            if (firstCard) {
+                firstCard.insertAdjacentHTML('beforebegin', warningHTML);
+            } else {
+                cardsGrid.insertAdjacentHTML('afterbegin', warningHTML);
             }
         }
         
@@ -1202,14 +1308,105 @@
             return `https://app.ptm.huma-num.fr/galligeo/georef/?ark=${arkId}`;
         }
         
+        // Cache pour les métadonnées Gallica (éviter les requêtes en double)
+        const gallicaMetadataCache = new Map();
+        
+        // Gestion du quota Gallica avec nextAccessTime
+        let gallicaQuotaExceeded = false;
+        let gallicaNextAccessTime = null;
+        
+        // Rate limiter pour les appels API Gallica
+        class RateLimiter {
+            constructor(maxRequestsPerSecond = 2) {
+                this.delay = 1000 / maxRequestsPerSecond; // délai entre les requêtes
+                this.lastCallTime = 0;
+            }
+            
+            async throttle() {
+                const now = Date.now();
+                const timeSinceLastCall = now - this.lastCallTime;
+                if (timeSinceLastCall < this.delay) {
+                    await new Promise(resolve => setTimeout(resolve, this.delay - timeSinceLastCall));
+                }
+                this.lastCallTime = Date.now();
+            }
+            
+            // Vérifier si le quota Gallica est dépassé
+            isQuotaExceeded() {
+                if (!gallicaQuotaExceeded) return false;
+                
+                if (gallicaNextAccessTime) {
+                    const now = new Date();
+                    const nextAccess = new Date(gallicaNextAccessTime);
+                    
+                    if (now >= nextAccess) {
+                        // Le quota est réinitialisé
+                        gallicaQuotaExceeded = false;
+                        gallicaNextAccessTime = null;
+                        console.log('✅ Quota Gallica réinitialisé');
+                        return false;
+                    }
+                    
+                    const minutesRemaining = Math.ceil((nextAccess - now) / 60000);
+                    console.warn(`⏳ Quota Gallica dépassé. Attente : ${minutesRemaining} minutes`);
+                    return true;
+                }
+                
+                return gallicaQuotaExceeded;
+            }
+        }
+        
+        const gallicaRateLimiter = new RateLimiter(2); // 2 requêtes par seconde max
+        
         // Fonction pour récupérer les métadonnées Gallica via l'API IIIF Manifest
         async function fetchGallicaMetadata(arkId) {
+            // Vérifier le cache d'abord
+            if (gallicaMetadataCache.has(arkId)) {
+                return gallicaMetadataCache.get(arkId);
+            }
+            
+            // Vérifier si le quota est dépassé
+            if (gallicaRateLimiter.isQuotaExceeded()) {
+                console.warn(`⏳ Quota Gallica dépassé pour ${arkId}, utilisation données par défaut`);
+                return {
+                    title: `Carte ${arkId}`,
+                    attribution: 'Bibliothèque nationale de France',
+                    gallicaUrl: `https://gallica.bnf.fr/ark:/12148/${arkId}`,
+                    date: '',
+                    manifestUrl: null,
+                    fromCache: false,
+                    quotaExceeded: true
+                };
+            }
+            
             try {
+                // Rate limiting
+                await gallicaRateLimiter.throttle();
+                
                 const manifestUrl = `https://openapi.bnf.fr/iiif/presentation/v3/ark:/12148/${arkId}/manifest.json`;
                 
                 const response = await fetch(manifestUrl);
                 
                 if (!response.ok) {
+                    // Vérifier si c'est une erreur 429 avec quota
+                    if (response.status === 429) {
+                        const errorData = await response.json().catch(() => null);
+                        
+                        if (errorData && errorData.code === '900802' && errorData.nextAccessTime) {
+                            // Quota dépassé
+                            gallicaQuotaExceeded = true;
+                            gallicaNextAccessTime = errorData.nextAccessTime;
+                            
+                            console.error('🚫 Quota Gallica dépassé !');
+                            console.error(`⏳ Prochaine tentative possible : ${gallicaNextAccessTime}`);
+                            
+                            // Afficher un message à l'utilisateur
+                            showQuotaExceededWarning(gallicaNextAccessTime);
+                            
+                            throw new Error(`Quota Gallica dépassé jusqu'à ${gallicaNextAccessTime}`);
+                        }
+                    }
+                    
                     throw new Error(`Erreur Gallica Manifest: ${response.status}`);
                 }
                 
@@ -1273,13 +1470,18 @@
                     });
                 }
                 
-                return {
+                const metadata = {
                     title: title,
                     attribution: attribution,
                     gallicaUrl: gallicaUrl,
                     date: date,
                     manifestUrl: manifestUrl
                 };
+                
+                // Mettre en cache
+                gallicaMetadataCache.set(arkId, metadata);
+                
+                return metadata;
                 
             } catch (error) {
                 console.warn(`Impossible de récupérer les métadonnées pour ${arkId}:`, error);
@@ -1295,8 +1497,43 @@
         
         // Fonction pour générer une carte avec les vraies données
         async function generateRealMapCard(mapData) {
-            const metadata = await fetchGallicaMetadata(mapData.ark);
-            const thumbnailUrl = generateGallicaThumbnail(mapData.ark);
+            // Debug pour la première carte
+            if (mapData.ark === 'btv1b53019735r') {
+                console.log('🔍 DEBUG generateRealMapCard btv1b53019735r:', {
+                    mapData: mapData,
+                    has_gallica_title: !!mapData.gallica_title,
+                    gallica_title_value: mapData.gallica_title
+                });
+            }
+            
+            // PRIORITÉ 1 : Utiliser les métadonnées stockées en base
+            let metadata;
+            if (mapData.gallica_title) {
+                metadata = {
+                    title: mapData.gallica_title,
+                    attribution: mapData.gallica_producer || 'Bibliothèque nationale de France',
+                    date: mapData.gallica_date || '',
+                    gallicaUrl: `https://gallica.bnf.fr/ark:/12148/${mapData.ark}`,
+                    manifestUrl: null,
+                    source: 'database'
+                };
+                console.log(`✓ ${mapData.ark} : métadonnées depuis la base`);
+            } else {
+                // PRIORITÉ 2 : Récupérer depuis l'API Gallica (avec gestion quota)
+                metadata = await fetchGallicaMetadata(mapData.ark);
+                
+                // Si récupération réussie, sauvegarder pour usage futur
+                if (metadata && metadata.title && !metadata.quotaExceeded && window.gallicaMetadataStorage) {
+                    window.gallicaMetadataStorage.saveMetadata(mapData.ark, {
+                        gallica_title: metadata.title,
+                        gallica_producer: metadata.attribution,
+                        gallica_date: metadata.date,
+                        metadata_fetched_at: new Date().toISOString()
+                    }).catch(err => console.warn(`⚠️ Sauvegarde métadonnées ${mapData.ark}:`, err));
+                }
+            }
+            
+            const thumbnailUrl = mapData.gallica_thumbnail_url || generateGallicaThumbnail(mapData.ark);
             const gallicaUrl = metadata.gallicaUrl || generateGallicaUrl(mapData.ark);
             const georefUrl = generateGeoreferenceUrl(mapData.ark);
             
@@ -1349,7 +1586,21 @@
         
         // Fonction pour générer une ligne de tableau avec les vraies données
         async function generateRealTableRow(mapData) {
-            const metadata = await fetchGallicaMetadata(mapData.ark);
+            // PRIORITÉ 1 : Utiliser les métadonnées stockées en base
+            let metadata;
+            if (mapData.gallica_title) {
+                metadata = {
+                    title: mapData.gallica_title,
+                    attribution: mapData.gallica_producer || 'Bibliothèque nationale de France',
+                    date: mapData.gallica_date || '',
+                    gallicaUrl: `https://gallica.bnf.fr/ark:/12148/${mapData.ark}`,
+                    source: 'database'
+                };
+            } else {
+                // PRIORITÉ 2 : Récupérer depuis l'API Gallica (avec gestion quota)
+                metadata = await fetchGallicaMetadata(mapData.ark);
+            }
+            
             const gallicaUrl = metadata.gallicaUrl || generateGallicaUrl(mapData.ark);
             const georefUrl = generateGeoreferenceUrl(mapData.ark);
             
@@ -1379,7 +1630,7 @@
             `;
         }
         
-        // Fonction pour charger le contenu réel depuis l'API
+        // Fonction pour charger le contenu réel depuis l'API avec chargement progressif
         async function loadRealContent() {
             try {
                 // Afficher un indicateur de chargement
@@ -1396,6 +1647,14 @@
                                             <span class="fr-icon-loader-line fr-mr-2w" aria-hidden="true"></span>
                                             Chargement des cartes géoréférencées...
                                         </p>
+                                        <div class="fr-progress" id="loading-progress">
+                                            <div class="fr-progress__bar" role="progressbar" 
+                                                 aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                                <span class="fr-progress__inner" style="width: 0%;">
+                                                    <span class="fr-progress__label">0%</span>
+                                                </span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1410,25 +1669,66 @@
                     throw new Error(apiResult.error);
                 }
                 
-                // Générer les cartes et lignes de tableau
-                const cardsPromises = realMapsData.map(mapData => generateRealMapCard(mapData));
-                const rowsPromises = realMapsData.map(mapData => generateRealTableRow(mapData));
+                // CHARGEMENT PROGRESSIF au lieu de Promise.all
+                const cardsHTML = [];
+                const rowsHTML = [];
+                const total = realMapsData.length;
                 
-                const [cardsHTML, rowsHTML] = await Promise.all([
-                    Promise.all(cardsPromises),
-                    Promise.all(rowsPromises)
-                ]);
+                console.log(`📊 Chargement progressif de ${total} cartes (rate limit: 2 req/s)...`);
                 
-                // Mettre à jour l'affichage
-                if (cardsGrid) {
-                    cardsGrid.innerHTML = cardsHTML.join('');
-                    cardsHTMLContent = cardsGrid.innerHTML;
+                // Fonction pour mettre à jour la barre de progression
+                function updateProgress(current, total) {
+                    const percent = Math.round((current / total) * 100);
+                    const progressBar = document.querySelector('#loading-progress .fr-progress__inner');
+                    const progressLabel = document.querySelector('#loading-progress .fr-progress__label');
+                    if (progressBar) {
+                        progressBar.style.width = `${percent}%`;
+                        progressBar.setAttribute('aria-valuenow', percent);
+                    }
+                    if (progressLabel) {
+                        progressLabel.textContent = `${current}/${total} cartes chargées (${percent}%)`;
+                    }
                 }
                 
-                if (tableBody) {
-                    tableBody.innerHTML = rowsHTML.join('');
-                    tableHTMLContent = tableBody.innerHTML;
+                // Charger les cartes séquentiellement pour respecter le rate limit
+                for (let i = 0; i < total; i++) {
+                    const mapData = realMapsData[i];
+                    
+                    // Si pas de métadonnées en base, pré-charger depuis Gallica UNE SEULE FOIS
+                    if (!mapData.gallica_title) {
+                        const metadata = await fetchGallicaMetadata(mapData.ark);
+                        // Le cache est maintenant rempli, les deux fonctions suivantes vont l'utiliser
+                    }
+                    
+                    // Générer carte et ligne en parallèle (utilisent le cache si appel Gallica fait ci-dessus)
+                    const [cardHTML, rowHTML] = await Promise.all([
+                        generateRealMapCard(mapData),
+                        generateRealTableRow(mapData)
+                    ]);
+                    
+                    cardsHTML.push(cardHTML);
+                    rowsHTML.push(rowHTML);
+                    
+                    // Mettre à jour la progression
+                    updateProgress(i + 1, total);
+                    
+                    // Affichage progressif toutes les 10 cartes
+                    if ((i + 1) % 10 === 0 || i === total - 1) {
+                        if (cardsGrid) {
+                            cardsGrid.innerHTML = cardsHTML.join('');
+                        }
+                        if (tableBody) {
+                            tableBody.innerHTML = rowsHTML.join('');
+                        }
+                        console.log(`✓ ${i + 1}/${total} cartes chargées`);
+                    }
                 }
+                
+                // Sauvegarder le contenu final
+                cardsHTMLContent = cardsGrid.innerHTML;
+                tableHTMLContent = tableBody.innerHTML;
+                
+                console.log('✅ Chargement terminé !');
                 
                 // Mettre à jour les statistiques avec les vraies données
                 const stats = apiResult.stats;
@@ -1710,129 +2010,33 @@
             updateFilterableElements();
         }
 
-        // Version alternative ultra-agressive : recréation DOM complète
-        function forceCompleteRecreation() {
-            const cardsGrid = document.getElementById('cards-grid');
-            const tableBody = document.getElementById('table-body');
-            const cardsContainer = document.getElementById('cards-container');
-            const tableContainer = document.getElementById('table-container');
-            
-            if (!cardsGrid || !tableBody) {
-                return;
-            }
-            
-            // Sauvegarder la vue actuelle
-            const currentlyCardsVisible = !cardsContainer.classList.contains('hidden');
-            
-            // ÉTAPE 1: Supprimer complètement le contenu existant
-            cardsGrid.innerHTML = '';
-            tableBody.innerHTML = '';
-            
-            // ÉTAPE 2: Forcer un repaint vide
-            requestAnimationFrame(() => {
-                // ÉTAPE 3: Restaurer le contenu depuis les sauvegardes
-                if (cardsHTMLContent && cardsHTMLContent.length > 100) {
-                    cardsGrid.innerHTML = cardsHTMLContent;
-                }
-                
-                if (tableHTMLContent && tableHTMLContent.length > 100) {
-                    tableBody.innerHTML = tableHTMLContent;
-                }
-                
-                // ÉTAPE 4: Forcer un autre repaint après restauration
-                requestAnimationFrame(() => {
-                    // ÉTAPE 5: Appliquer immédiatement les filtres
-                    applySearchAndFilter();
-                    
-                    // ÉTAPE 6: Forcer le redessin
-                    setTimeout(() => {
-                        forceUIRedraw();
-                    }, 50);
-                });
-            });
-        }
-
-        // Modifier les gestionnaires pour utiliser la recréation complète
+        // Gestionnaires pour la recherche et le filtrage
         function handleSearchInput(e) {
             clearTimeout(window.searchTimeout);
             window.searchTimeout = setTimeout(() => {
-                // Utiliser la recréation complète pour être sûr
-                forceCompleteRecreation();
-            }, 500); // Délai plus long pour éviter trop de recréations
+                applySearchAndFilter();
+            }, 300); // Délai pour éviter trop de recréations pendant la frappe
         }
 
         function handleSearchKeypress(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
                 clearTimeout(window.searchTimeout);
-                
-                // Utiliser la recréation complète
-                forceCompleteRecreation();
+                applySearchAndFilter();
             }
         }
 
         function handlePeriodChange(e) {
-            
-            // Utiliser la recréation complète
-            forceCompleteRecreation();
+            applySearchAndFilter();
         }
 
-        // Exposer les nouvelles fonctions pour debug
-        window.forceUIRedraw = forceUIRedraw;
-        window.forceCompleteRecreation = forceCompleteRecreation;
-
-        // Nouvelle fonction pour forcer la mise à jour de la vue active
-        function forceViewRefresh() {
-            console.log('💪 === FORÇAGE MISE À JOUR VUE ACTIVE ===');
-            
-            const cardsContainer = document.getElementById('cards-container');
-            const tableContainer = document.getElementById('table-container');
-            
-            if (!cardsContainer || !tableContainer) {
-                console.error('Conteneurs non trouvés');
-                return;
-            }
-            
-            const currentlyCardsVisible = !cardsContainer.classList.contains('hidden');
-            
-            if (currentlyCardsVisible) {
-                console.log('Forçage rafraîchissement vue cartes');
-                // Forcer la re-génération de la vue cartes
-                cardsContainer.style.display = 'none';
-                setTimeout(() => {
-                    cardsContainer.style.display = 'block';
-                    
-                    // Réappliquer les filtres après le rafraîchissement
-                    setTimeout(() => {
-                        applySearchAndFilter();
-                    }, 10);
-                }, 10);
-            } else {
-                console.log('Forçage rafraîchissement vue tableau');
-                // Forcer la re-génération de la vue tableau
-                tableContainer.style.display = 'none';
-                setTimeout(() => {
-                    tableContainer.style.display = 'block';
-                    
-                    // Réappliquer les filtres après le rafraîchissement
-                    setTimeout(() => {
-                        applySearchAndFilter();
-                    }, 10);
-                }, 10);
-            }
-        }
-
-        // Fonction pour mettre à jour la liste des éléments filtrables
+        // Fonction pour mettre à jour la liste des éléments filtrables (obsolète mais gardée pour compatibilité)
         function updateFilterableElements() {
-            // Toujours récupérer les éléments depuis le DOM (pas de cache)
-            if (currentView === 'cards') {
-                allFilterableElements = Array.from(document.querySelectorAll('.map-card'));
-            } else {
-                allFilterableElements = Array.from(document.querySelectorAll('#table-body tr.table-row'));
-            }
+            // Cette fonction n'est plus nécessaire avec le système de recréation DOM
+            // mais est gardée pour compatibilité avec d'autres parties du code
         }
 
-        // Fonction de recherche
+        // Fonction de recherche (obsolète, remplacée par applySearchAndFilter)
         function performSearch() {
             const searchTerm = document.getElementById('search-input').value.toLowerCase().trim();
 
@@ -2021,73 +2225,8 @@
             };
         }
 
-        // Fonction pour combiner recherche et filtrage
-        // Fonction unifiée pour déterminer si un élément correspond à la recherche
-        function elementMatchesSearch(element, arkId, searchTerm, selectedPeriod) {
-            let searchMatch = true;
-            let periodMatch = true;
-            
-            // Test de recherche textuelle unifié
-            if (searchTerm !== '') {
-                let searchableText = '';
-                
-                // Pour les cartes : TOUT LE CONTENU TEXTUEL
-                if (element.classList.contains('map-card')) {
-                    const titleEl = element.querySelector('.fr-card__title');
-                    const descEls = element.querySelectorAll('.fr-card__desc');
-                    const detailEls = element.querySelectorAll('.fr-card__detail');
-                    
-                    const title = titleEl ? titleEl.textContent || '' : '';
-                    const descs = Array.from(descEls).map(el => el.textContent || '').join(' ');
-                    const details = Array.from(detailEls).map(el => el.textContent || '').join(' ');
-                    
-                    searchableText = (title + ' ' + descs + ' ' + details).toLowerCase();
-                }
-                // Pour les lignes : TOUTES LES CELLULES
-                else if (element.classList.contains('table-row')) {
-                    const cells = element.querySelectorAll('td');
-                    searchableText = Array.from(cells).map(cell => cell.textContent || '').join(' ').toLowerCase();
-                }
-                
-                // Ajouter l'ARK ID au texte recherchable pour les deux types
-                searchableText += ' ' + arkId.toLowerCase();
-                
-                searchMatch = searchableText.includes(searchTerm);
-            }
-            
-            // Test de filtrage par période unifié
-            if (selectedPeriod !== 'all' && selectedPeriod !== '') {
-                const dateStr = element.getAttribute('data-date');
-                if (dateStr && dateStr !== '' && dateStr !== 'undefined') {
-                    const year = parseInt(dateStr);
-                    if (!isNaN(year)) {
-                        switch(selectedPeriod) {
-                            case 'before-1800':
-                                periodMatch = year < 1800;
-                                break;
-                            case '1800-1850':
-                                periodMatch = year >= 1800 && year <= 1850;
-                                break;
-                            case '1850-1900':
-                                periodMatch = year >= 1850 && year <= 1900;
-                                break;
-                            case '1900-1950':
-                                periodMatch = year >= 1900 && year <= 1950;
-                                break;
-                            case 'after-1950':
-                                periodMatch = year > 1950;
-                                break;
-                            default:
-                                periodMatch = true;
-                        }
-                    }
-                }
-            }
-            
-            return searchMatch && periodMatch;
-        }
-
-        function applySearchAndFilter() {
+        // Fonction pour recréer la vue avec uniquement les éléments filtrés
+        async function applySearchAndFilter() {
             const searchInput = document.getElementById('search-input');
             const periodFilter = document.getElementById('period-filter');
             
@@ -2098,127 +2237,138 @@
             lastSearchTerm = searchTerm;
             lastPeriodFilter = selectedPeriod;
 
-            // RÉCUPÉRER TOUS LES ÉLÉMENTS DES DEUX VUES AVEC SÉLECTEURS PRÉCIS
-            const allCards = document.querySelectorAll('.map-card[data-ark-id]');
-            const allRows = document.querySelectorAll('#table-body tr.table-row[data-ark-id]');
+            console.log(`🔍 Filtrage: terme="${searchTerm}", période="${selectedPeriod}"`);
 
-            // TRAITER LES CARTES avec la fonction unifiée
-            let visibleCardsCount = 0;
-            allCards.forEach((card, index) => {
-                const arkId = card.getAttribute('data-ark-id');
-                const shouldShow = elementMatchesSearch(card, arkId, searchTerm, selectedPeriod);
-                
-                if (shouldShow) {
-                    card.style.display = '';
-                    visibleCardsCount++;
-                } else {
-                    card.style.display = 'none';
-                }
-            });
-
-            // TRAITER LES LIGNES DU TABLEAU avec la même fonction unifiée
-            let visibleRowsCount = 0;
-            allRows.forEach((row, index) => {
-                const arkId = row.getAttribute('data-ark-id');
-                const shouldShow = elementMatchesSearch(row, arkId, searchTerm, selectedPeriod);
-                
-                if (shouldShow) {
-                    row.style.display = '';
-                    visibleRowsCount++;
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-            
-            // Vérifier la cohérence et corriger si nécessaire
-            if (visibleCardsCount !== visibleRowsCount) {
-                // Forcer l'harmonisation en cas d'incohérence
-                allCards.forEach((card, i) => {
-                    const arkId = card.getAttribute('data-ark-id');
-                    const correspondingRow = document.querySelector(`#table-body tr.table-row[data-ark-id="${arkId}"]`);
+            // Filtrer les données selon les critères
+            const filteredData = realMapsData.filter(mapData => {
+                // Filtre par recherche textuelle
+                let searchMatch = true;
+                if (searchTerm) {
+                    const title = (mapData.gallica_title || '').toLowerCase();
+                    const producer = (mapData.gallica_producer || '').toLowerCase();
+                    const date = (mapData.gallica_date || '').toLowerCase();
+                    const georefBy = (mapData.georeferenced_by || '').toLowerCase();
+                    const ark = (mapData.ark || '').toLowerCase();
                     
-                    if (correspondingRow) {
-                        const shouldShow = elementMatchesSearch(card, arkId, searchTerm, selectedPeriod);
-                        card.style.display = shouldShow ? '' : 'none';
-                        correspondingRow.style.display = shouldShow ? '' : 'none';
+                    searchMatch = title.includes(searchTerm) || 
+                                  producer.includes(searchTerm) || 
+                                  date.includes(searchTerm) ||
+                                  georefBy.includes(searchTerm) ||
+                                  ark.includes(searchTerm);
+                }
+                
+                // Filtre par période
+                let periodMatch = true;
+                if (selectedPeriod !== 'all') {
+                    const dateStr = mapData.gallica_date || '';
+                    if (dateStr) {
+                        const year = parseInt(dateStr.match(/\d{4}/)?.[0] || '0');
+                        
+                        switch (selectedPeriod) {
+                            case 'before-1800':
+                                periodMatch = year < 1800;
+                                break;
+                            case '1800-1850':
+                                periodMatch = year >= 1800 && year < 1850;
+                                break;
+                            case '1850-1900':
+                                periodMatch = year >= 1850 && year < 1900;
+                                break;
+                            case '1900-1950':
+                                periodMatch = year >= 1900 && year < 1950;
+                                break;
+                            case 'after-1950':
+                                periodMatch = year >= 1950;
+                                break;
+                            default:
+                                periodMatch = true;
+                        }
+                    } else {
+                        periodMatch = false; // Exclure les cartes sans date si un filtre de période est actif
                     }
-                });
-            }
+                }
+                
+                return searchMatch && periodMatch;
+            });
+
+            console.log(`📊 ${filteredData.length} cartes correspondent aux critères (sur ${realMapsData.length})`);
+
+            // Recréer la vue cartes
+            await rebuildCardsView(filteredData);
             
-            // FORCER LE REDESSIN DE L'INTERFACE UTILISATEUR
-            setTimeout(() => {
-                forceUIRedraw();
-            }, 10);
+            // Recréer la vue tableau
+            await rebuildTableView(filteredData);
             
             updateVisibleCount();
         }
 
-        // Nouvelle fonction pour forcer le redessin de l'interface utilisateur
-        function forceUIRedraw() {
-            const cardsContainer = document.getElementById('cards-container');
-            const tableContainer = document.getElementById('table-container');
+        // Fonction pour reconstruire la vue en cartes
+        async function rebuildCardsView(filteredData) {
             const cardsGrid = document.getElementById('cards-grid');
-            const tableBody = document.getElementById('table-body');
-            
-            if (!cardsContainer || !tableContainer) {
+            if (!cardsGrid) return;
+
+            // Vider le contenu actuel
+            cardsGrid.innerHTML = '';
+
+            if (filteredData.length === 0) {
+                cardsGrid.innerHTML = `
+                    <div class="fr-col-12">
+                        <div class="fr-alert fr-alert--info">
+                            <p><strong>Aucun résultat</strong></p>
+                            <p>Aucune carte ne correspond à vos critères de recherche.</p>
+                        </div>
+                    </div>
+                `;
                 return;
             }
+
+            // Générer les cartes HTML pour les données filtrées
+            const cardsPromises = filteredData.map(mapData => generateRealMapCard(mapData));
+            const cardsHTML = await Promise.all(cardsPromises);
             
-            // Détecter la vue active
-            const cardsActive = !cardsContainer.classList.contains('hidden');
+            // Insérer dans le DOM
+            cardsGrid.innerHTML = cardsHTML.join('');
             
-            if (cardsActive) {
-                // Technique 1: Forcer le reflow avec modification du style
-                cardsGrid.style.transform = 'translateZ(0)';
-                cardsContainer.style.display = 'none';
-                
-                // Forcer le reflow en lisant une propriété calculée
-                const height = cardsContainer.offsetHeight;
-                
-                // Restaurer l'affichage
-                cardsContainer.style.display = 'block';
-                cardsGrid.style.transform = '';
-                
-                // Technique 2: Forcer un scroll pour déclencher le repaint
-                setTimeout(() => {
-                    const currentScroll = window.pageYOffset;
-                    window.scrollTo(0, currentScroll + 1);
-                    window.scrollTo(0, currentScroll);
-                }, 5);
-                
-            } else {
-                // Même technique pour le tableau
-                tableBody.style.transform = 'translateZ(0)';
-                tableContainer.style.display = 'none';
-                
-                const height = tableContainer.offsetHeight;
-                
-                tableContainer.style.display = 'block';
-                tableBody.style.transform = '';
-                
-                setTimeout(() => {
-                    const currentScroll = window.pageYOffset;
-                    window.scrollTo(0, currentScroll + 1);
-                    window.scrollTo(0, currentScroll);
-                }, 5);
+            // Sauvegarder le contenu pour restauration lors du changement de vue
+            cardsHTMLContent = cardsGrid.innerHTML;
+        }
+
+        // Fonction pour reconstruire la vue en tableau
+        async function rebuildTableView(filteredData) {
+            const tableBody = document.getElementById('table-body');
+            if (!tableBody) return;
+
+            // Vider le contenu actuel
+            tableBody.innerHTML = '';
+
+            if (filteredData.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 2rem;">
+                            <strong>Aucun résultat</strong><br>
+                            Aucune carte ne correspond à vos critères de recherche.
+                        </td>
+                    </tr>
+                `;
+                return;
             }
+
+            // Générer les lignes HTML pour les données filtrées
+            const rowsPromises = filteredData.map(mapData => generateRealTableRow(mapData));
+            const rowsHTML = await Promise.all(rowsPromises);
             
-            // Technique 3: Forcer le repaint avec requestAnimationFrame
-            requestAnimationFrame(() => {
-                // Technique 4: Modification temporaire des classes CSS
-                const bodyElement = document.body;
-                bodyElement.classList.add('force-repaint');
-                
-                setTimeout(() => {
-                    bodyElement.classList.remove('force-repaint');
-                }, 10);
-            });
+            // Insérer dans le DOM
+            tableBody.innerHTML = rowsHTML.join('');
+            
+            // Sauvegarder le contenu pour restauration lors du changement de vue
+            tableHTMLContent = tableBody.innerHTML;
         }
 
         // Fonction pour mettre à jour le compteur d'éléments visibles
         function updateVisibleCount() {
-            updateFilterableElements();
-            const visibleElements = allFilterableElements.filter(el => el.style.display !== 'none');
+            // Compter les cartes actuellement dans le DOM
+            const visibleCards = document.querySelectorAll('.map-card[data-ark-id]').length;
+            console.log(`📊 ${visibleCards} carte(s) affichée(s)`);
         }
 
         // === FIN FONCTIONS DE RECHERCHE ET FILTRAGE ===

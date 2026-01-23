@@ -383,14 +383,14 @@ body {
     box-sizing: border-box;
 }
 
-.fr-grid-row {
+.fr-grid-row:not(#cards-grid) {
     margin-left: 0 !important;
     margin-right: 0 !important;
     max-width: 100% !important;
     overflow-x: hidden;
 }
 
-.fr-col {
+.fr-col:not(#cards-grid .fr-col) {
     padding-left: 0.5rem !important;
     padding-right: 0.5rem !important;
     max-width: 100%;
@@ -771,6 +771,73 @@ body {
 
 .cards-container.hidden {
     display: none !important;
+}
+
+/* Grille CSS pour l'alignement correct des cartes */
+#cards-grid.fr-grid-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+    padding: 0;
+}
+
+/* Assurer que les cartes prennent toute la largeur de leur colonne */
+#cards-grid .fr-col-md-4,
+#cards-grid .fr-col {
+    width: 100%;
+    max-width: none;
+    padding: 0;
+}
+
+/* Assurer une hauteur uniforme pour toutes les cartes */
+#cards-grid .fr-card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* S'assurer que le contenu de la carte prend toute la hauteur disponible */
+#cards-grid .fr-card__body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+#cards-grid .fr-card__content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* L'élément fr-card__start doit rester en bas */
+#cards-grid .fr-card__start {
+    margin-top: auto;
+}
+
+/* Forcer les images à avoir une hauteur fixe */
+#cards-grid .fr-card__img img {
+    height: 200px;
+    object-fit: cover;
+    width: 100%;
+}
+
+/* Responsive : ajuster le nombre de colonnes */
+@media (max-width: 768px) {
+    #cards-grid.fr-grid-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+    #cards-grid.fr-grid-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 1025px) {
+    #cards-grid.fr-grid-row {
+        grid-template-columns: repeat(3, 1fr);
+    }
 }
 
 .table-container {
