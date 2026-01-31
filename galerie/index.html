@@ -252,6 +252,15 @@
                                         <option value="20e">XXe siècle</option>
                                     </select>
                                 </div>
+
+                                <div class="fr-select-group" style="margin-left: 1rem; display: inline-block; vertical-align: top;">
+                                    <label class="fr-label" for="sort-select">Trier par</label>
+                                    <select class="fr-select" id="sort-select" name="sort-select" title="Trier les cartes">
+                                        <option value="period">Période (chronologique)</option>
+                                        <option value="firstWorked">Date de premier géoréférencement</option>
+                                        <option value="lastUpdated">Dernière mise à jour (plus récent d'abord)</option>
+                                    </select>
+                                </div>
                             </div>
                         </fieldset>
                     </div>
@@ -1965,6 +1974,74 @@
 
         // === FONCTIONS DE RECHERCHE ET FILTRAGE ===
 
+        // --- Parsing robuste de `gallica_date` ---
+        function parseGallicaDate(dateStr) {
+            if (!dateStr || typeof dateStr !== 'string') return null;
+            const s = dateStr.trim();
+
+            // Chercher un year 4 chiffres
+            const y4 = s.match(/(\d{4})/);
+            if (y4) {
+                const y = parseInt(y4[1], 10);
+                return { min: y, max: y };
+            }
+
+            // Traiter les formats tronqués comme "19..", "18..", "1..."
+            const leading = s.match(/^(\d{1,4})/);
+            if (!leading) return null;
+            const ld = leading[1];
+
+            // Si la chaîne contient des points, on considère une plage (siècle ou millénaire)
+            if (s.includes('.') || s.includes('\u2026')) {
+                if (ld.length === 2) {
+                    // ex: '19..' => 1900-1999
+                    const century = parseInt(ld, 10);
+                    return { min: century * 100, max: century * 100 + 99 };
+                } else if (ld.length === 1) {
+                    // ex: '1...' => 1000-1999 (grand intervalle pour rester permissif)
+                    const n = parseInt(ld, 10);
+                    return { min: n * 1000, max: (n + 1) * 1000 - 1 };
+                } else if (ld.length === 3) {
+                    // ex: '180.' => 1800-1809 approximatif
+                    const base = parseInt(ld, 10);
+                    return { min: base * 10, max: base * 10 + 9 };
+                }
+            }
+
+            // Si on a juste 3 chiffres (ex: '180') on considère 180 comme année
+            if (ld.length === 3) {
+                const year = parseInt(ld, 10);
+                return { min: year, max: year };
+            }
+
+            // Si on a 1 ou 2 chiffres sans points, on retourne une valeur précise
+            const yearNum = parseInt(ld, 10);
+            if (!isNaN(yearNum)) return { min: yearNum, max: yearNum };
+
+            return null;
+        }
+
+        function matchesPeriodKey(dateStr, periodKey) {
+            // periodKey: 'moyen-age','renaissance','moderne','19e','20e'
+            if (!dateStr) return false;
+            const range = parseGallicaDate(dateStr);
+            if (!range) return false;
+
+            const periods = {
+                'moyen-age': { min: -Infinity, max: 1499 },
+                'renaissance': { min: 1500, max: 1599 },
+                'moderne': { min: 1600, max: 1799 },
+                '19e': { min: 1800, max: 1899 },
+                '20e': { min: 1900, max: 1999 }
+            };
+
+            const p = periods[periodKey];
+            if (!p) return false;
+
+            // overlap test
+            return !(range.max < p.min || range.min > p.max);
+        }
+
         // Variable pour stocker tous les éléments filtrables
         let allFilterableElements = [];
         let allCardsElements = [];  // Cache permanent pour les cartes
@@ -1981,6 +2058,7 @@
             // Initialiser les événements avec nouvelle stratégie
             const searchInput = document.getElementById('search-input');
             const periodFilter = document.getElementById('period-filter');
+            const sortSelect = document.getElementById('sort-select');
             
             if (searchInput) {
                 // Supprimer tous les anciens événements
@@ -2004,6 +2082,12 @@
                 
             } else {
                 console.error('❌ period-filter non trouvé dans le DOM');
+            }
+
+            if (sortSelect) {
+                // Assurer l'écoute sur le select de tri
+                sortSelect.removeEventListener('change', applySearchAndFilter);
+                sortSelect.addEventListener('change', applySearchAndFilter);
             }
 
             // Mettre à jour la liste des éléments filtrables
@@ -2259,30 +2343,11 @@
                 
                 // Filtre par période
                 let periodMatch = true;
-                if (selectedPeriod !== 'all') {
+                const effectivePeriod = (selectedPeriod === '' || selectedPeriod === 'all') ? 'all' : selectedPeriod;
+                if (effectivePeriod !== 'all') {
                     const dateStr = mapData.gallica_date || '';
                     if (dateStr) {
-                        const year = parseInt(dateStr.match(/\d{4}/)?.[0] || '0');
-                        
-                        switch (selectedPeriod) {
-                            case 'before-1800':
-                                periodMatch = year < 1800;
-                                break;
-                            case '1800-1850':
-                                periodMatch = year >= 1800 && year < 1850;
-                                break;
-                            case '1850-1900':
-                                periodMatch = year >= 1850 && year < 1900;
-                                break;
-                            case '1900-1950':
-                                periodMatch = year >= 1900 && year < 1950;
-                                break;
-                            case 'after-1950':
-                                periodMatch = year >= 1950;
-                                break;
-                            default:
-                                periodMatch = true;
-                        }
+                        periodMatch = matchesPeriodKey(dateStr, effectivePeriod);
                     } else {
                         periodMatch = false; // Exclure les cartes sans date si un filtre de période est actif
                     }
@@ -2292,6 +2357,31 @@
             });
 
             console.log(`📊 ${filteredData.length} cartes correspondent aux critères (sur ${realMapsData.length})`);
+
+            // Tri
+            try {
+                const sortSelect = document.getElementById('sort-select');
+                const sortBy = sortSelect ? sortSelect.value : 'period';
+
+                filteredData.sort((a, b) => {
+                    if (sortBy === 'firstWorked') {
+                        const ta = a.firstWorked ? Date.parse(a.firstWorked) : Infinity;
+                        const tb = b.firstWorked ? Date.parse(b.firstWorked) : Infinity;
+                        return ta - tb; // plus ancien d'abord
+                    } else if (sortBy === 'lastUpdated') {
+                        const ta = a.lastUpdated ? Date.parse(a.lastUpdated) : 0;
+                        const tb = b.lastUpdated ? Date.parse(b.lastUpdated) : 0;
+                        return tb - ta; // plus récent d'abord
+                    } else {
+                        // 'period' ou défaut : trier chronologiquement selon gallica_date inférieure
+                        const ra = parseGallicaDate(a.gallica_date || '') || { min: Infinity };
+                        const rb = parseGallicaDate(b.gallica_date || '') || { min: Infinity };
+                        return (ra.min || Infinity) - (rb.min || Infinity);
+                    }
+                });
+            } catch (e) {
+                console.warn('Erreur lors du tri:', e);
+            }
 
             // Recréer la vue cartes
             await rebuildCardsView(filteredData);
