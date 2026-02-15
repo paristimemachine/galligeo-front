@@ -50,7 +50,6 @@
     </div>
 
     <script>
-        // Your JSON data
         const records = [
             {"date": "1450", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b53030004x"},
             {"date": "169x", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b8440866p"},
@@ -121,7 +120,6 @@
             {"date": "1949", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b53189648k"}
         ];
 
-        // DOM elements
         const tableBody = document.getElementById('recordsTable');
         const loading = document.getElementById('loading');
 
@@ -178,7 +176,6 @@
             loading.classList.add('hidden');
         }
 
-        // Start processing
         processRecords();
     </script>
 </body>
