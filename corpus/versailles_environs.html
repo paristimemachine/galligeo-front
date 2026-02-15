@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Environs de Versailles - Corpus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .spin {
+            animation: spin 1s linear infinite;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="flex justify-between items-center mb-8">
+            <div class="flex items-center space-x-4">
+                <h1 class="text-2xl font-bold text-gray-800">Environs de Versailles : plans et cartes</h1>
+            </div>
+            <div class="text-sm text-gray-500">
+                <i class="fas fa-info-circle mr-1"></i> Lesquels sont géoréférencés ?
+            </div>
+        </header>
+
+        <!-- Table -->
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Identifiant</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Géoréférencement</th>
+                    </tr>
+                </thead>
+                <tbody id="recordsTable" class="bg-white divide-y divide-gray-200">
+                    <!-- Rows will be added by JS -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Loading indicator -->
+        <div id="loading" class="flex justify-center items-center mt-8">
+            <div class="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full spin"></div>
+        </div>
+    </div>
+
+    <script>
+        const records = [
+            {"date": "1...", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b8444538k"},
+            {"date": "1695", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b53053084w"},
+            {"date": "1695", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b5971793z"},
+            {"date": "17..", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b53053239t"},
+            {"date": "17..-17..", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b53179277j"},
+            {"date": "1700-1799", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b530532084"},
+            {"date": "1706", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b53053302t"},
+            {"date": "1730-173.", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b53053261g"},
+            {"date": "1754", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b53052609r"},
+            {"date": "1756", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b8439994v"},
+            {"date": "1766", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b8490673h"},
+            {"date": "1792", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b52505626v"},
+            {"date": "1825", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b53023131x"},
+            {"date": "1826", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b84455918"},
+            {"date": "1832", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b53233013g"},
+            {"date": "1837", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b530351365"},
+            {"date": "1839", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b530351810"},
+            {"date": "1840", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b530831077"},
+            {"date": "1844", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b53060592k"},
+            {"date": "1844", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b53087824r"},
+            {"date": "1872", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b530847801"},
+            {"date": "1875", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b53084781g"},
+            {"date": "1899", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b53063610s"}
+        ];
+
+        const tableBody = document.getElementById('recordsTable');
+        const loading = document.getElementById('loading');
+
+        // Check if info exists
+        async function checkInfoJson(btvId) {
+            const url = `https://tile.ptm.huma-num.fr/tiles/ark/info_tiles/12148/${btvId}`;
+            try {
+                const response = await fetch(url, { method: 'GET' });
+                return response.ok;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        // Extract btvId from URL
+        function extractBtvId(url) {
+            const match = url.match(/btv1b([a-z0-9]+)/i);
+            return match ? match[0] : null;
+        }
+
+        // Update UI for a row
+        function updateRow(row, exists, arkid) {
+            const statusCell = row.querySelector('.status-cell');
+            statusCell.innerHTML = exists
+                ? `<i class="fas fa-check-circle text-green-500"></i> <a class="text-blue-600" href="https://app.ptm.huma-num.fr/galligeo/georef/?ark=${arkid}" target="_blank">Géoréférencé</a>`
+                : `<i class="fas fa-times-circle text-red-500"></i> <a class="text-blue-600" href="https://app.ptm.huma-num.fr/galligeo?ark=${arkid}" target="_blank">Non géoréférencé</a>`;
+        }
+
+        // Process all records
+        async function processRecords() {
+            loading.classList.remove('hidden');
+            tableBody.innerHTML = '';
+
+            for (const record of records) {
+                const btvId = extractBtvId(record.identifier);
+                if (!btvId) continue;
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${record.date}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-600">
+                        <a href="${record.identifier}" target="_blank" class="hover:underline">${btvId}</a>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm status-cell">
+                        <div class="w-4 h-4 border-2 border-gray-300 border-t-transparent rounded-full spin mx-auto"></div>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+
+                const exists = await checkInfoJson(btvId);
+                updateRow(row, exists, btvId);
+            }
+
+            loading.classList.add('hidden');
+        }
+
+        processRecords();
+    </script>
+</body>
+</html>
