@@ -23,6 +23,28 @@
     
     <!-- CSS spécifique à la galerie -->
     <link rel="stylesheet" href="galerie.css"/>
+        <style>
+        /* Bouton flottant "Retour en haut" */
+        #back-to-top {
+            position: fixed;
+            right: 1rem;
+            bottom: 1.5rem;
+            z-index: 99999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            border-radius: 999px;
+            background: #000091;
+            color: #fff;
+            border: none;
+            box-shadow: 0 6px 14px rgba(0,0,0,0.25);
+            cursor: pointer;
+            font-size: 18px;
+        }
+        #back-to-top:focus { outline: 3px solid rgba(0,160,140,0.25); }
+        </style>
   </head>
   <body>
 
@@ -3583,6 +3605,41 @@
         window.deleteAtlas = deleteAtlas;
         
         // === FIN GESTION DES ATLAS ===
+
+        // Bouton flottant: retour en haut
+        (function() {
+            // Créer le bouton et l'insérer dans le DOM
+            const btn = document.createElement('button');
+            btn.id = 'back-to-top';
+            btn.title = 'Retour en haut';
+            btn.setAttribute('aria-label', 'Retourner en haut de la page');
+            btn.innerHTML = '&#8679;';
+            btn.style.display = 'none';
+            document.body.appendChild(btn);
+
+            // Montrer/masquer en fonction du scroll
+            function onScroll() {
+                const show = window.scrollY > 300;
+                btn.style.display = show ? 'flex' : 'none';
+            }
+
+            // Smooth scroll to top
+            btn.addEventListener('click', function() {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+
+            // Accessibilité clavier
+            btn.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    btn.click();
+                }
+            });
+
+            window.addEventListener('scroll', onScroll, { passive: true });
+            // Initial check
+            onScroll();
+        })();
 
         // Fonction pour initialiser l'affichage de version
         function initializeVersionDisplay() {

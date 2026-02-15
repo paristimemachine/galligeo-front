@@ -7,7 +7,7 @@ class APIHealthMonitor {
     constructor() {
         this.gallicaStatus = 'unknown';
         this.ptmTileStatus = 'unknown';
-        this.checkInterval = 30000; // Vérification toutes les 30 secondes
+        this.checkInterval = 60000; // Vérification toutes les 30 secondes
         this.timeoutDuration = 10000; // Timeout de 10 secondes
         
         // URLs à tester
