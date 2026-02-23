@@ -32,7 +32,6 @@
   </div>
   
 <script>
-  // const URL_TILE_SERVER = "http://127.0.0.1:8014/";
   const URL_TILE_SERVER = "https://tile.ptm.huma-num.fr/tiles/ark/highres/jpg/";
   const URL_TILE_SERVER_SUB = "https://{s}.tile.ptm.huma-num.fr/tiles/ark/highres/jpg/";
   const params = new URLSearchParams(document.location.search);
@@ -54,7 +53,6 @@
       initMap(responseJson);
     })
     .catch((error) => {
-      // console.log(error);
       displayMessage("Cette référence ARK (" + ark + ") n'est pas encore géoréférencée.");
     });
   }
@@ -63,7 +61,6 @@
     const div = document.getElementById("map");
     const content = document.createTextNode(message);
     div.appendChild(content);
-    // document.body.append(div);
   }
 
   function initMap(json) {
