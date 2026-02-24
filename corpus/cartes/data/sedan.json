@@ -1,0 +1,27 @@
+{
+  "title": "Sedan : cartes et plans",
+  "records": [
+    {"date": "1631", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b8592506m"},
+    {"date": "1632", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b55005012q"},
+    {"date": "1642", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b84952157"},
+    {"date": "1642", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b85925056"},
+    {"date": "1645", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b8495216n"},
+    {"date": "1656", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b8593244k"},
+    {"date": "1663", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b59730208"},
+    {"date": "1695", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b55011312s"},
+    {"date": "1712", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b530210865"},
+    {"date": "1726", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b8593373n"},
+    {"date": "1733", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b53052906j"},
+    {"date": "1750", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b53064478f"},
+    {"date": "1767", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b53100453d"},
+    {"date": "1785", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b8439588r"},
+    {"date": "1869", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b8495146f"},
+    {"date": "1874", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b8495002x"},
+    {"date": "1879", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b53074867d"},
+    {"date": "1882", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b53239392j"},
+    {"date": "1883", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b108469011"},
+    {"date": "1885", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b532428121"},
+    {"date": "1885", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b84409824"},
+    {"date": "1895", "identifier": "https://gallica.bnf.fr/ark:/12148/btv1b84444958"}
+  ]
+}
