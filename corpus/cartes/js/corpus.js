@@ -7,7 +7,14 @@ const errorMessage = document.getElementById('errorMessage');
 // Get location from URL query parameter
 function getLocationParam() {
     const params = new URLSearchParams(window.location.search);
-    return params.get('location') || 'versailles';
+    const nom = params.get('nom');
+    
+    // Redirect if 'nom' parameter is not specified
+    if (!nom) {
+        window.location.href = '../';
+        return null;
+    }
+    return nom;
 }
 
 // Check if info exists
@@ -48,6 +55,7 @@ async function loadData() {
         const data = await response.json();
         return data;
     } catch (error) {
+        window.location.href = '../';
         throw new Error(`Error loading data: ${error.message}`);
     }
 }
@@ -94,6 +102,11 @@ async function processRecords() {
         errorDiv.classList.remove('hidden');
         errorMessage.textContent = error.message;
         console.error(error);
+        
+        // Redirect to ../ after 2 seconds if data load fails
+        setTimeout(() => {
+            window.location.href = '../';
+        }, 2000);
     }
 }
 
