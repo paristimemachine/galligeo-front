@@ -437,7 +437,7 @@ function generateLayerControls() {
         if (!mapData.error && mapData.tileUrl) {
             // Utiliser les tuiles PTM standard au lieu d'IIIF
             tileLayer = L.tileLayer(mapData.tileUrl, {
-                attribution: 'Paris Time Machine - Huma-Num',
+                attribution: 'Tuiles <a href="https://ptm.huma-num.fr" target="_blank">PTM</a> - <a href="https://huma-num.fr" target="_blank">Huma-Num</a>',
                 minZoom: CONFIG.MIN_ZOOM,
                 maxZoom: CONFIG.MAX_ZOOM,
                 subdomains: ['a', 'b', 'c'], // Pour la répartition de charge
