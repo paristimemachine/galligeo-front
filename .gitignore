@@ -3,6 +3,7 @@ js/version.js
 doc/*
 backups/*
 node_modules/
+tmp/
 
 # Fichiers de version générés automatiquement
 version.json
