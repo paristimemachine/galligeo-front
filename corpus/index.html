@@ -1,29 +1,131 @@
-<!DOCTYPE html>
-<html>
-<head>
-<title>Galligeo &mdash; Corpus</title>
-<style>
-    body {
-        width: 35em;
-        margin: 0 auto;
-        font-family: Tahoma, Verdana, Arial, sans-serif;
-    }
-</style>
-</head>
-<body>
-<h1>Galligeo : corpus de cartes et plans</h1>
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="../node_modules/@gouvfr/dsfr/dist/dsfr.min.css">
+    <link rel="stylesheet" href="../node_modules/@gouvfr/dsfr/dist/component/card/card.min.css">
+    <link rel="stylesheet" href="../node_modules/@gouvfr/dsfr/dist/component/button/button.min.css">
+    <link href="../node_modules/@gouvfr/dsfr/dist/core/core.min.css" rel="stylesheet">
+    <link href="../node_modules/@gouvfr/dsfr/dist/component/link/link.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../node_modules/@gouvfr/dsfr/dist/utility/icons/icons.min.css">
 
-<p>
-  <a href="./cartes/?nom=bordeaux" target="_blank">Bordeaux</a><br/>
-</p>
+    <meta name="theme-color" content="#000091">
 
-<p>
-  <a href="./cartes/?nom=versailles" target="_blank">Versailles</a><br/>
-</p>
+    <link rel="apple-touch-icon" href="../img/favicon.png">
+    <link rel="icon" href="../img/favicon.png" type="image/png">
 
-<p>
-  <a href="./cartes/?nom=versailles_environs" target="_blank">Environs de Versailles</a><br/>
-</p>
+    <title>Galligeo &mdash; Corpus de cartes et plans</title>
 
-</body>
+    <link rel="stylesheet" href="../css/main.css"/>
+
+    <style>
+      .corpus-card {
+        transition: box-shadow 0.2s ease;
+      }
+      .corpus-card:hover {
+        box-shadow: 0 6px 14px rgba(0,0,0,0.15);
+      }
+      .corpus-section {
+        margin-bottom: 3rem;
+      }
+    </style>
+  </head>
+  <body>
+    <header role="banner" class="fr-header">
+      <div class="fr-header__body">
+        <div class="fr-container--fluid">
+          <div class="fr-header__body-row">
+            <div class="fr-header__brand fr-enlarge-link" style="margin-left: 24px;">
+              <div class="fr-header__brand-top">
+                <div class="fr-header__operator">
+                  <a href="../" title="Retour à l'accueil - Galligeo">
+                    <img class="fr-responsive-img" style="width:auto; height:70px;" src="../img/logo_galligeo.png" alt="Galligeo">
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="fr-container fr-py-6w">
+      <div class="fr-grid-row fr-grid-row--center fr-mb-6w">
+        <div class="fr-col-12">
+          <h1 class="fr-h1 fr-mb-2w">
+            <span class="fr-icon-map-2-fill fr-mr-2w" aria-hidden="true"></span>
+            Corpus de cartes et plans
+          </h1>
+          <p class="fr-text--lg fr-text--grey">
+            À géoréferencer ou géoréférencés, regroupés par lieu
+          </p>
+        </div>
+      </div>
+
+      <div class="fr-grid-row fr-grid-row--gutters">
+        <!-- Bordeaux card -->
+        <div class="fr-col-12 fr-col-md-6 fr-col-lg-4">
+          <div class="fr-card fr-card--horizontal corpus-card fr-enlarge-link">
+            <div class="fr-card__body">
+              <h3 class="fr-card__title">
+                <a href="./cartes/?nom=bordeaux">Bordeaux</a>
+              </h3>
+              <p class="fr-card__desc fr-text--sm fr-mb-2w">
+                Plans et cartes de la ville de Bordeaux
+              </p>
+            </div>
+            <div class="fr-card__footer">
+              <a class="fr-btn fr-btn--sm" href="./cartes/?nom=bordeaux">
+                Accéder
+                <span class="fr-icon-arrow-right-line fr-ml-1w" aria-hidden="true"></span>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Versailles card -->
+        <div class="fr-col-12 fr-col-md-6 fr-col-lg-4">
+          <div class="fr-card fr-card--horizontal corpus-card fr-enlarge-link">
+            <div class="fr-card__body">
+              <h3 class="fr-card__title">
+                <a href="./cartes/?nom=versailles">Versailles</a>
+              </h3>
+              <p class="fr-card__desc fr-text--sm fr-mb-2w">
+                Plans et cartes de la ville de Versailles, de son château et de ses jardins
+              </p>
+            </div>
+            <div class="fr-card__footer">
+              <a class="fr-btn fr-btn--sm" href="./cartes/?nom=versailles">
+                Accéder
+                <span class="fr-icon-arrow-right-line fr-ml-1w" aria-hidden="true"></span>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Versailles Environs card -->
+        <div class="fr-col-12 fr-col-md-6 fr-col-lg-4">
+          <div class="fr-card fr-card--horizontal corpus-card fr-enlarge-link">
+            <div class="fr-card__body">
+              <h3 class="fr-card__title">
+                <a href="./cartes/?nom=versailles_environs">Environs de Versailles</a>
+              </h3>
+              <p class="fr-card__desc fr-text--sm fr-mb-2w">
+                Plans et cartes de la région entourant Versailles
+              </p>
+            </div>
+            <div class="fr-card__footer">
+              <a class="fr-btn fr-btn--sm" href="./cartes/?nom=versailles_environs">
+                Accéder
+                <span class="fr-icon-arrow-right-line fr-ml-1w" aria-hidden="true"></span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="../node_modules/@gouvfr/dsfr/dist/dsfr.nomodule.min.js"></script>
+  </body>
 </html>
