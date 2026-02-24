@@ -1,29 +1,52 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Galligeo &mdash; Corpus</title>
-<style>
-    body {
-        width: 35em;
-        margin: 0 auto;
-        font-family: Tahoma, Verdana, Arial, sans-serif;
-    }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Corpus - Maps and Plans</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
-<h1>Galligeo : corpus de cartes et plans</h1>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="flex justify-between items-center mb-8">
+            <div class="flex items-center space-x-4">
+                <h1 id="mainTitle" class="text-2xl font-bold text-gray-800">Loading...</h1>
+            </div>
+            <div class="text-sm text-gray-500">
+                <i class="fas fa-info-circle mr-1"></i> Lesquels sont géoréférencés ?
+            </div>
+        </header>
 
-<p>
-  <a href="https://app.ptm.huma-num.fr/galligeo/corpus/bordeaux.html" target="_blank">Bordeaux</a><br/>
-</p>
+        <!-- Table -->
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Identifiant</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Géoréférencement</th>
+                    </tr>
+                </thead>
+                <tbody id="recordsTable" class="bg-white divide-y divide-gray-200">
+                    <!-- Rows will be added by JS -->
+                </tbody>
+            </table>
+        </div>
 
-<p>
-  <a href="https://app.ptm.huma-num.fr/galligeo/corpus/versailles.html" target="_blank">Versailles</a><br/>
-</p>
+        <!-- Loading indicator -->
+        <div id="loading" class="flex justify-center items-center mt-8">
+            <div class="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full spin"></div>
+        </div>
 
-<p>
-  <a href="https://app.ptm.huma-num.fr/galligeo/corpus/versailles_environs.html" target="_blank">Environs de Versailles</a><br/>
-</p>
+        <!-- Error message -->
+        <div id="error" class="hidden mt-8 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+            <p id="errorMessage"></p>
+        </div>
+    </div>
 
+    <script src="js/script.js"></script>
 </body>
 </html>
