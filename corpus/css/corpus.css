@@ -11,6 +11,9 @@ html, body {
 }
 
 .corpus-card:hover {
-  margin-bottom: 3rem;
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
+}
+
+.corpus-section {
+    margin-bottom: 3rem;
 }
