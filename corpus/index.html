@@ -52,89 +52,12 @@
         </div>
       </div>
 
-      <div class="fr-grid-row fr-grid-row--gutters">
-        <!-- Bordeaux card -->
-        <div class="fr-col-12 fr-col-md-6 fr-col-lg-4">
-          <div class="fr-card fr-card--horizontal corpus-card fr-enlarge-link">
-            <div class="fr-card__body">
-              <h3 class="fr-card__title">
-                <a href="./cartes/?nom=bordeaux">Bordeaux</a>
-              </h3>
-              <p class="fr-card__desc fr-text--sm fr-mb-2w">
-                Cartes et plans de Bordeaux
-              </p>
-            </div>
-            <div class="fr-card__footer">
-              <a class="fr-btn fr-btn--sm" href="./cartes/?nom=bordeaux" target="_blank">
-                Accéder
-                <span class="fr-icon-arrow-right-line fr-ml-1w" aria-hidden="true"></span>
-              </a>
-            </div>
-          </div>
-        </div>
-
-        <!-- Sedan card -->
-        <div class="fr-col-12 fr-col-md-6 fr-col-lg-4">
-          <div class="fr-card fr-card--horizontal corpus-card fr-enlarge-link">
-            <div class="fr-card__body">
-              <h3 class="fr-card__title">
-                <a href="./cartes/?nom=sedan">Sedan</a>
-              </h3>
-              <p class="fr-card__desc fr-text--sm fr-mb-2w">
-                Cartes et plans de Sedan
-              </p>
-            </div>
-            <div class="fr-card__footer">
-              <a class="fr-btn fr-btn--sm" href="./cartes/?nom=sedan" target="_blank">
-                Accéder
-                <span class="fr-icon-arrow-right-line fr-ml-1w" aria-hidden="true"></span>
-              </a>
-            </div>
-          </div>
-        </div>
-
-        <!-- Versailles card -->
-        <div class="fr-col-12 fr-col-md-6 fr-col-lg-4">
-          <div class="fr-card fr-card--horizontal corpus-card fr-enlarge-link">
-            <div class="fr-card__body">
-              <h3 class="fr-card__title">
-                <a href="./cartes/?nom=versailles">Versailles</a>
-              </h3>
-              <p class="fr-card__desc fr-text--sm fr-mb-2w">
-                Cartes et plans de Versailles, de son château et de ses jardins
-              </p>
-            </div>
-            <div class="fr-card__footer">
-              <a class="fr-btn fr-btn--sm" href="./cartes/?nom=versailles" target="_blank">
-                Accéder
-                <span class="fr-icon-arrow-right-line fr-ml-1w" aria-hidden="true"></span>
-              </a>
-            </div>
-          </div>
-        </div>
-
-        <!-- Versailles Environs card -->
-        <div class="fr-col-12 fr-col-md-6 fr-col-lg-4">
-          <div class="fr-card fr-card--horizontal corpus-card fr-enlarge-link">
-            <div class="fr-card__body">
-              <h3 class="fr-card__title">
-                <a href="./cartes/?nom=versailles_environs">Environs de Versailles</a>
-              </h3>
-              <p class="fr-card__desc fr-text--sm fr-mb-2w">
-                Cartes et plans de la région entourant Versailles
-              </p>
-            </div>
-            <div class="fr-card__footer">
-              <a class="fr-btn fr-btn--sm" href="./cartes/?nom=versailles_environs" target="_blank">
-                Accéder
-                <span class="fr-icon-arrow-right-line fr-ml-1w" aria-hidden="true"></span>
-              </a>
-            </div>
-          </div>
-        </div>
+      <div class="fr-grid-row fr-grid-row--gutters" id="cardsContainer">
+        <!-- Cards will be generated here by JS -->
       </div>
     </div>
 
+    <script src="./js/corpus.js"></script>
     <script src="../node_modules/@gouvfr/dsfr/dist/dsfr.nomodule.min.js"></script>
   </body>
 </html>

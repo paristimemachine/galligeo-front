@@ -1,17 +1,16 @@
 html, body {
-    height: auto;
-    overflow-x: hidden;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior-y: auto;
+  height: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: auto;
 }
 
 .corpus-card {
-    transition: box-shadow 0.2s ease;
+  transition: box-shadow 0.2s ease;
 }
+
 .corpus-card:hover {
-    box-shadow: 0 6px 14px rgba(0,0,0,0.15);
-}
-.corpus-section {
-    margin-bottom: 3rem;
+  margin-bottom: 3rem;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
 }

@@ -1,0 +1,22 @@
+[
+  {
+    "nom": "bordeaux",
+    "titre": "Bordeaux",
+    "description": "Cartes et plans de Bordeaux"
+  },
+  {
+    "nom": "sedan",
+    "titre": "Sedan",
+    "description": "Cartes et plans de Sedan"
+  },
+  {
+    "nom": "versailles",
+    "titre": "Versailles",
+    "description": "Cartes et plans de Versailles, de son château et de ses jardins"
+  },
+  {
+    "nom": "versailles_environs",
+    "titre": "Environs de Versailles",
+    "description": "Cartes et plans de la région entourant Versailles"
+  }
+]
