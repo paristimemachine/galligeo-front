@@ -47,7 +47,7 @@
         },
         'https://rawgithub.com/ebrelsford/Leaflet.loading/master/src/Control.Loading.css': {
             type: 'css',
-            fallback: '/galligeo/assets/Control.Loading.css',
+            fallback: '/galligeo/js/external/Control.Loading.css',
             essential: false
         },
         
@@ -66,7 +66,7 @@
         },
         'https://rawgithub.com/ebrelsford/Leaflet.loading/master/src/Control.Loading.js': {
             type: 'js',
-            fallback: '/galligeo/assets/Control.Loading.js',
+            fallback: '/galligeo/js/external/Control.Loading.js',
             essential: false,
             globalCheck: () => window.L && window.L.Control && window.L.Control.Loading
         },
