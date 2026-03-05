@@ -1,0 +1,2967 @@
+        function openExternalLink(url) {
+            window.open(url, '_blank', 'noopener,noreferrer');
+        }
+
+        // Variables globales pour la sélection
+        let selectedMaps = new Set();
+
+        // Fonctions de sélection
+        function toggleMapSelection(arkId, element) {
+            if (selectedMaps.has(arkId)) {
+                selectedMaps.delete(arkId);
+                element.classList.remove('selected');
+            } else {
+                selectedMaps.add(arkId);
+                element.classList.add('selected');
+            }
+            updateSelectionUI();
+        }
+
+        function toggleSelectAll(checkbox) {
+            const allCheckboxes = document.querySelectorAll('.selectable-item input[type="checkbox"]');
+            const allCards = document.querySelectorAll('.selectable-card');
+            
+            if (checkbox.checked) {
+                // Sélectionner tout
+                allCheckboxes.forEach(cb => {
+                    cb.checked = true;
+                    const arkId = cb.dataset.arkId;
+                    if (arkId) selectedMaps.add(arkId);
+                });
+                allCards.forEach(card => {
+                    const arkId = card.dataset.arkId;
+                    if (arkId) {
+                        selectedMaps.add(arkId);
+                        card.classList.add('selected');
+                    }
+                });
+            } else {
+                // Désélectionner tout
+                clearSelection();
+            }
+            updateSelectionUI();
+        }
+
+        function clearSelection() {
+            selectedMaps.clear();
+            document.querySelectorAll('.selectable-item input[type="checkbox"]').forEach(cb => cb.checked = false);
+            document.querySelectorAll('.selectable-card.selected').forEach(card => card.classList.remove('selected'));
+            document.getElementById('select-all').checked = false;
+            updateSelectionUI();
+        }
+
+        function updateSelectionUI() {
+            const count = selectedMaps.size;
+            const toolbar = document.getElementById('selection-toolbar');
+            const countElement = document.getElementById('selected-count');
+            const mainWrapper = document.getElementById('mainContentWrapper');
+            
+            if (count > 0) {
+                toolbar.style.display = 'block';
+                countElement.textContent = count;
+                mainWrapper.classList.add('with-selection-toolbar');
+            } else {
+                toolbar.style.display = 'none';
+                mainWrapper.classList.remove('with-selection-toolbar');
+            }
+        }
+
+        function createAtlas() {
+            if (selectedMaps.size === 0) {
+                alert('Veuillez sélectionner au moins une carte.');
+                return;
+            }
+            
+            const selectedArray = Array.from(selectedMaps);
+            
+            // TODO: Implémenter la création d'atlas
+            alert(`Atlas créé avec ${selectedArray.length} carte(s). Cette fonctionnalité sera bientôt disponible !`);
+        }
+
+        // Initialisation de la page
+        document.addEventListener('DOMContentLoaded', async () => {
+            
+            // Vérifier l'authentification au chargement
+            await checkAuthenticationStatus();
+            
+            // Charger le contenu réel depuis l'API
+            await loadRealContent();
+            
+            // Attendre que le contenu soit bien inséré, puis initialiser les vues
+            setTimeout(() => {
+                // Initialiser le basculement de vue
+                initializeViewToggle();
+                
+                // Initialiser la recherche et le filtrage
+                initializeSearchAndFilter();
+                
+                // S'assurer que la vue cartes est visible par défaut
+                const cardsContainer = document.getElementById('cards-container');
+                const tableContainer = document.getElementById('table-container');
+                if (cardsContainer && tableContainer) {
+                    cardsContainer.classList.remove('hidden');
+                    tableContainer.classList.add('hidden');
+                    
+                    // Vérifier que le contenu est bien présent
+                    const cardsContent = cardsContainer.innerHTML;
+                    const tableContent = tableContainer.querySelector('tbody')?.innerHTML;
+                }
+            }, 1000);
+            
+            // Initialiser l'affichage de version
+            initializeVersionDisplay();
+        });
+
+        // === SYSTÈME DE SÉLECTION ===
+        
+        // Fonction pour synchroniser les sélections entre les vues
+        function syncSelectionBetweenViews(arkId, isSelected) {
+            // Synchroniser la checkbox du tableau
+            const tableCheckbox = document.querySelector(`#table-body input[data-ark-id="${arkId}"]`);
+            if (tableCheckbox) {
+                tableCheckbox.checked = isSelected;
+            }
+            
+            // Synchroniser la checkbox des cartes
+            const cardCheckbox = document.querySelector(`#cards-grid input[data-ark-id="${arkId}"]`);
+            if (cardCheckbox) {
+                cardCheckbox.checked = isSelected;
+            }
+            
+            // Synchroniser la classe selected sur la carte
+            const mapCard = document.querySelector(`.map-card[data-ark-id="${arkId}"]`);
+            if (mapCard) {
+                if (isSelected) {
+                    mapCard.classList.add('selected');
+                } else {
+                    mapCard.classList.remove('selected');
+                }
+            }
+            
+            // Synchroniser la classe selected sur la ligne
+            const tableRow = document.querySelector(`#table-body .table-row[data-ark-id="${arkId}"]`);
+            if (tableRow) {
+                if (isSelected) {
+                    tableRow.classList.add('selected');
+                } else {
+                    tableRow.classList.remove('selected');
+                }
+            }
+        }
+
+        // Fonction améliorée pour basculer la sélection d'une carte
+        function toggleMapSelection(arkId, element) {
+            const isCurrentlySelected = selectedMaps.has(arkId);
+            const newSelectionState = !isCurrentlySelected;
+            
+            if (newSelectionState) {
+                selectedMaps.add(arkId);
+            } else {
+                selectedMaps.delete(arkId);
+            }
+            
+            // Synchroniser dans toutes les vues
+            syncSelectionBetweenViews(arkId, newSelectionState);
+            
+            updateSelectionUI();
+        }
+
+        // Fonction pour tout sélectionner/désélectionner (checkbox "select-all")
+        function toggleSelectAll(selectAllCheckbox) {
+            const allCheckboxes = document.querySelectorAll('input[data-ark-id]');
+            const allCards = document.querySelectorAll('[data-ark-id].map-card');
+            const allRows = document.querySelectorAll('[data-ark-id].table-row');
+            
+            if (selectAllCheckbox.checked) {
+                // Sélectionner tout
+                allCheckboxes.forEach(cb => {
+                    cb.checked = true;
+                    const arkId = cb.dataset.arkId;
+                    if (arkId) selectedMaps.add(arkId);
+                });
+                allCards.forEach(card => {
+                    const arkId = card.dataset.arkId;
+                    if (arkId) {
+                        selectedMaps.add(arkId);
+                        card.classList.add('selected');
+                    }
+                });
+                allRows.forEach(row => {
+                    const arkId = row.dataset.arkId;
+                    if (arkId) {
+                        selectedMaps.add(arkId);
+                        row.classList.add('selected');
+                    }
+                });
+            } else {
+                // Désélectionner tout
+                clearAllSelections();
+            }
+            updateSelectionUI();
+        }
+
+        function clearAllSelections() {
+            // Vider le Set de sélections
+            const previouslySelected = Array.from(selectedMaps);
+            selectedMaps.clear();
+            
+            // Synchroniser chaque élément précédemment sélectionné
+            previouslySelected.forEach(arkId => {
+                syncSelectionBetweenViews(arkId, false);
+            });
+            
+            // Décocher le select-all
+            const selectAllCheckbox = document.getElementById('select-all');
+            if (selectAllCheckbox) {
+                selectAllCheckbox.checked = false;
+            }
+            
+            updateSelectionUI();
+        }
+
+        function updateSelectionUI() {
+            const count = selectedMaps.size;
+            const selectionBar = document.getElementById('selection-bar');
+            const selectionCount = document.getElementById('selection-count');
+            const atlasButton = document.getElementById('atlas-button');
+            
+            // Mettre à jour le texte de comptage
+            selectionCount.textContent = `${count} carte(s) sélectionnée(s)`;
+            
+            // Afficher/masquer la barre de sélection
+            if (count > 0) {
+                selectionBar.classList.add('active');
+            } else {
+                selectionBar.classList.remove('active');
+            }
+            
+            // Activer/désactiver le bouton atlas (minimum 2 cartes)
+            if (count >= 2) {
+                atlasButton.disabled = false;
+                atlasButton.textContent = 'Créer un atlas';
+            } else {
+                atlasButton.disabled = true;
+                atlasButton.textContent = count === 0 ? 'Créer un atlas' : 'Sélectionnez au moins 2 cartes';
+            }
+        }
+
+        function createAtlas() {
+            if (selectedMaps.size < 2) {
+                alert('Veuillez sélectionner au moins 2 cartes pour créer un atlas.');
+                return;
+            }
+            
+            const selectedArray = Array.from(selectedMaps);
+            
+            // Récupérer les données des cartes sélectionnées
+            const selectedMapsData = realMapsData.filter(map => selectedArray.includes(map.ark));
+            
+            // Peupler la liste des cartes sélectionnées dans la modale
+            populateSelectedMapsInModal(selectedMapsData);
+            
+            // Réinitialiser le formulaire
+            document.getElementById('atlas-name').value = '';
+            document.getElementById('atlas-description').value = '';
+            document.getElementById('mode-voisinage').checked = true;
+            
+            // Masquer les messages d'erreur/succès
+            document.getElementById('create-atlas-error').style.display = 'none';
+            document.getElementById('create-atlas-success').style.display = 'none';
+            
+            // La modale s'ouvrira automatiquement via le DSFR car le bouton a aria-controls
+        }
+
+        // Fonction pour peupler la liste des cartes sélectionnées dans la modale
+        function populateSelectedMapsInModal(selectedMapsData) {
+            const container = document.getElementById('selected-maps-list');
+            
+            if (!container) {
+                console.error('❌ Conteneur selected-maps-list non trouvé');
+                return;
+            }
+            
+            if (selectedMapsData.length === 0) {
+                container.innerHTML = '<p class="fr-text--sm" style="opacity: 0.7;">Aucune carte sélectionnée</p>';
+                return;
+            }
+            
+            // Générer la liste des cartes
+            const listHTML = selectedMapsData.map((map, index) => `
+                <div class="fr-mb-1w" style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span class="fr-icon-checkbox-circle-fill" style="color: var(--background-action-high-success);" aria-hidden="true"></span>
+                    <span class="fr-text--sm">
+                        <strong>${index + 1}.</strong> ${map.ark}
+                        <span style="opacity: 0.7;">(par ${map.georeferenced_by || 'Inconnu'})</span>
+                    </span>
+                </div>
+            `).join('');
+            
+            container.innerHTML = `
+                <div class="fr-text--sm">
+                    <p class="fr-mb-2w"><strong>${selectedMapsData.length} carte${selectedMapsData.length > 1 ? 's' : ''} sélectionnée${selectedMapsData.length > 1 ? 's' : ''}</strong></p>
+                    ${listHTML}
+                </div>
+            `;
+        }
+
+        // Fonction pour soumettre le formulaire de création d'atlas
+        async function submitCreateAtlas() {
+            // Récupérer les valeurs du formulaire
+            const atlasName = document.getElementById('atlas-name').value.trim();
+            const atlasDescription = document.getElementById('atlas-description').value.trim();
+            const atlasMode = document.querySelector('input[name="atlas-mode"]:checked').value;
+            
+            // Validation
+            if (!atlasName) {
+                showAtlasError('Veuillez donner un nom à votre atlas.');
+                return;
+            }
+            
+            if (selectedMaps.size < 2) {
+                showAtlasError('Au moins 2 cartes doivent être sélectionnées.');
+                return;
+            }
+            
+            // Préparer les données selon le format de l'API
+            const selectedArray = Array.from(selectedMaps);
+            
+            // Générer l'URL de l'atlas (juste le slug, pas l'URL complète)
+            const atlasSlug = atlasName.toLowerCase()
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // Retirer les accents
+                .replace(/[^a-z0-9]+/g, '-') // Remplacer les caractères spéciaux par des tirets
+                .replace(/^-+|-+$/g, ''); // Retirer les tirets au début et à la fin
+            
+            const atlasUrl = `${atlasSlug}-${Date.now()}`;
+            
+            // Construire le payload selon le format de l'API
+            const atlasData = {
+                name: atlasName,
+                url: atlasUrl,
+                ark_ids: selectedArray,
+                is_public: true // Par défaut, les atlas sont publics
+            };
+            
+            // Ajouter display_mode seulement si ce n'est pas le mode par défaut (diachronique)
+            if (atlasMode !== 'diachronique') {
+                atlasData.display_mode = atlasMode;
+            }
+            
+            // Désactiver le bouton pendant la création
+            const createButton = document.getElementById('btn-create-atlas');
+            const originalButtonText = createButton.innerHTML;
+            createButton.disabled = true;
+            createButton.innerHTML = '<span class="fr-icon-refresh-line fr-icon--sm" aria-hidden="true"></span> Création en cours...';
+            
+            try {
+                // Vérifier l'authentification
+                const token = window.ptmAuth.getToken();
+                
+                if (!token) {
+                    throw new Error('Vous devez être connecté pour créer un atlas.');
+                }
+                
+                // Appeler l'API pour créer l'atlas
+                const response = await fetch('https://api.ptm.huma-num.fr/auth/app/galligeo/atlas', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(atlasData)
+                });
+                
+                if (!response.ok) {
+                    // Gestion spécifique de l'erreur 401 (Unauthorized)
+                    if (response.status === 401) {
+                        // Vérifier le statut d'authentification
+                        await window.ptmAuth.checkAuthStatus();
+                        throw new Error('Votre session a expiré. Veuillez vous reconnecter.');
+                    }
+                    
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.message || `Erreur ${response.status}: ${response.statusText}`);
+                }
+                
+                const result = await response.json();
+                
+                // Afficher le message de succès
+                showAtlasSuccess(`Atlas "${atlasName}" créé avec succès ! ${selectedArray.length} cartes ajoutées.`);
+                
+                // Réinitialiser la sélection
+                selectedMaps.clear();
+                updateSelectionUI();
+                
+                // Fermer la modale après 2 secondes
+                setTimeout(() => {
+                    const modal = document.getElementById('fr-modal-create-atlas');
+                    if (modal) {
+                        // Fermer via le bouton de fermeture DSFR
+                        const closeButton = modal.querySelector('.fr-link--close');
+                        if (closeButton) {
+                            closeButton.click();
+                        }
+                    }
+                }, 2000);
+                
+            } catch (error) {
+                console.error('❌ Erreur lors de la création de l\'atlas:', error);
+                showAtlasError(error.message || 'Une erreur est survenue lors de la création de l\'atlas.');
+            } finally {
+                // Réactiver le bouton
+                createButton.disabled = false;
+                createButton.innerHTML = originalButtonText;
+            }
+        }
+
+        // Fonction pour afficher un message d'erreur dans la modale
+        function showAtlasError(message) {
+            const errorDiv = document.getElementById('create-atlas-error');
+            const errorMessage = document.getElementById('create-atlas-error-message');
+            const successDiv = document.getElementById('create-atlas-success');
+            
+            if (errorDiv && errorMessage) {
+                errorMessage.textContent = message;
+                errorDiv.style.display = 'block';
+                successDiv.style.display = 'none';
+                
+                // Scroll vers le message
+                errorDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+
+        // Fonction pour afficher un message de succès dans la modale
+        function showAtlasSuccess(message) {
+            const successDiv = document.getElementById('create-atlas-success');
+            const successMessage = document.getElementById('create-atlas-success-message');
+            const errorDiv = document.getElementById('create-atlas-error');
+            
+            if (successDiv && successMessage) {
+                successMessage.textContent = message;
+                successDiv.style.display = 'block';
+                errorDiv.style.display = 'none';
+                
+                // Scroll vers le message
+                successDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+
+        // Gestionnaire pour les clics sur les cartes
+        function handleCardClick(event, arkId) {
+            // Éviter le comportement par défaut si c'est une checkbox
+            if (event.target.type === 'checkbox') {
+                const card = event.target.closest('.map-card');
+                if (card) {
+                    toggleMapSelection(arkId, card);
+                }
+                return;
+            }
+            
+            // Clic sur la carte elle-même
+            const card = event.currentTarget;
+            toggleMapSelection(arkId, card);
+        }
+
+        // Gestionnaire pour les clics sur les lignes du tableau
+        function handleRowClick(event, arkId) {
+            // Éviter le comportement par défaut si c'est une checkbox
+            if (event.target.type === 'checkbox') {
+                const row = event.target.closest('.table-row');
+                if (row) {
+                    toggleMapSelection(arkId, row);
+                }
+                return;
+            }
+            
+            // Clic sur la ligne elle-même
+            const row = event.currentTarget;
+            toggleMapSelection(arkId, row);
+        }
+
+        // === FIN SYSTÈME DE SÉLECTION ===
+
+        // === GÉNÉRATION DE CONTENU RÉEL ===
+        
+        // Variable pour stocker les données de l'API
+        let realMapsData = [];
+        
+        // Fonction pour récupérer les cartes géoréférencées depuis l'API PTM
+        async function fetchGeoreferencedMaps() {
+            try {
+                const response = await fetch('https://api.ptm.huma-num.fr/auth/admin/galligeo/georeferenced-maps-by-users');
+                
+                if (!response.ok) {
+                    throw new Error(`Erreur HTTP: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.status === 'ok' && data.users) {
+                    // Transformer les données pour notre format
+                    const allMaps = [];
+                    
+                    data.users.forEach(user => {
+                        user.georeferenced_maps.forEach(map => {
+                            const mapData = {
+                                ark: map.ark,
+                                status: map.status,
+                                firstWorked: map.firstWorked,
+                                lastUpdated: map.lastUpdated,
+                                georeferenced_by: user.full_name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Utilisateur anonyme',
+                                georeferenced_date: map.lastUpdated,
+                                orcid_id: user.orcid_id,
+                                // Métadonnées Gallica si disponibles en base
+                                gallica_title: map.gallica_title,
+                                gallica_producer: map.gallica_producer,
+                                gallica_date: map.gallica_date,
+                                gallica_thumbnail_url: map.gallica_thumbnail_url,
+                                metadata_fetched_at: map.metadata_fetched_at
+                            };
+                            
+                            allMaps.push(mapData);
+                        });
+                    });
+                    
+                    console.log(`📊 Total cartes brutes de l'API : ${allMaps.length}`);
+                    
+                    // DÉDUPLICATION : Garder une seule version de chaque ARK
+                    // Priorité : avec métadonnées > plus récente
+                    const mapsByArk = {};
+                    let duplicatesCount = 0;
+                    
+                    allMaps.forEach(map => {
+                        if (!mapsByArk[map.ark]) {
+                            mapsByArk[map.ark] = map;
+                        } else {
+                            duplicatesCount++;
+                            const existing = mapsByArk[map.ark];
+                            
+                            // Garder la version avec métadonnées si possible
+                            const mapHasMeta = !!map.gallica_title;
+                            const existingHasMeta = !!existing.gallica_title;
+                            
+                            if (mapHasMeta && !existingHasMeta) {
+                                // Nouvelle version a des métadonnées, l'ancienne non → remplacer
+                                mapsByArk[map.ark] = map;
+                                console.log(`🔄 ${map.ark} : remplacement par version avec métadonnées`);
+                            } else if (!mapHasMeta && existingHasMeta) {
+                                // Garder l'existante qui a des métadonnées
+                                // Ne rien faire
+                            } else {
+                                // Soit les deux ont des métadonnées, soit aucune → garder la plus récente
+                                const mapDate = new Date(map.lastUpdated || map.firstWorked || 0);
+                                const existingDate = new Date(existing.lastUpdated || existing.firstWorked || 0);
+                                
+                                if (mapDate > existingDate) {
+                                    mapsByArk[map.ark] = map;
+                                }
+                            }
+                        }
+                    });
+                    
+                    realMapsData = Object.values(mapsByArk);
+                    
+                    if (duplicatesCount > 0) {
+                        console.warn(`⚠️  ${duplicatesCount} doublons détectés et fusionnés`);
+                    }
+                    
+                    // Statistiques sur les métadonnées
+                    const withMetadata = realMapsData.filter(m => m.gallica_title).length;
+                    const withoutMetadata = realMapsData.length - withMetadata;
+                    console.log(`📊 Cartes uniques : ${realMapsData.length}`);
+                    console.log(`   ✅ Avec métadonnées : ${withMetadata}`);
+                    console.log(`   ⚠️  Sans métadonnées : ${withoutMetadata} (seront récupérées depuis Gallica)`);
+                    
+                    return { success: true, data: realMapsData, stats: data };
+                } else {
+                    throw new Error('Format de données invalide');
+                }
+                
+            } catch (error) {
+                console.error('Erreur récupération cartes géoréférencées:', error);
+                return { success: false, error: error.message };
+            }
+        }
+        
+        // Fonction pour afficher un avertissement quota dépassé
+        function showQuotaExceededWarning(nextAccessTime) {
+            const cardsGrid = document.getElementById('cards-grid');
+            if (!cardsGrid) return;
+            
+            const nextAccess = new Date(nextAccessTime);
+            const now = new Date();
+            const minutesRemaining = Math.ceil((nextAccess - now) / 60000);
+            const hoursRemaining = Math.floor(minutesRemaining / 60);
+            const minsRemaining = minutesRemaining % 60;
+            
+            let timeText = '';
+            if (hoursRemaining > 0) {
+                timeText = `${hoursRemaining}h ${minsRemaining}min`;
+            } else {
+                timeText = `${minsRemaining} minutes`;
+            }
+            
+            const warningHTML = `
+                <div class="fr-col-12">
+                    <div class="fr-alert fr-alert--warning" style="margin-bottom: 2rem;">
+                        <h3 class="fr-alert__title">⏳ Quota API Gallica dépassé</h3>
+                        <p>L'API de Gallica a atteint sa limite de requêtes.</p>
+                        <p><strong>Prochaine tentative possible :</strong> ${nextAccess.toLocaleString('fr-FR')}</p>
+                        <p><strong>Temps d'attente :</strong> environ ${timeText}</p>
+                        <p class="fr-text--sm">
+                            Les cartes sont affichées avec des informations minimales. 
+                            Les métadonnées complètes (titres, dates) seront chargées après réinitialisation du quota.
+                        </p>
+                        <p class="fr-text--sm">
+                            💡 <strong>Solution recommandée :</strong> Le stockage des métadonnées en base de données 
+                            permettrait d'éviter complètement ce problème.
+                        </p>
+                    </div>
+                </div>
+            `;
+            
+            // Insérer l'alerte en haut de la galerie
+            const firstCard = cardsGrid.querySelector('.fr-col');
+            if (firstCard) {
+                firstCard.insertAdjacentHTML('beforebegin', warningHTML);
+            } else {
+                cardsGrid.insertAdjacentHTML('afterbegin', warningHTML);
+            }
+        }
+        
+        // Fonction pour générer l'URL de la vignette Gallica IIIF
+        function generateGallicaThumbnail(arkId) {
+            return `https://openapi.bnf.fr/iiif/image/v3/ark:/12148/${arkId}/f1/full/,480/0/default.webp`;
+            // return `https://gallica.bnf.fr/ark:/12148/${arkId}.thumbnail`;
+        }
+        
+        // Fonction pour générer l'URL Gallica (fallback si pas dans manifest)
+        function generateGallicaUrl(arkId) {
+            return `https://gallica.bnf.fr/ark:/12148/${arkId}`;
+        }
+        
+        // Fonction pour générer l'URL de géoréférencement
+        function generateGeoreferenceUrl(arkId) {
+            return `https://app.ptm.huma-num.fr/galligeo/georef/?ark=${arkId}`;
+        }
+        
+        // Cache pour les métadonnées Gallica (éviter les requêtes en double)
+        const gallicaMetadataCache = new Map();
+        
+        // Gestion du quota Gallica avec nextAccessTime
+        let gallicaQuotaExceeded = false;
+        let gallicaNextAccessTime = null;
+        
+        // Rate limiter pour les appels API Gallica
+        class RateLimiter {
+            constructor(maxRequestsPerSecond = 2) {
+                this.delay = 1000 / maxRequestsPerSecond; // délai entre les requêtes
+                this.lastCallTime = 0;
+            }
+            
+            async throttle() {
+                const now = Date.now();
+                const timeSinceLastCall = now - this.lastCallTime;
+                if (timeSinceLastCall < this.delay) {
+                    await new Promise(resolve => setTimeout(resolve, this.delay - timeSinceLastCall));
+                }
+                this.lastCallTime = Date.now();
+            }
+            
+            // Vérifier si le quota Gallica est dépassé
+            isQuotaExceeded() {
+                if (!gallicaQuotaExceeded) return false;
+                
+                if (gallicaNextAccessTime) {
+                    const now = new Date();
+                    const nextAccess = new Date(gallicaNextAccessTime);
+                    
+                    if (now >= nextAccess) {
+                        // Le quota est réinitialisé
+                        gallicaQuotaExceeded = false;
+                        gallicaNextAccessTime = null;
+                        console.log('✅ Quota Gallica réinitialisé');
+                        return false;
+                    }
+                    
+                    const minutesRemaining = Math.ceil((nextAccess - now) / 60000);
+                    console.warn(`⏳ Quota Gallica dépassé. Attente : ${minutesRemaining} minutes`);
+                    return true;
+                }
+                
+                return gallicaQuotaExceeded;
+            }
+        }
+        
+        const gallicaRateLimiter = new RateLimiter(2); // 2 requêtes par seconde max
+        
+        // Fonction pour récupérer les métadonnées Gallica via l'API IIIF Manifest
+        async function fetchGallicaMetadata(arkId) {
+            // Vérifier le cache d'abord
+            if (gallicaMetadataCache.has(arkId)) {
+                return gallicaMetadataCache.get(arkId);
+            }
+            
+            // Vérifier si le quota est dépassé
+            if (gallicaRateLimiter.isQuotaExceeded()) {
+                console.warn(`⏳ Quota Gallica dépassé pour ${arkId}, utilisation données par défaut`);
+                return {
+                    title: `Carte ${arkId}`,
+                    attribution: 'Bibliothèque nationale de France',
+                    gallicaUrl: `https://gallica.bnf.fr/ark:/12148/${arkId}`,
+                    date: '',
+                    manifestUrl: null,
+                    fromCache: false,
+                    quotaExceeded: true
+                };
+            }
+            
+            try {
+                // Rate limiting
+                await gallicaRateLimiter.throttle();
+                
+                const manifestUrl = `https://openapi.bnf.fr/iiif/presentation/v3/ark:/12148/${arkId}/manifest.json`;
+                
+                const response = await fetch(manifestUrl);
+                
+                if (!response.ok) {
+                    // Vérifier si c'est une erreur 429 avec quota
+                    if (response.status === 429) {
+                        const errorData = await response.json().catch(() => null);
+                        
+                        if (errorData && errorData.code === '900802' && errorData.nextAccessTime) {
+                            // Quota dépassé
+                            gallicaQuotaExceeded = true;
+                            gallicaNextAccessTime = errorData.nextAccessTime;
+                            
+                            console.error('🚫 Quota Gallica dépassé !');
+                            console.error(`⏳ Prochaine tentative possible : ${gallicaNextAccessTime}`);
+                            
+                            // Afficher un message à l'utilisateur
+                            showQuotaExceededWarning(gallicaNextAccessTime);
+                            
+                            throw new Error(`Quota Gallica dépassé jusqu'à ${gallicaNextAccessTime}`);
+                        }
+                    }
+                    
+                    throw new Error(`Erreur Gallica Manifest: ${response.status}`);
+                }
+                
+                const manifest = await response.json();
+                
+                // Extraction des métadonnées du manifest IIIF v3
+                // Le titre descriptif est dans summary (IIIF v3), label est une cote/référence
+                let title = 'Titre non disponible';
+                
+                // Priorité 1 : summary (titre descriptif complet)
+                if (manifest.summary) {
+                    if (typeof manifest.summary === 'object') {
+                        title = manifest.summary.none?.[0] || manifest.summary.fr?.[0] || manifest.summary.en?.[0] || title;
+                    } else {
+                        title = manifest.summary;
+                    }
+                }
+                // Fallback : label (généralement la cote)
+                else if (manifest.label) {
+                    if (typeof manifest.label === 'object') {
+                        title = manifest.label.none?.[0] || manifest.label.fr?.[0] || manifest.label.en?.[0] || title;
+                    } else {
+                        title = manifest.label;
+                    }
+                }
+                
+                const gallicaUrl = manifest.homepage?.[0]?.id || `https://gallica.bnf.fr/ark:/12148/${arkId}`;
+                
+                // Attribution depuis requiredStatement (IIIF v3)
+                let attribution = '';
+                if (manifest.requiredStatement && manifest.requiredStatement.value) {
+                    const attrValue = manifest.requiredStatement.value;
+                    attribution = attrValue.none?.[0] || attrValue.fr?.[0] || attrValue.en?.[0] || '';
+                }
+                
+                // Rechercher la date dans les métadonnées
+                let date = '';
+                
+                if (manifest.metadata && Array.isArray(manifest.metadata)) {
+                    manifest.metadata.forEach((item, index) => {
+                        // Extraire le label (format IIIF v3)
+                        let label = '';
+                        if (item.label) {
+                            if (typeof item.label === 'object') {
+                                label = item.label.fr?.[0] || item.label.en?.[0] || item.label.none?.[0] || '';
+                            } else {
+                                label = item.label;
+                            }
+                        }
+                        
+                        if (label && label.toLowerCase().includes('date')) {
+                            // Extraire la valeur (format IIIF v3)
+                            if (item.value) {
+                                if (typeof item.value === 'object') {
+                                    date = item.value.none?.[0] || item.value.fr?.[0] || item.value.en?.[0] || '';
+                                } else {
+                                    date = item.value;
+                                }
+                            }
+                        }
+                    });
+                }
+                
+                const metadata = {
+                    title: title,
+                    attribution: attribution,
+                    gallicaUrl: gallicaUrl,
+                    date: date,
+                    manifestUrl: manifestUrl
+                };
+                
+                // Mettre en cache
+                gallicaMetadataCache.set(arkId, metadata);
+                
+                return metadata;
+                
+            } catch (error) {
+                console.warn(`Impossible de récupérer les métadonnées pour ${arkId}:`, error);
+                return {
+                    title: `Carte ${arkId}`,
+                    attribution: 'Bibliothèque nationale de France',
+                    gallicaUrl: `https://gallica.bnf.fr/ark:/12148/${arkId}`,
+                    date: '',
+                    manifestUrl: null
+                };
+            }
+        }
+        
+        // Fonction pour générer une carte avec les vraies données
+        async function generateRealMapCard(mapData) {
+            // Debug pour la première carte
+            if (mapData.ark === 'btv1b53019735r') {
+                console.log('🔍 DEBUG generateRealMapCard btv1b53019735r:', {
+                    mapData: mapData,
+                    has_gallica_title: !!mapData.gallica_title,
+                    gallica_title_value: mapData.gallica_title
+                });
+            }
+            
+            // PRIORITÉ 1 : Utiliser les métadonnées stockées en base
+            let metadata;
+            if (mapData.gallica_title) {
+                metadata = {
+                    title: mapData.gallica_title,
+                    attribution: mapData.gallica_producer || 'Bibliothèque nationale de France',
+                    date: mapData.gallica_date || '',
+                    gallicaUrl: `https://gallica.bnf.fr/ark:/12148/${mapData.ark}`,
+                    manifestUrl: null,
+                    source: 'database'
+                };
+                console.log(`✓ ${mapData.ark} : métadonnées depuis la base`);
+            } else {
+                // PRIORITÉ 2 : Récupérer depuis l'API Gallica (avec gestion quota)
+                metadata = await fetchGallicaMetadata(mapData.ark);
+                
+                // Si récupération réussie, sauvegarder pour usage futur
+                if (metadata && metadata.title && !metadata.quotaExceeded && window.gallicaMetadataStorage) {
+                    window.gallicaMetadataStorage.saveMetadata(mapData.ark, {
+                        gallica_title: metadata.title,
+                        gallica_producer: metadata.attribution,
+                        gallica_date: metadata.date,
+                        metadata_fetched_at: new Date().toISOString()
+                    }).catch(err => console.warn(`⚠️ Sauvegarde métadonnées ${mapData.ark}:`, err));
+                }
+            }
+            
+            const thumbnailUrl = mapData.gallica_thumbnail_url || generateGallicaThumbnail(mapData.ark);
+            const gallicaUrl = metadata.gallicaUrl || generateGallicaUrl(mapData.ark);
+            const georefUrl = generateGeoreferenceUrl(mapData.ark);
+            
+            return `
+                <div class="fr-col-md-4 fr-col">
+                    <div class="fr-card map-card" data-ark-id="${mapData.ark}" data-date="${metadata.date}" onclick="handleCardClick(event, '${mapData.ark}')">
+                        <div class="selection-checkbox">
+                            <input type="checkbox" 
+                                   id="card-${mapData.ark}" 
+                                   class="fr-checkbox-input" 
+                                   data-ark-id="${mapData.ark}"
+                                   onchange="toggleMapSelection('${mapData.ark}', this.closest('.map-card'))">
+                            <label for="card-${mapData.ark}" class="fr-checkbox-label"></label>
+                        </div>
+                        <div class="fr-card__body">
+                            <div class="fr-card__content">
+                                <h4 class="fr-card__title">
+                                    <a href="${gallicaUrl}" target="_blank" rel="noopener">${metadata.title}</a>
+                                </h4>
+                                <p class="fr-card__desc">${metadata.attribution}${metadata.date ? ` - ${metadata.date}` : ''}</p>
+                                <p class="fr-card__desc">
+                                    <a href="${gallicaUrl}" target="_blank" rel="noopener">Voir la notice Gallica</a>
+                                </p>
+                                <p class="fr-card__desc">
+                                    <a href="${georefUrl}" target="_blank" rel="noopener">Voir le géoréférencement</a>
+                                </p>
+                                <div class="fr-card__start">
+                                    <ul class="fr-tags-group">
+                                        <li><p class="fr-tag fr-tag--green-emeraude">Géoréférencée</p></li>
+                                        <li><p class="fr-tag fr-tag--blue-france">Galligeo</p></li>
+                                        ${metadata.date ? `<li><p class="fr-tag fr-tag--yellow-tournesol">${metadata.date}</p></li>` : ''}
+                                    </ul>
+                                    <p class="fr-card__detail fr-icon-map-pin-2-fill">Géoréférencé par ${mapData.georeferenced_by}</p>
+                                    <p class="fr-card__detail fr-icon-calendar-line">${new Date(mapData.georeferenced_date).toLocaleDateString('fr-FR')}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="fr-card__header">
+                            <div class="fr-card__img">
+                                <img class="fr-responsive-img" 
+                                     src="${thumbnailUrl}" 
+                                     alt="${metadata.title}"
+                                     onerror="this.parentElement.style.display='none';" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Fonction pour générer une ligne de tableau avec les vraies données
+        async function generateRealTableRow(mapData) {
+            // PRIORITÉ 1 : Utiliser les métadonnées stockées en base
+            let metadata;
+            if (mapData.gallica_title) {
+                metadata = {
+                    title: mapData.gallica_title,
+                    attribution: mapData.gallica_producer || 'Bibliothèque nationale de France',
+                    date: mapData.gallica_date || '',
+                    gallicaUrl: `https://gallica.bnf.fr/ark:/12148/${mapData.ark}`,
+                    source: 'database'
+                };
+            } else {
+                // PRIORITÉ 2 : Récupérer depuis l'API Gallica (avec gestion quota)
+                metadata = await fetchGallicaMetadata(mapData.ark);
+            }
+            
+            const gallicaUrl = metadata.gallicaUrl || generateGallicaUrl(mapData.ark);
+            const georefUrl = generateGeoreferenceUrl(mapData.ark);
+            
+            return `
+                <tr class="table-row" data-ark-id="${mapData.ark}" data-date="${metadata.date}" onclick="handleRowClick(event, '${mapData.ark}')">
+                    <td>
+                        <input type="checkbox" 
+                               id="table-${mapData.ark}" 
+                               class="fr-checkbox-input" 
+                               data-ark-id="${mapData.ark}"
+                               onchange="toggleMapSelection('${mapData.ark}', this.closest('.table-row'))">
+                        <label for="table-${mapData.ark}" class="fr-checkbox-label">${metadata.title}</label>
+                    </td>
+                    <td>${metadata.attribution}</td>
+                    <td>${metadata.date || 'Non renseignée'}</td>
+                    <td>${mapData.georeferenced_by}</td>
+                    <td>${new Date(mapData.georeferenced_date).toLocaleDateString('fr-FR')}</td>
+                    <td>
+                        <a href="${gallicaUrl}" target="_blank" rel="noopener" class="fr-btn fr-btn--sm fr-btn--secondary fr-mr-1w">
+                            Gallica
+                        </a>
+                        <a href="${georefUrl}" target="_blank" rel="noopener" class="fr-btn fr-btn--sm fr-btn--primary">
+                            Géoréf
+                        </a>
+                    </td>
+                </tr>
+            `;
+        }
+        
+        // Fonction pour charger le contenu réel depuis l'API avec chargement progressif
+        async function loadRealContent() {
+            try {
+                // Afficher un indicateur de chargement
+                const cardsGrid = document.getElementById('cards-grid');
+                const tableBody = document.getElementById('table-body');
+                
+                if (cardsGrid) {
+                    cardsGrid.innerHTML = `
+                        <div class="fr-col-12">
+                            <div class="fr-card fr-card--no-border">
+                                <div class="fr-card__body">
+                                    <div class="fr-card__content">
+                                        <p class="fr-text--lg">
+                                            <span class="fr-icon-loader-line fr-mr-2w" aria-hidden="true"></span>
+                                            Chargement des cartes géoréférencées...
+                                        </p>
+                                        <div class="fr-progress" id="loading-progress">
+                                            <div class="fr-progress__bar" role="progressbar" 
+                                                 aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                                <span class="fr-progress__inner" style="width: 0%;">
+                                                    <span class="fr-progress__label">0%</span>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                // Récupérer les données de l'API
+                const apiResult = await fetchGeoreferencedMaps();
+                
+                if (!apiResult.success) {
+                    throw new Error(apiResult.error);
+                }
+                
+                // CHARGEMENT PROGRESSIF au lieu de Promise.all
+                const cardsHTML = [];
+                const rowsHTML = [];
+                const total = realMapsData.length;
+                
+                console.log(`📊 Chargement progressif de ${total} cartes (rate limit: 2 req/s)...`);
+                
+                // Fonction pour mettre à jour la barre de progression
+                function updateProgress(current, total) {
+                    const percent = Math.round((current / total) * 100);
+                    const progressBar = document.querySelector('#loading-progress .fr-progress__inner');
+                    const progressLabel = document.querySelector('#loading-progress .fr-progress__label');
+                    if (progressBar) {
+                        progressBar.style.width = `${percent}%`;
+                        progressBar.setAttribute('aria-valuenow', percent);
+                    }
+                    if (progressLabel) {
+                        progressLabel.textContent = `${current}/${total} cartes chargées (${percent}%)`;
+                    }
+                }
+                
+                // Charger les cartes séquentiellement pour respecter le rate limit
+                for (let i = 0; i < total; i++) {
+                    const mapData = realMapsData[i];
+                    
+                    // Si pas de métadonnées en base, pré-charger depuis Gallica UNE SEULE FOIS
+                    if (!mapData.gallica_title) {
+                        const metadata = await fetchGallicaMetadata(mapData.ark);
+                        // Le cache est maintenant rempli, les deux fonctions suivantes vont l'utiliser
+                    }
+                    
+                    // Générer carte et ligne en parallèle (utilisent le cache si appel Gallica fait ci-dessus)
+                    const [cardHTML, rowHTML] = await Promise.all([
+                        generateRealMapCard(mapData),
+                        generateRealTableRow(mapData)
+                    ]);
+                    
+                    cardsHTML.push(cardHTML);
+                    rowsHTML.push(rowHTML);
+                    
+                    // Mettre à jour la progression
+                    updateProgress(i + 1, total);
+                    
+                    // Affichage progressif toutes les 10 cartes
+                    if ((i + 1) % 10 === 0 || i === total - 1) {
+                        if (cardsGrid) {
+                            cardsGrid.innerHTML = cardsHTML.join('');
+                        }
+                        if (tableBody) {
+                            tableBody.innerHTML = rowsHTML.join('');
+                        }
+                        console.log(`✓ ${i + 1}/${total} cartes chargées`);
+                    }
+                }
+                
+                // Sauvegarder le contenu final
+                cardsHTMLContent = cardsGrid.innerHTML;
+                tableHTMLContent = tableBody.innerHTML;
+                
+                console.log('✅ Chargement terminé !');
+                
+                // Mettre à jour les statistiques avec les vraies données
+                const stats = apiResult.stats;
+                const totalCount = document.getElementById('total-count');
+                if (totalCount) {
+                    totalCount.innerHTML = `
+                        <span class="fr-icon-map-2-fill" aria-hidden="true"></span>
+                        ${stats.total_georeferenced_maps}
+                    `;
+                }
+                
+                const contributorsCount = document.getElementById('contributors-count');
+                if (contributorsCount) {
+                    contributorsCount.innerHTML = `
+                        <span class="fr-icon-account-circle-fill" aria-hidden="true"></span>
+                        ${stats.total_users_with_georeferenced_maps}
+                    `;
+                }
+                
+                const recentCount = document.getElementById('recent-count');
+                if (recentCount) {
+                    const oneMonthAgo = new Date(Date.now() - 30*24*60*60*1000);
+                    const recentMaps = realMapsData.filter(m => new Date(m.georeferenced_date) > oneMonthAgo);
+                    recentCount.innerHTML = `
+                        <span class="fr-icon-calendar-fill" aria-hidden="true"></span>
+                        ${recentMaps.length}
+                    `;
+                }
+                
+                // Réinitialiser la recherche et le filtrage après chargement du contenu
+                setTimeout(() => {
+                    resetElementsCache();
+                    updateFilterableElements();
+                }, 100);
+                
+            } catch (error) {
+                console.error('Erreur chargement contenu:', error);
+                
+                // Afficher un message d'erreur
+                const cardsGrid = document.getElementById('cards-grid');
+                if (cardsGrid) {
+                    cardsGrid.innerHTML = `
+                        <div class="fr-col-12">
+                            <div class="fr-alert fr-alert--error">
+                                <p><strong>Erreur de chargement</strong></p>
+                                <p>Impossible de charger les cartes géoréférencées. Veuillez réessayer plus tard.</p>
+                                <p class="fr-text--xs">Détail : ${error.message}</p>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        // === FIN GÉNÉRATION DE CONTENU RÉEL ===
+
+        // === GESTION DES VUES - VERSION SIMPLIFIÉE ===
+        
+        // Variables globales pour stocker le contenu
+        let cardsHTMLContent = '';
+        let tableHTMLContent = '';
+        let currentView = 'cards';
+        
+        // Fonction pour forcer la sauvegarde (debug uniquement)
+        function forceSaveContent() {
+            const cardsGrid = document.getElementById('cards-grid');
+            const tableBody = document.getElementById('table-body');
+            
+            if (cardsGrid && cardsGrid.innerHTML.length > 1000) {
+                cardsHTMLContent = cardsGrid.innerHTML;
+            }
+            
+            if (tableBody && tableBody.innerHTML.length > 100) {
+                tableHTMLContent = tableBody.innerHTML;
+            }
+        }
+        
+        // Fonction simplifiée pour basculer entre vue cartes et tableau
+        function switchView(viewMode) {
+            const cardsContainer = document.getElementById('cards-container');
+            const tableContainer = document.getElementById('table-container');
+            const cardsRadio = document.getElementById('view-cards');
+            const tableRadio = document.getElementById('view-table');
+            
+            if (!cardsContainer || !tableContainer) {
+                console.error('Conteneurs non trouvés');
+                return;
+            }
+            
+            // Ne PAS sauvegarder ici - utiliser uniquement le contenu sauvegardé au chargement
+            
+            // Basculer l'affichage
+            if (viewMode === 'cards') {
+                cardsContainer.classList.remove('hidden');
+                tableContainer.classList.add('hidden');
+                if (cardsRadio) cardsRadio.checked = true;
+                currentView = 'cards';
+                
+                // Restaurer le contenu des cartes
+                const cardsGrid = document.getElementById('cards-grid');
+                if (cardsGrid && cardsHTMLContent) {
+                    cardsGrid.innerHTML = cardsHTMLContent;
+                }
+                
+            } else if (viewMode === 'table') {
+                cardsContainer.classList.add('hidden');
+                tableContainer.classList.remove('hidden');
+                if (tableRadio) tableRadio.checked = true;
+                currentView = 'table';
+                
+                // Restaurer le contenu du tableau
+                const tableBody = document.getElementById('table-body');
+                if (tableBody && tableHTMLContent) {
+                    tableBody.innerHTML = tableHTMLContent;
+                }
+            }
+            
+            // Réappliquer immédiatement les filtres de recherche sauvegardés
+            setTimeout(() => {
+                // Restaurer les valeurs de recherche dans les champs
+                const searchInput = document.getElementById('search-input');
+                const periodFilter = document.getElementById('period-filter');
+                
+                if (searchInput && lastSearchTerm) {
+                    searchInput.value = lastSearchTerm;
+                }
+                if (periodFilter && lastPeriodFilter) {
+                    periodFilter.value = lastPeriodFilter;
+                }
+                
+                // Réappliquer les filtres
+                applySearchAndFilter();
+            }, 100);
+        }
+
+        // Variable pour éviter la double initialisation
+        let viewToggleInitialized = false;
+
+        // Écouteurs pour les boutons radio de vue
+        function initializeViewToggle() {
+            if (viewToggleInitialized) {
+                return;
+            }
+            
+            const cardsRadio = document.getElementById('view-cards');
+            const tableRadio = document.getElementById('view-table');
+            
+            if (!cardsRadio || !tableRadio) {
+                console.error('Boutons radio de vue non trouvés');
+                return;
+            }
+            
+            // Supprimer les anciens événements s'ils existent
+            cardsRadio.removeEventListener('change', handleCardsChange);
+            tableRadio.removeEventListener('change', handleTableChange);
+            
+            // Ajouter les nouveaux événements
+            cardsRadio.addEventListener('change', handleCardsChange);
+            tableRadio.addEventListener('change', handleTableChange);
+            
+            // Marquer comme initialisé
+            viewToggleInitialized = true;
+        }
+
+        // Gestionnaires d'événements séparés pour éviter les fuites
+        function handleCardsChange(event) {
+            if (event.target.checked) {
+                switchView('cards');
+            }
+        }
+
+        function handleTableChange(event) {
+            if (event.target.checked) {
+                switchView('table');
+            }
+        }
+
+        // Fonction globale pour basculer manuellement (debug)
+        window.switchToCards = () => switchView('cards');
+        window.switchToTable = () => switchView('table');
+        
+        // Fonctions de debug améliorées
+        window.forceSaveContent = forceSaveContent;
+        window.forceRestoreCards = function() {
+            const cardsGrid = document.getElementById('cards-grid');
+            if (cardsGrid && cardsHTMLContent) {
+                cardsGrid.innerHTML = cardsHTMLContent;
+            }
+        };
+        window.forceRestoreTable = function() {
+            const tableBody = document.getElementById('table-body');
+            if (tableBody && tableHTMLContent) {
+                tableBody.innerHTML = tableHTMLContent;
+            }
+        };
+        
+        // Fonction de diagnostic
+        window.debugViews = function() {
+            console.log('=== DIAGNOSTIC DES VUES ===');
+            const cardsContainer = document.getElementById('cards-container');
+            const tableContainer = document.getElementById('table-container');
+            const cardsGrid = document.getElementById('cards-grid');
+            const tableBody = document.getElementById('table-body');
+            
+            console.log('Cards container:', cardsContainer ? 'OK' : 'MANQUANT');
+            console.log('Table container:', tableContainer ? 'OK' : 'MANQUANT');
+            console.log('Cards grid:', cardsGrid ? 'OK' : 'MANQUANT');
+            console.log('Table body:', tableBody ? 'OK' : 'MANQUANT');
+            
+            if (cardsContainer) {
+                console.log('Cards visible:', !cardsContainer.classList.contains('hidden'));
+                console.log('Cards contenu DOM:', cardsContainer.innerHTML.length > 100 ? 'OK' : 'VIDE');
+            }
+            
+            if (tableContainer) {
+                console.log('Table visible:', !tableContainer.classList.contains('hidden'));
+                console.log('Table contenu DOM:', tableContainer.innerHTML.length > 100 ? 'OK' : 'VIDE');
+            }
+            
+            console.log('Cartes dans DOM:', document.querySelectorAll('.map-card').length);
+            console.log('Lignes dans DOM:', document.querySelectorAll('#table-body tr').length);
+            console.log('Données réelles:', window.realMapsData ? window.realMapsData.length : 'NON CHARGÉES');
+            console.log('Contenu sauvegardé - Cartes:', cardsHTMLContent.length, 'caractères');
+            console.log('Contenu sauvegardé - Tableau:', tableHTMLContent.length, 'caractères');
+            console.log('Vue actuelle:', currentView);
+        };
+        
+        // Exposer les données pour debug
+        window.realMapsData = realMapsData;
+        window.cardsHTMLContent = () => cardsHTMLContent;
+        window.tableHTMLContent = () => tableHTMLContent;
+
+        // === FIN GESTION DES VUES ===
+
+        // === FONCTIONS DE RECHERCHE ET FILTRAGE ===
+
+        // --- Parsing robuste de `gallica_date` ---
+        function parseGallicaDate(dateStr) {
+            if (!dateStr || typeof dateStr !== 'string') return null;
+            const s = dateStr.trim();
+
+            // Chercher un year 4 chiffres
+            const y4 = s.match(/(\d{4})/);
+            if (y4) {
+                const y = parseInt(y4[1], 10);
+                return { min: y, max: y };
+            }
+
+            // Traiter les formats tronqués comme "19..", "18..", "1..."
+            const leading = s.match(/^(\d{1,4})/);
+            if (!leading) return null;
+            const ld = leading[1];
+
+            // Si la chaîne contient des points, on considère une plage (siècle ou millénaire)
+            if (s.includes('.') || s.includes('\u2026')) {
+                if (ld.length === 2) {
+                    // ex: '19..' => 1900-1999
+                    const century = parseInt(ld, 10);
+                    return { min: century * 100, max: century * 100 + 99 };
+                } else if (ld.length === 1) {
+                    // ex: '1...' => 1000-1999 (grand intervalle pour rester permissif)
+                    const n = parseInt(ld, 10);
+                    return { min: n * 1000, max: (n + 1) * 1000 - 1 };
+                } else if (ld.length === 3) {
+                    // ex: '180.' => 1800-1809 approximatif
+                    const base = parseInt(ld, 10);
+                    return { min: base * 10, max: base * 10 + 9 };
+                }
+            }
+
+            // Si on a juste 3 chiffres (ex: '180') on considère 180 comme année
+            if (ld.length === 3) {
+                const year = parseInt(ld, 10);
+                return { min: year, max: year };
+            }
+
+            // Si on a 1 ou 2 chiffres sans points, on retourne une valeur précise
+            const yearNum = parseInt(ld, 10);
+            if (!isNaN(yearNum)) return { min: yearNum, max: yearNum };
+
+            return null;
+        }
+
+        function matchesPeriodKey(dateStr, periodKey) {
+            // periodKey: 'moyen-age','renaissance','moderne','19e','20e'
+            if (!dateStr) return false;
+            const range = parseGallicaDate(dateStr);
+            if (!range) return false;
+
+            const periods = {
+                'moyen-age': { min: -Infinity, max: 1499 },
+                'renaissance': { min: 1500, max: 1599 },
+                'moderne': { min: 1600, max: 1799 },
+                '19e': { min: 1800, max: 1899 },
+                '20e': { min: 1900, max: 1999 }
+            };
+
+            const p = periods[periodKey];
+            if (!p) return false;
+
+            // overlap test
+            return !(range.max < p.min || range.min > p.max);
+        }
+
+        // Variable pour stocker tous les éléments filtrables
+        let allFilterableElements = [];
+        let allCardsElements = [];  // Cache permanent pour les cartes
+        let allTableRowsElements = [];  // Cache permanent pour les lignes
+
+        // Fonction pour réinitialiser les caches d'éléments
+        function resetElementsCache() {
+            console.log('🔄 Réinitialisation des caches d\'éléments');
+            allCardsElements = [];
+            allTableRowsElements = [];
+            allFilterableElements = [];
+        }
+        function initializeSearchAndFilter() {
+            // Initialiser les événements avec nouvelle stratégie
+            const searchInput = document.getElementById('search-input');
+            const periodFilter = document.getElementById('period-filter');
+            const sortSelect = document.getElementById('sort-select');
+            
+            if (searchInput) {
+                // Supprimer tous les anciens événements
+                searchInput.removeEventListener('input', handleSearchInput);
+                searchInput.removeEventListener('keypress', handleSearchKeypress);
+                
+                // Ajouter les nouveaux événements avec forçage immédiat
+                searchInput.addEventListener('input', handleSearchInput);
+                searchInput.addEventListener('keypress', handleSearchKeypress);
+                
+            } else {
+                console.error('❌ search-input non trouvé dans le DOM');
+            }
+            
+            if (periodFilter) {
+                // Supprimer les anciens événements
+                periodFilter.removeEventListener('change', handlePeriodChange);
+                
+                // Ajouter le nouvel événement avec forçage immédiat
+                periodFilter.addEventListener('change', handlePeriodChange);
+                
+            } else {
+                console.error('❌ period-filter non trouvé dans le DOM');
+            }
+
+            if (sortSelect) {
+                // Assurer l'écoute sur le select de tri
+                sortSelect.removeEventListener('change', applySearchAndFilter);
+                sortSelect.addEventListener('change', applySearchAndFilter);
+            }
+
+            // Mettre à jour la liste des éléments filtrables
+            updateFilterableElements();
+        }
+
+        // Gestionnaires pour la recherche et le filtrage
+        function handleSearchInput(e) {
+            clearTimeout(window.searchTimeout);
+            window.searchTimeout = setTimeout(() => {
+                applySearchAndFilter();
+            }, 300); // Délai pour éviter trop de recréations pendant la frappe
+        }
+
+        function handleSearchKeypress(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                clearTimeout(window.searchTimeout);
+                applySearchAndFilter();
+            }
+        }
+
+        function handlePeriodChange(e) {
+            applySearchAndFilter();
+        }
+
+        // Fonction pour mettre à jour la liste des éléments filtrables (obsolète mais gardée pour compatibilité)
+        function updateFilterableElements() {
+            // Cette fonction n'est plus nécessaire avec le système de recréation DOM
+            // mais est gardée pour compatibilité avec d'autres parties du code
+        }
+
+        // Fonction de recherche (obsolète, remplacée par applySearchAndFilter)
+        function performSearch() {
+            const searchTerm = document.getElementById('search-input').value.toLowerCase().trim();
+
+            updateFilterableElements();
+
+            allFilterableElements.forEach(element => {
+                let searchableText = '';
+                
+                if (currentView === 'cards') {
+                    // Pour les cartes, chercher dans le titre et la description
+                    const title = element.querySelector('.fr-card__title')?.textContent || '';
+                    const desc = element.querySelector('.fr-card__desc')?.textContent || '';
+                    searchableText = (title + ' ' + desc).toLowerCase();
+                } else {
+                    // Pour le tableau, chercher dans toutes les cellules
+                    const cells = element.querySelectorAll('td');
+                    searchableText = Array.from(cells).map(cell => cell.textContent || '').join(' ').toLowerCase();
+                }
+
+                if (searchTerm === '' || searchableText.includes(searchTerm)) {
+                    element.style.display = '';
+                } else {
+                    element.style.display = 'none';
+                }
+            });
+
+            updateVisibleCount();
+        }
+
+        // Fonction de filtrage par période
+        function performFilter() {
+            const selectedPeriod = document.getElementById('period-filter').value;
+            console.log('Filtrage par période:', selectedPeriod);
+
+            updateFilterableElements();
+
+            allFilterableElements.forEach(element => {
+                const dateStr = element.getAttribute('data-date');
+                let showElement = true;
+
+                if (selectedPeriod !== 'all' && dateStr && dateStr !== '' && dateStr !== 'undefined') {
+                    const year = parseInt(dateStr);
+                    
+                    switch(selectedPeriod) {
+                        case 'before-1800':
+                            showElement = year < 1800;
+                            break;
+                        case '1800-1850':
+                            showElement = year >= 1800 && year <= 1850;
+                            break;
+                        case '1850-1900':
+                            showElement = year >= 1850 && year <= 1900;
+                            break;
+                        case '1900-1950':
+                            showElement = year >= 1900 && year <= 1950;
+                            break;
+                        case 'after-1950':
+                            showElement = year > 1950;
+                            break;
+                        default:
+                            showElement = true;
+                    }
+                }
+
+                if (showElement) {
+                    element.style.display = '';
+                } else {
+                    element.style.display = 'none';
+                }
+            });
+
+            updateVisibleCount();
+        }
+
+        // Variables pour sauvegarder l'état de la recherche
+        let lastSearchTerm = '';
+        let lastPeriodFilter = 'all';
+        let isRefreshing = false; // Flag pour éviter les boucles infinies
+
+        // Fonction pour forcer le rafraîchissement de l'affichage en simulant un changement de vue
+        function forceRefreshDisplay() {
+            // Éviter les boucles infinies
+            if (isRefreshing) {
+                console.log('⚠️ Rafraîchissement déjà en cours, ignoré');
+                return;
+            }
+            
+            console.log('🔄 === FORÇAGE RAFRAÎCHISSEMENT VIA SIMULATION CLICS ===');
+            isRefreshing = true;
+            
+            const cardsRadio = document.getElementById('view-cards');
+            const tableRadio = document.getElementById('view-table');
+            
+            if (!cardsRadio || !tableRadio) {
+                console.warn('Boutons radio de vue non trouvés');
+                isRefreshing = false;
+                return;
+            }
+            
+            const currentlyCards = cardsRadio.checked;
+            
+            // Simuler un SEUL changement de vue pour forcer le rafraîchissement
+            if (currentlyCards) {
+                console.log('Simulation: cartes -> tableau');
+                tableRadio.click();
+                
+                setTimeout(() => {
+                    console.log('Simulation: tableau -> cartes');
+                    cardsRadio.click();
+                    
+                    setTimeout(() => {
+                        isRefreshing = false;
+                        console.log('Rafraîchissement terminé');
+                    }, 100);
+                }, 100);
+                
+            } else {
+                console.log('Simulation: tableau -> cartes');
+                cardsRadio.click();
+                
+                setTimeout(() => {
+                    console.log('Simulation: cartes -> tableau');
+                    tableRadio.click();
+                    
+                    setTimeout(() => {
+                        isRefreshing = false;
+                        console.log('Rafraîchissement terminé');
+                    }, 100);
+                }, 100);
+            }
+        }
+
+        // Fonction pour réinitialiser la recherche
+        function resetSearch() {
+            const searchInput = document.getElementById('search-input');
+            const periodFilter = document.getElementById('period-filter');
+            
+            if (searchInput) searchInput.value = '';
+            if (periodFilter) periodFilter.value = 'all';
+            
+            lastSearchTerm = '';
+            lastPeriodFilter = 'all';
+            
+            applySearchAndFilter();
+        }
+
+        // Fonction pour diagnostiquer les différences entre les vues
+        function diagnoseViewDifferences() {
+            console.log('🔍 === DIAGNOSTIC DES DIFFÉRENCES ENTRE VUES ===');
+            
+            const allCards = document.querySelectorAll('.map-card[data-ark-id]');
+            const allRows = document.querySelectorAll('#table-body tr.table-row[data-ark-id]');
+            
+            console.log(`Cartes trouvées: ${allCards.length}`);
+            console.log(`Lignes trouvées: ${allRows.length}`);
+            
+            // Récupérer les ARK IDs de chaque vue
+            const cardsArkIds = Array.from(allCards).map(card => card.getAttribute('data-ark-id')).sort();
+            const rowsArkIds = Array.from(allRows).map(row => row.getAttribute('data-ark-id')).sort();
+            
+            console.log('ARK IDs des cartes:', cardsArkIds);
+            console.log('ARK IDs des lignes:', rowsArkIds);
+            
+            // Trouver les différences
+            const cardsOnly = cardsArkIds.filter(id => !rowsArkIds.includes(id));
+            const rowsOnly = rowsArkIds.filter(id => !cardsArkIds.includes(id));
+            
+            if (cardsOnly.length > 0) {
+                console.warn('❌ ARK IDs présents uniquement dans les cartes:', cardsOnly);
+            }
+            if (rowsOnly.length > 0) {
+                console.warn('❌ ARK IDs présents uniquement dans les lignes:', rowsOnly);
+            }
+            
+            if (cardsOnly.length === 0 && rowsOnly.length === 0) {
+                console.log('✅ Les ARK IDs sont identiques dans les deux vues');
+            }
+            
+            return {
+                cardsCount: allCards.length,
+                rowsCount: allRows.length,
+                cardsArkIds,
+                rowsArkIds,
+                cardsOnly,
+                rowsOnly
+            };
+        }
+
+        // Fonction pour recréer la vue avec uniquement les éléments filtrés
+        async function applySearchAndFilter() {
+            const searchInput = document.getElementById('search-input');
+            const periodFilter = document.getElementById('period-filter');
+            
+            const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+            const selectedPeriod = periodFilter ? periodFilter.value : 'all';
+            
+            // Sauvegarder l'état de la recherche
+            lastSearchTerm = searchTerm;
+            lastPeriodFilter = selectedPeriod;
+
+            console.log(`🔍 Filtrage: terme="${searchTerm}", période="${selectedPeriod}"`);
+
+            // Filtrer les données selon les critères
+            const filteredData = realMapsData.filter(mapData => {
+                // Filtre par recherche textuelle
+                let searchMatch = true;
+                if (searchTerm) {
+                    const title = (mapData.gallica_title || '').toLowerCase();
+                    const producer = (mapData.gallica_producer || '').toLowerCase();
+                    const date = (mapData.gallica_date || '').toLowerCase();
+                    const georefBy = (mapData.georeferenced_by || '').toLowerCase();
+                    const ark = (mapData.ark || '').toLowerCase();
+                    
+                    searchMatch = title.includes(searchTerm) || 
+                                  producer.includes(searchTerm) || 
+                                  date.includes(searchTerm) ||
+                                  georefBy.includes(searchTerm) ||
+                                  ark.includes(searchTerm);
+                }
+                
+                // Filtre par période
+                let periodMatch = true;
+                const effectivePeriod = (selectedPeriod === '' || selectedPeriod === 'all') ? 'all' : selectedPeriod;
+                if (effectivePeriod !== 'all') {
+                    const dateStr = mapData.gallica_date || '';
+                    if (dateStr) {
+                        periodMatch = matchesPeriodKey(dateStr, effectivePeriod);
+                    } else {
+                        periodMatch = false; // Exclure les cartes sans date si un filtre de période est actif
+                    }
+                }
+                
+                return searchMatch && periodMatch;
+            });
+
+            console.log(`📊 ${filteredData.length} cartes correspondent aux critères (sur ${realMapsData.length})`);
+
+            // Tri
+            try {
+                const sortSelect = document.getElementById('sort-select');
+                const sortBy = sortSelect ? sortSelect.value : 'period';
+
+                filteredData.sort((a, b) => {
+                    if (sortBy === 'firstWorked') {
+                        const ta = a.firstWorked ? Date.parse(a.firstWorked) : Infinity;
+                        const tb = b.firstWorked ? Date.parse(b.firstWorked) : Infinity;
+                        return ta - tb; // plus ancien d'abord
+                    } else if (sortBy === 'lastUpdated') {
+                        const ta = a.lastUpdated ? Date.parse(a.lastUpdated) : 0;
+                        const tb = b.lastUpdated ? Date.parse(b.lastUpdated) : 0;
+                        return tb - ta; // plus récent d'abord
+                    } else {
+                        // 'period' ou défaut : trier chronologiquement selon gallica_date inférieure
+                        const ra = parseGallicaDate(a.gallica_date || '') || { min: Infinity };
+                        const rb = parseGallicaDate(b.gallica_date || '') || { min: Infinity };
+                        return (ra.min || Infinity) - (rb.min || Infinity);
+                    }
+                });
+            } catch (e) {
+                console.warn('Erreur lors du tri:', e);
+            }
+
+            // Recréer la vue cartes
+            await rebuildCardsView(filteredData);
+            
+            // Recréer la vue tableau
+            await rebuildTableView(filteredData);
+            
+            updateVisibleCount();
+        }
+
+        // Fonction pour reconstruire la vue en cartes
+        async function rebuildCardsView(filteredData) {
+            const cardsGrid = document.getElementById('cards-grid');
+            if (!cardsGrid) return;
+
+            // Vider le contenu actuel
+            cardsGrid.innerHTML = '';
+
+            if (filteredData.length === 0) {
+                cardsGrid.innerHTML = `
+                    <div class="fr-col-12">
+                        <div class="fr-alert fr-alert--info">
+                            <p><strong>Aucun résultat</strong></p>
+                            <p>Aucune carte ne correspond à vos critères de recherche.</p>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            // Générer les cartes HTML pour les données filtrées
+            const cardsPromises = filteredData.map(mapData => generateRealMapCard(mapData));
+            const cardsHTML = await Promise.all(cardsPromises);
+            
+            // Insérer dans le DOM
+            cardsGrid.innerHTML = cardsHTML.join('');
+            
+            // Sauvegarder le contenu pour restauration lors du changement de vue
+            cardsHTMLContent = cardsGrid.innerHTML;
+        }
+
+        // Fonction pour reconstruire la vue en tableau
+        async function rebuildTableView(filteredData) {
+            const tableBody = document.getElementById('table-body');
+            if (!tableBody) return;
+
+            // Vider le contenu actuel
+            tableBody.innerHTML = '';
+
+            if (filteredData.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 2rem;">
+                            <strong>Aucun résultat</strong><br>
+                            Aucune carte ne correspond à vos critères de recherche.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            // Générer les lignes HTML pour les données filtrées
+            const rowsPromises = filteredData.map(mapData => generateRealTableRow(mapData));
+            const rowsHTML = await Promise.all(rowsPromises);
+            
+            // Insérer dans le DOM
+            tableBody.innerHTML = rowsHTML.join('');
+            
+            // Sauvegarder le contenu pour restauration lors du changement de vue
+            tableHTMLContent = tableBody.innerHTML;
+        }
+
+        // Fonction pour mettre à jour le compteur d'éléments visibles
+        function updateVisibleCount() {
+            // Compter les cartes actuellement dans le DOM
+            const visibleCards = document.querySelectorAll('.map-card[data-ark-id]').length;
+            console.log(`📊 ${visibleCards} carte(s) affichée(s)`);
+        }
+
+        // === FIN FONCTIONS DE RECHERCHE ET FILTRAGE ===
+
+        // === FONCTIONS DE DEBUG ===
+        
+        // Fonction de test pour vérifier la recherche et le filtrage
+        window.testSearchAndFilter = function() {
+            console.log('🧪 === TEST RECHERCHE ET FILTRAGE ===');
+            
+            // Vérifier les éléments DOM
+            const searchInput = document.getElementById('search-input');
+            const periodFilter = document.getElementById('period-filter');
+            
+            console.log('Éléments DOM:');
+            console.log('- search-input:', searchInput);
+            console.log('- period-filter:', periodFilter);
+            
+            if (searchInput) {
+                console.log('- search-input value:', searchInput.value);
+                console.log('- search-input listeners:', getEventListeners ? getEventListeners(searchInput) : 'N/A');
+            }
+            
+            if (periodFilter) {
+                console.log('- period-filter value:', periodFilter.value);
+                console.log('- period-filter options:', Array.from(periodFilter.options).map(o => o.value));
+            }
+            
+            // Vérifier les éléments filtrables
+            updateFilterableElements();
+            
+            // Test de recherche manuel
+            console.log('Test de recherche avec "paris":');
+            if (searchInput) {
+                searchInput.value = 'paris';
+                applySearchAndFilter();
+            }
+        };
+        
+        // Fonction pour forcer la réinitialisation
+        window.forceReinitializeSearch = function() {
+            console.log('🔧 === RÉINITIALISATION FORCÉE ===');
+            resetElementsCache();
+            initializeSearchAndFilter();
+        };
+        
+        // Fonction pour réinitialiser l'affichage (montrer tous les éléments)
+        window.resetDisplay = function() {
+            console.log('🔄 === RÉINITIALISATION AFFICHAGE ===');
+            
+            // Remettre à vide les champs
+            const searchInput = document.getElementById('search-input');
+            const periodFilter = document.getElementById('period-filter');
+            
+            if (searchInput) searchInput.value = '';
+            if (periodFilter) periodFilter.value = 'all';
+            
+            // Afficher tous les éléments
+            const allCards = document.querySelectorAll('.map-card');
+            const allRows = document.querySelectorAll('#table-body tr.table-row');
+            
+            allCards.forEach(card => card.style.display = '');
+            allRows.forEach(row => row.style.display = '');
+            
+            console.log('Affichage réinitialisé - Cartes:', allCards.length, 'Lignes:', allRows.length);
+        };
+        
+        // Fonction pour débugger l'état de l'affichage
+        window.debugDisplay = function() {
+            console.log('🔍 === DEBUG AFFICHAGE ===');
+            
+            const allCards = document.querySelectorAll('.map-card');
+            const allRows = document.querySelectorAll('#table-body tr.table-row');
+            
+            console.log('Vue actuelle:', currentView);
+            console.log('Total cartes dans DOM:', allCards.length);
+            console.log('Total lignes dans DOM:', allRows.length);
+            
+            let visibleCards = 0, hiddenCards = 0;
+            let visibleRows = 0, hiddenRows = 0;
+            
+            allCards.forEach(card => {
+                if (card.style.display === 'none') hiddenCards++;
+                else visibleCards++;
+            });
+            
+            allRows.forEach(row => {
+                if (row.style.display === 'none') hiddenRows++;
+                else visibleRows++;
+            });
+            
+            console.log('Cartes - Visibles:', visibleCards, 'Masquées:', hiddenCards);
+            console.log('Lignes - Visibles:', visibleRows, 'Masquées:', hiddenRows);
+            
+            // État des champs
+            const searchInput = document.getElementById('search-input');
+            const periodFilter = document.getElementById('period-filter');
+            console.log('Recherche:', searchInput ? searchInput.value : 'N/A');
+            console.log('Période:', periodFilter ? periodFilter.value : 'N/A');
+        };
+        
+        // Fonction pour forcer l'affichage de tous les éléments
+        window.forceShowAll = function() {
+            console.log('💪 === FORÇAGE AFFICHAGE TOUS LES ÉLÉMENTS ===');
+            
+            const allCards = document.querySelectorAll('.map-card');
+            const allRows = document.querySelectorAll('#table-body tr.table-row');
+            
+            allCards.forEach((card, i) => {
+                card.style.display = '';
+                card.style.visibility = 'visible';
+                card.style.opacity = '1';
+                console.log(`Carte ${i} forcée visible`);
+            });
+            
+            allRows.forEach((row, i) => {
+                row.style.display = '';
+                row.style.visibility = 'visible';
+                row.style.opacity = '1';
+                console.log(`Ligne ${i} forcée visible`);
+            });
+            
+            console.log(`Tous les éléments forcés visibles: ${allCards.length} cartes, ${allRows.length} lignes`);
+        };
+
+        // Exposer la fonction de réinitialisation pour debug
+        window.resetSearch = resetSearch;
+        
+        // Version alternative : regénération complète forcée
+        function forceCompleteRefresh() {
+            console.log('🚀 === REGÉNÉRATION COMPLÈTE FORCÉE ===');
+            
+            const cardsGrid = document.getElementById('cards-grid');
+            const tableBody = document.getElementById('table-body');
+            const cardsContainer = document.getElementById('cards-container');
+            const tableContainer = document.getElementById('table-container');
+            
+            if (!cardsGrid || !tableBody) {
+                console.error('Éléments de contenu non trouvés');
+                return;
+            }
+            
+            // Sauvegarder l'état de la vue actuelle
+            const currentlyCardsVisible = !cardsContainer.classList.contains('hidden');
+            
+            console.log('Vue actuelle:', currentlyCardsVisible ? 'cartes' : 'tableau');
+            
+            // ÉTAPE 1: Restaurer le contenu complet depuis les sauvegardes
+            if (cardsHTMLContent && cardsHTMLContent.length > 100) {
+                cardsGrid.innerHTML = cardsHTMLContent;
+            }
+            
+            if (tableHTMLContent && tableHTMLContent.length > 100) {
+                tableBody.innerHTML = tableHTMLContent;
+            }
+            
+            // ÉTAPE 2: Forcer l'affichage de tous les éléments
+            const allCards = document.querySelectorAll('.map-card[data-ark-id]');
+            const allRows = document.querySelectorAll('#table-body tr.table-row[data-ark-id]');
+            
+            allCards.forEach(card => {
+                card.style.display = '';
+                card.style.visibility = 'visible';
+            });
+            
+            allRows.forEach(row => {
+                row.style.display = '';
+                row.style.visibility = 'visible';
+            });
+            
+            // ÉTAPE 3: Réappliquer immédiatement les filtres
+            setTimeout(() => {
+                applySearchAndFilter();
+                
+                // ÉTAPE 4: Forcer le rafraîchissement de la vue active
+                setTimeout(() => {
+                    if (currentlyCardsVisible) {
+                        cardsContainer.style.display = 'none';
+                        setTimeout(() => {
+                            cardsContainer.style.display = 'block';
+                            cardsContainer.classList.remove('hidden');
+                        }, 5);
+                    } else {
+                        tableContainer.style.display = 'none';
+                        setTimeout(() => {
+                            tableContainer.style.display = 'block';
+                            tableContainer.classList.remove('hidden');
+                        }, 5);
+                    }
+                }, 50);
+            }, 10);
+        }
+
+        // Exposer la fonction de regénération complète
+        window.forceCompleteRefresh = forceCompleteRefresh;
+        
+        // Exposer la fonction de diagnostic pour debug
+        window.diagnoseViewDifferences = diagnoseViewDifferences;
+        
+        // Fonction pour débugger l'état de la recherche
+        window.debugSearchState = function() {
+            console.log('=== ÉTAT DE LA RECHERCHE ===');
+            console.log('Vue actuelle:', currentView);
+            console.log('Dernier terme recherché:', lastSearchTerm);
+            console.log('Dernier filtre période:', lastPeriodFilter);
+            
+            const searchInput = document.getElementById('search-input');
+            const periodFilter = document.getElementById('period-filter');
+            console.log('Valeur actuelle recherche:', searchInput?.value);
+            console.log('Valeur actuelle période:', periodFilter?.value);
+            
+            const allCards = document.querySelectorAll('.map-card');
+            const allRows = document.querySelectorAll('#table-body tr.table-row');
+            
+            const visibleCards = Array.from(allCards).filter(card => card.style.display !== 'none').length;
+            const visibleRows = Array.from(allRows).filter(row => row.style.display !== 'none').length;
+            
+            console.log(`Cartes: ${visibleCards}/${allCards.length} visibles`);
+            console.log(`Lignes: ${visibleRows}/${allRows.length} visibles`);
+        };
+        
+        // Fonction pour tester manuellement la recherche avec regénération complète
+        window.testSearchWithCompleteRefresh = function(searchTerm = 'paris') {
+            console.log('🧪 === TEST RECHERCHE AVEC REGÉNÉRATION COMPLÈTE ===');
+            
+            const searchInput = document.getElementById('search-input');
+            if (searchInput) {
+                searchInput.value = searchTerm;
+                console.log('Terme de recherche défini:', searchTerm);
+                
+                // Utiliser la regénération complète
+                forceCompleteRefresh();
+            } else {
+                console.error('Champ de recherche non trouvé');
+            }
+        };
+
+        // Fonction pour tester différentes stratégies de forçage
+        window.testAllForcingStrategies = function(searchTerm = 'toul') {
+            console.log('🧪 === TEST DE TOUTES LES STRATÉGIES DE FORÇAGE ===');
+            
+            const searchInput = document.getElementById('search-input');
+            if (!searchInput) {
+                console.error('Champ de recherche non trouvé');
+                return;
+            }
+            
+            searchInput.value = searchTerm;
+            
+            console.log('1. Test avec applySearchAndFilter + forceUIRedraw');
+            applySearchAndFilter();
+            setTimeout(() => forceUIRedraw(), 100);
+            
+            setTimeout(() => {
+                console.log('2. Test avec forceCompleteRefresh');
+                forceCompleteRefresh();
+                
+                setTimeout(() => {
+                    console.log('3. Test avec forceCompleteRecreation');
+                    forceCompleteRecreation();
+                }, 2000);
+            }, 2000);
+        };
+
+        // Fonction de diagnostic visuel
+        window.checkVisualState = function() {
+            console.log('👁️ === DIAGNOSTIC ÉTAT VISUEL ===');
+            
+            const allCards = document.querySelectorAll('.map-card[data-ark-id]');
+            const cardsContainer = document.getElementById('cards-container');
+            
+            console.log('Vue active:', cardsContainer.classList.contains('hidden') ? 'tableau' : 'cartes');
+            
+            let hiddenByStyle = 0;
+            let visibleByStyle = 0;
+            
+            allCards.forEach((card, i) => {
+                const computedStyle = window.getComputedStyle(card);
+                const isHidden = card.style.display === 'none' || computedStyle.display === 'none';
+                
+                if (isHidden) {
+                    hiddenByStyle++;
+                } else {
+                    visibleByStyle++;
+                }
+                
+                if (i < 3) {
+                    console.log(`Carte ${i}:`, {
+                        'data-ark-id': card.getAttribute('data-ark-id'),
+                        'style.display': card.style.display,
+                        'computed.display': computedStyle.display,
+                        'visible': !isHidden
+                    });
+                }
+            });
+            
+            console.log(`Résumé: ${visibleByStyle} visibles, ${hiddenByStyle} cachées`);
+            
+            return {
+                totalCards: allCards.length,
+                visibleByStyle,
+                hiddenByStyle
+            };
+        };
+
+        // Fonction pour vérifier la cohérence des sélections
+        window.checkSelectionConsistency = function() {
+            console.log('☑️ === DIAGNOSTIC COHÉRENCE SÉLECTIONS ===');
+            
+            const allCards = document.querySelectorAll('.map-card[data-ark-id]');
+            const allRows = document.querySelectorAll('#table-body .table-row[data-ark-id]');
+            
+            let inconsistencies = 0;
+            
+            allCards.forEach(card => {
+                const arkId = card.getAttribute('data-ark-id');
+                const cardSelected = card.classList.contains('selected');
+                const cardCheckbox = document.querySelector(`#cards-grid input[data-ark-id="${arkId}"]`);
+                const cardCheckboxChecked = cardCheckbox ? cardCheckbox.checked : false;
+                
+                const correspondingRow = document.querySelector(`#table-body .table-row[data-ark-id="${arkId}"]`);
+                const rowSelected = correspondingRow ? correspondingRow.classList.contains('selected') : false;
+                const rowCheckbox = document.querySelector(`#table-body input[data-ark-id="${arkId}"]`);
+                const rowCheckboxChecked = rowCheckbox ? rowCheckbox.checked : false;
+                
+                const inSelectedMaps = selectedMaps.has(arkId);
+                
+                const states = {
+                    arkId,
+                    cardSelected,
+                    cardCheckboxChecked,
+                    rowSelected,
+                    rowCheckboxChecked,
+                    inSelectedMaps
+                };
+                
+                // Vérifier la cohérence
+                const allStatesMatch = cardSelected === rowSelected && 
+                                     cardSelected === cardCheckboxChecked && 
+                                     cardSelected === rowCheckboxChecked && 
+                                     cardSelected === inSelectedMaps;
+                
+                if (!allStatesMatch) {
+                    console.warn(`❌ Incohérence ${arkId}:`, states);
+                    inconsistencies++;
+                    
+                    // Auto-correction
+                    const correctState = inSelectedMaps;
+                    syncSelectionBetweenViews(arkId, correctState);
+                } else if (inSelectedMaps) {
+                    console.log(`✅ Cohérent ${arkId}: sélectionné partout`);
+                }
+            });
+            
+            console.log(`Total incohérences détectées et corrigées: ${inconsistencies}`);
+            return inconsistencies;
+        };
+
+        // Fonction d'arrêt d'urgence pour stopper le clignottement
+        window.stopRefreshing = function() {
+            console.log('🛑 === ARRÊT D\'URGENCE DU RAFRAÎCHISSEMENT ===');
+            isRefreshing = false;
+            
+            // Stopper tous les timeouts de recherche
+            clearTimeout(window.searchTimeout);
+            
+            // Forcer l'affichage de tous les éléments
+            const allCards = document.querySelectorAll('.map-card');
+            const allRows = document.querySelectorAll('#table-body tr.table-row');
+            
+            allCards.forEach(card => card.style.display = '');
+            allRows.forEach(row => row.style.display = '');
+            
+            console.log('Rafraîchissement arrêté, tous les éléments affichés');
+        };
+        
+        // === FIN FONCTIONS DE DEBUG ===
+
+        // === FONCTION DE TEST AUTHENTIFICATION ===
+        
+        // Fonction pour tester l'authentification et le token
+        window.testAuthForAtlas = async function() {
+            console.log('🧪 === TEST AUTHENTIFICATION POUR ATLAS ===');
+            
+            try {
+                // 1. Vérifier si ptmAuth existe
+                if (!window.ptmAuth) {
+                    console.error('❌ window.ptmAuth n\'existe pas !');
+                    return;
+                }
+                console.log('✅ window.ptmAuth existe');
+                
+                // 2. Vérifier le statut d'authentification
+                const authStatus = await window.ptmAuth.checkAuthStatus();
+                console.log('📊 Status d\'authentification:', authStatus);
+                
+                if (!authStatus.authenticated) {
+                    console.error('❌ Utilisateur NON authentifié');
+                    return;
+                }
+                console.log('✅ Utilisateur authentifié');
+                
+                // 3. Récupérer le token
+                const token = window.ptmAuth.getToken();
+                if (!token) {
+                    console.error('❌ Aucun token trouvé');
+                    return;
+                }
+                
+                // 4. Décoder le token JWT pour voir son contenu
+                try {
+                    const parts = token.split('.');
+                    if (parts.length === 3) {
+                        const payload = JSON.parse(atob(parts[1]));
+                        
+                        // Vérifier l'expiration
+                        if (payload.exp) {
+                            const expirationDate = new Date(payload.exp * 1000);
+                            const now = new Date();
+                            const isExpired = now > expirationDate;
+                            
+                            console.log('Token:', isExpired ? 'EXPIRÉ' : 'VALIDE');
+                            
+                            if (isExpired) {
+                                console.error('Le token est expiré, reconnexion nécessaire');
+                            }
+                        }
+                    }
+                } catch (decodeError) {
+                    console.warn('Impossible de décoder le token');
+                }
+                
+                // 5. Tester une requête à l'API atlas
+                const testPayload = {
+                    name: "Test Atlas " + Date.now(),
+                    url: `test-${Date.now()}`,
+                    ark_ids: ["ark:/12148/test1", "ark:/12148/test2"],
+                    is_public: true
+                };
+                
+                console.log('📦 Payload de test:', testPayload);
+                
+                const response = await fetch('https://api.ptm.huma-num.fr/auth/app/galligeo/atlas', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(testPayload)
+                });
+                
+                console.log('📡 Réponse de l\'API:');
+                console.log('  - Status:', response.status);
+                console.log('  - Status Text:', response.statusText);
+                console.log('  - OK:', response.ok);
+                
+                // Afficher les headers de réponse
+                console.log('📨 Headers de réponse:');
+                response.headers.forEach((value, key) => {
+                    console.log(`  - ${key}: ${value}`);
+                });
+                
+                if (response.status === 401) {
+                    console.error('❌ ERREUR 401: Token rejeté par l\'API');
+                    console.error('Causes possibles:');
+                    console.error('  1. Token expiré');
+                    console.error('  2. Token invalide ou corrompu');
+                    console.error('  3. Token ne correspond pas au bon environnement');
+                    console.error('  4. API attend un format différent');
+                    
+                    // Essayer de lire le corps de la réponse
+                    try {
+                        const errorBody = await response.json();
+                        console.error('📄 Corps de l\'erreur:', errorBody);
+                    } catch (e) {
+                        const errorText = await response.text();
+                        console.error('📄 Texte de l\'erreur:', errorText);
+                    }
+                } else if (response.ok) {
+                    const result = await response.json();
+                    console.log('✅ Requête réussie !');
+                    console.log('📦 Résultat:', result);
+                } else {
+                    console.error(`❌ Erreur ${response.status}`);
+                    try {
+                        const errorBody = await response.json();
+                        console.error('📄 Corps de l\'erreur:', errorBody);
+                    } catch (e) {
+                        const errorText = await response.text();
+                        console.error('📄 Texte de l\'erreur:', errorText);
+                    }
+                }
+                
+            } catch (error) {
+                console.error('❌ Erreur lors du test:', error);
+                console.error('Stack:', error.stack);
+            }
+            
+            console.log('=== FIN DU TEST ===');
+        };
+        
+        // === FIN FONCTION DE TEST AUTHENTIFICATION ===
+
+        // Fonction pour vérifier l'état d'authentification
+        async function checkAuthenticationStatus() {
+            try {
+                // Vérifier si l'utilisateur revient d'une authentification (token dans l'URL)
+                const urlParams = new URLSearchParams(window.location.search);
+                const token = urlParams.get('token') || urlParams.get('access_token');
+                
+                if (token) {
+                    console.log('Token détecté dans l\'URL, configuration de l\'authentification...');
+                    window.ptmAuth.setToken(token);
+                    
+                    // Nettoyer l'URL
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
+                
+                const authStatus = await window.ptmAuth.checkAuthStatus();
+                updateAuthenticationUI(authStatus.authenticated, authStatus.user);
+                
+            } catch (error) {
+                console.error('Erreur lors de la vérification de l\'authentification:', error);
+                updateAuthenticationUI(false, null);
+            }
+        }
+
+        // Fonction pour mettre à jour l'interface utilisateur selon l'état d'authentification
+        function updateAuthenticationUI(isAuthenticated, user) {
+            const authContainer = document.getElementById('auth-button-container');
+            
+            if (isAuthenticated && authContainer && user) {
+                // Déterminer le nom à afficher
+                const displayName = user.name || 'Utilisateur';
+                
+                // Charger le profil complet pour avoir toutes les infos
+                loadUserProfile().then(profile => {
+                    const fullName = profile ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() : displayName;
+                    const userProfile = profile || {};
+                    
+                    // Créer le menu déroulant utilisateur
+                    authContainer.innerHTML = `
+                        <button class="fr-btn fr-icon-account-line user-menu-toggle" 
+                                style="color:#00ac8c;" 
+                                data-fr-opened="false" 
+                                aria-controls="user-dropdown-menu"
+                                onclick="toggleUserMenu()">
+                            ${fullName || displayName}
+                        </button>
+                        <div class="user-dropdown-menu" id="user-dropdown-menu" style="display: none;">
+                            <div class="user-info">
+                                <p><strong>Nom :</strong> ${userProfile.last_name || userProfile.family_name || 'Non renseigné'}</p>
+                                <p><strong>Prénom :</strong> ${userProfile.first_name || userProfile.given_name || 'Non renseigné'}</p>
+                                <p><strong>ORCID :</strong> ${userProfile.orcid || userProfile.orcid_id || userProfile.sub || 'Non renseigné'}</p>
+                                <p><strong>Email :</strong> ${userProfile.email || 'Non renseigné'}</p>
+                                ${userProfile.institution ? `<p><strong>Institution :</strong> ${userProfile.institution}</p>` : ''}
+                            </div>
+                            <hr>
+                            <ul class="user-menu-actions">
+                                <li>
+                                    <button type="button" 
+                                            class="fr-btn fr-btn--sm fr-icon-settings-3-line" 
+                                            data-fr-opened="false" 
+                                            aria-controls="fr-modal-settings"
+                                            onclick="toggleUserMenu()">
+                                        Paramètres
+                                    </button>
+                                </li>
+                                <li>
+                                    <button type="button" 
+                                            onclick="logout()" 
+                                            class="fr-btn fr-btn--sm fr-icon-logout-box-r-line">
+                                        Se déconnecter
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+                    `;
+                }).catch(error => {
+                    console.error('❌ Erreur lors du chargement du profil:', error);
+                    // Afficher quand même avec les infos de base
+                    authContainer.innerHTML = `
+                        <button class="fr-btn fr-icon-account-line user-menu-toggle" 
+                                style="color:#00ac8c;" 
+                                data-fr-opened="false" 
+                                aria-controls="user-dropdown-menu"
+                                onclick="toggleUserMenu()">
+                            ${displayName}
+                        </button>
+                        <div class="user-dropdown-menu" id="user-dropdown-menu" style="display: none;">
+                            <div class="user-info">
+                                <p><strong>Nom :</strong> ${displayName}</p>
+                                <p><em>Impossible de charger les détails du profil</em></p>
+                            </div>
+                            <hr>
+                            <ul class="user-menu-actions">
+                                <li>
+                                    <button type="button" 
+                                            class="fr-btn fr-btn--sm fr-icon-settings-3-line" 
+                                            data-fr-opened="false" 
+                                            aria-controls="fr-modal-settings"
+                                            onclick="toggleUserMenu()">
+                                        Paramètres
+                                    </button>
+                                </li>
+                                <li>
+                                    <button type="button" 
+                                            onclick="logout()" 
+                                            class="fr-btn fr-btn--sm fr-icon-logout-box-r-line">
+                                        Se déconnecter
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+                    `;
+                });
+            }
+        }
+
+        // Fonction pour charger le profil utilisateur complet
+        async function loadUserProfile() {
+            try {
+                console.log('📥 Chargement du profil utilisateur...');
+                const profile = await window.ptmAuth.getUserProfile();
+                console.log('✅ Profil reçu:', profile);
+                return profile;
+            } catch (error) {
+                console.error('❌ Erreur lors du chargement du profil:', error);
+                // Fallback : essayer d'extraire du token JWT
+                try {
+                    const token = window.ptmAuth.getToken();
+                    if (token) {
+                        const payload = JSON.parse(atob(token.split('.')[1]));
+                        return {
+                            first_name: payload.given_name,
+                            last_name: payload.family_name,
+                            email: payload.email,
+                            orcid: payload.orcid || payload.sub,
+                            institution: payload.institution
+                        };
+                    }
+                } catch (tokenError) {
+                    console.error('❌ Impossible d\'extraire du token:', tokenError);
+                }
+                throw error;
+            }
+        }
+
+        // Fonction pour basculer l'affichage du menu utilisateur
+        function toggleUserMenu() {
+            const menu = document.getElementById('user-dropdown-menu');
+            const button = document.querySelector('.user-menu-toggle');
+            
+            if (!menu || !button) {
+                console.warn('⚠️ Menu ou bouton non trouvé');
+                return;
+            }
+            
+            if (menu.style.display === 'none') {
+                menu.style.display = 'block';
+                menu.style.zIndex = '99999';
+                menu.style.position = 'absolute';
+                button.setAttribute('data-fr-opened', 'true');
+            } else {
+                menu.style.display = 'none';
+                button.setAttribute('data-fr-opened', 'false');
+            }
+        }
+
+        // Fermer le menu utilisateur si on clique ailleurs
+        document.addEventListener('click', function(event) {
+            const menu = document.getElementById('user-dropdown-menu');
+            const button = document.querySelector('.user-menu-toggle');
+            
+            if (menu && button && !button.contains(event.target) && !menu.contains(event.target)) {
+                menu.style.display = 'none';
+                button.setAttribute('data-fr-opened', 'false');
+            }
+        });
+
+        // Fonction de déconnexion
+        async function logout() {
+            try {
+                console.log('👋 Déconnexion en cours...');
+                window.ptmAuth.logout();
+                // Recharger la page pour réinitialiser l'interface
+                window.location.reload();
+            } catch (error) {
+                console.error('❌ Erreur lors de la déconnexion:', error);
+            }
+        }
+
+        // Fonction pour peupler le profil utilisateur dans la modale
+        async function populateUserProfileInModal() {
+            try {
+                console.log('📥 Chargement du profil pour la modale...');
+                
+                // Utiliser la même méthode que pour le dropdown
+                const userProfile = await window.ptmAuth.getUserProfile();
+                console.log('✅ Profil reçu pour la modale:', userProfile);
+                
+                if (!userProfile) {
+                    console.warn('⚠️ Aucun profil disponible');
+                    return;
+                }
+                
+                // Peupler les champs de la modale
+                const setFieldValue = (id, value) => {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        element.textContent = value || 'Non renseigné';
+                    }
+                };
+
+                // Mapping des champs (en respectant les différentes structures possibles)
+                setFieldValue('user-first-name', userProfile.given_name || userProfile.firstName || userProfile.first_name);
+                setFieldValue('user-last-name', userProfile.family_name || userProfile.lastName || userProfile.last_name);
+                setFieldValue('user-email', userProfile.email);
+                setFieldValue('user-orcid', userProfile.orcid || userProfile.orcid_id || userProfile.sub);
+                setFieldValue('user-institution', userProfile.institution);
+                
+                console.log('✅ Profil affiché dans la modale');
+            } catch (error) {
+                console.error('❌ Erreur lors du chargement du profil dans la modale:', error);
+                
+                // Fallback : essayer d'extraire du token JWT
+                try {
+                    const token = window.ptmAuth.getToken();
+                    if (token) {
+                        console.log('🔄 Tentative d\'extraction depuis le token JWT...');
+                        const payload = JSON.parse(atob(token.split('.')[1]));
+                        
+                        const setFieldValue = (id, value) => {
+                            const element = document.getElementById(id);
+                            if (element) element.textContent = value || 'Non renseigné';
+                        };
+
+                        setFieldValue('user-first-name', payload.given_name);
+                        setFieldValue('user-last-name', payload.family_name);
+                        setFieldValue('user-email', payload.email);
+                        setFieldValue('user-orcid', payload.orcid || payload.sub);
+                        setFieldValue('user-institution', payload.institution);
+                        
+                        console.log('✅ Profil extrait du token JWT');
+                    }
+                } catch (tokenError) {
+                    console.error('❌ Impossible d\'extraire du token:', tokenError);
+                }
+            }
+        }
+
+        // Observer l'ouverture de la modale pour charger les données
+        document.addEventListener('DOMContentLoaded', function() {
+            const modal = document.getElementById('fr-modal-settings');
+            if (modal) {
+                // Écouter l'événement d'ouverture de la modale
+                modal.addEventListener('dsfr.conceal', function() {
+                    console.log('📋 Modale fermée');
+                });
+                
+                modal.addEventListener('dsfr.disclose', function() {
+                    console.log('📋 Modale ouverte - chargement du profil');
+                    populateUserProfileInModal();
+                });
+            }
+            
+            // Écouter les changements d'onglet dans la modale
+            const atlasTab = document.getElementById('tabpanel-atlas');
+            if (atlasTab) {
+                atlasTab.addEventListener('click', function() {
+                    console.log('📋 Onglet Atlas activé - chargement des atlas');
+                    loadUserAtlas();
+                });
+            }
+        });
+
+        // === GESTION DES ATLAS ===
+        
+        // Fonction pour récupérer les atlas de l'utilisateur depuis l'API
+        async function loadUserAtlas() {
+            console.log('📦 Chargement des atlas de l\'utilisateur...');
+            
+            const container = document.getElementById('atlas-list-container');
+            const statusMessage = document.getElementById('atlas-status-message');
+            const loadingDiv = document.getElementById('atlas-loading');
+            
+            try {
+                // Vérifier l'authentification
+                const token = window.ptmAuth.getToken();
+                if (!token) {
+                    console.warn('⚠️ Utilisateur non authentifié');
+                    if (loadingDiv) loadingDiv.style.display = 'none';
+                    container.innerHTML = `
+                        <div class="fr-alert fr-alert--warning">
+                            <p class="fr-text--sm">
+                                <span class="fr-icon-warning-line fr-mr-1w" aria-hidden="true"></span>
+                                Vous devez être connecté pour voir vos atlas.
+                            </p>
+                        </div>
+                    `;
+                    if (statusMessage) statusMessage.textContent = 'Connectez-vous pour voir vos atlas.';
+                    return;
+                }
+                
+                // Récupérer le profil pour obtenir l'ORCID
+                const profile = await window.ptmAuth.getUserProfile();
+                const orcidId = profile?.orcid || profile?.orcid_id || profile?.sub;
+                
+                if (!orcidId) {
+                    throw new Error('Impossible de récupérer l\'identifiant ORCID');
+                }
+                
+                console.log('🔑 ORCID ID:', orcidId);
+                
+                // Appeler l'API pour récupérer les atlas de l'utilisateur
+                // GET /auth/app/galligeo/atlas?owner=ORCID&include_private=true
+                const response = await fetch(`https://api.ptm.huma-num.fr/auth/app/galligeo/atlas?owner=${encodeURIComponent(orcidId)}&include_private=true`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                console.log('📡 Réponse API atlas:', response.status, response.statusText);
+                
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        throw new Error('Session expirée. Veuillez vous reconnecter.');
+                    }
+                    throw new Error(`Erreur ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                console.log('✅ Atlas reçus:', data);
+                
+                // Afficher les atlas
+                displayAtlasList(data.atlas || data || []);
+                
+                if (statusMessage) {
+                    const count = (data.atlas || data || []).length;
+                    statusMessage.textContent = count > 0 
+                        ? `${count} atlas trouvé${count > 1 ? 's' : ''}.` 
+                        : 'Aucun atlas pour le moment.';
+                }
+                
+            } catch (error) {
+                console.error('❌ Erreur lors du chargement des atlas:', error);
+                
+                if (loadingDiv) loadingDiv.style.display = 'none';
+                container.innerHTML = `
+                    <div class="fr-alert fr-alert--error">
+                        <p class="fr-text--sm">
+                            <span class="fr-icon-error-line fr-mr-1w" aria-hidden="true"></span>
+                            ${error.message || 'Erreur lors du chargement des atlas.'}
+                        </p>
+                    </div>
+                `;
+                
+                if (statusMessage) statusMessage.textContent = 'Erreur de chargement.';
+            }
+        }
+        
+        // Fonction pour afficher la liste des atlas
+        function displayAtlasList(atlasList) {
+            console.log('🖼️ Affichage de', atlasList.length, 'atlas');
+            
+            const container = document.getElementById('atlas-list-container');
+            const loadingDiv = document.getElementById('atlas-loading');
+            
+            // Masquer le message de chargement
+            if (loadingDiv) loadingDiv.style.display = 'none';
+            
+            // Si aucun atlas
+            if (!atlasList || atlasList.length === 0) {
+                container.innerHTML = `
+                    <div class="fr-alert fr-alert--info">
+                        <p class="fr-text--sm">
+                            <span class="fr-icon-information-line fr-mr-1w" aria-hidden="true"></span>
+                            Vous n'avez pas encore créé d'atlas. Sélectionnez des cartes dans la galerie et créez votre premier atlas !
+                        </p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Générer la liste HTML des atlas
+            const atlasListHTML = atlasList.map(atlas => {
+                const displayMode = atlas.display_mode || 'diachronique';
+                const isPublic = atlas.is_public !== false;
+                const createdDate = atlas.created_at ? new Date(atlas.created_at).toLocaleDateString('fr-FR') : 'N/A';
+                const mapCount = atlas.ark_ids ? atlas.ark_ids.length : 0;
+                
+                // Nettoyer l'URL : extraire juste le slug si c'est une URL complète
+                let atlasSlug = atlas.url || '';
+                if (atlasSlug.includes('://')) {
+                    // Si c'est une URL complète, extraire la dernière partie
+                    atlasSlug = atlasSlug.split('/').filter(Boolean).pop();
+                }
+                
+                // Icône selon le mode
+                const modeIcon = displayMode === 'voisinage' 
+                    ? '<span class="fr-icon-layout-grid-line" aria-hidden="true"></span>' 
+                    : '<span class="fr-icon-time-line" aria-hidden="true"></span>';
+                
+                // Badge de statut
+                const statusBadge = isPublic 
+                    ? '<span class="fr-badge fr-badge--success fr-badge--sm">Public</span>'
+                    : '<span class="fr-badge fr-badge--warning fr-badge--sm">Privé</span>';
+                
+                return `
+                    <div class="fr-card fr-card--horizontal fr-card--sm fr-mb-2w" data-atlas-id="${atlas.id}">
+                        <div class="fr-card__body">
+                            <div class="fr-card__content">
+                                <h4 class="fr-card__title">
+                                    ${modeIcon}
+                                    <a href="../atlas/?slug=${encodeURIComponent(atlasSlug)}" class="fr-card__link" target="_blank">
+                                        ${atlas.name || 'Sans titre'}
+                                    </a>
+                                </h4>
+                                <p class="fr-card__desc fr-text--sm">
+                                    <strong>Type :</strong> ${displayMode === 'voisinage' ? 'Voisinage' : 'Diachronique'}
+                                    <br>
+                                    <strong>Cartes :</strong> ${mapCount} carte${mapCount > 1 ? 's' : ''}
+                                    <br>
+                                    <strong>Créé le :</strong> ${createdDate}
+                                </p>
+                                <div class="fr-card__footer" style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;">
+                                    <div>${statusBadge}</div>
+                                    <div style="display: flex; gap: 0.5rem;">
+                                        <a href="../atlas/?slug=${encodeURIComponent(atlasSlug)}" 
+                                           class="fr-btn fr-btn--sm fr-btn--secondary fr-icon-eye-line"
+                                           title="Voir l'atlas"
+                                           target="_blank">
+                                            Voir
+                                        </a>
+                                        <button class="fr-btn fr-btn--sm fr-btn--tertiary-no-outline fr-icon-delete-line" 
+                                                onclick="confirmDeleteAtlas('${atlas.id}', \`${atlas.name}\`)"
+                                                title="Supprimer cet atlas"
+                                                aria-label="Supprimer l'atlas ${atlas.name}">
+                                            Supprimer
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="fr-card__header">
+                            <div class="fr-card__img" style="background-color: #f5f5f5; display: flex; align-items: center; justify-content: center; min-height: 100px;">
+                                <span class="fr-icon-map-2-fill" style="font-size: 3rem; color: #ccc;" aria-hidden="true"></span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            container.innerHTML = atlasListHTML;
+        }
+        
+        // Exposer la fonction pour debug
+        window.loadUserAtlas = loadUserAtlas;
+        
+        // Fonction pour confirmer la suppression d'un atlas
+        function confirmDeleteAtlas(atlasId, atlasName) {
+            console.log('🗑️ Demande de suppression atlas:', atlasId, atlasName);
+            
+            // Confirmation avec une modale DSFR native
+            const confirmed = confirm(
+                `Êtes-vous sûr de vouloir supprimer l'atlas "${atlasName}" ?\n\n` +
+                `Cette action est irréversible.`
+            );
+            
+            if (confirmed) {
+                deleteAtlas(atlasId, atlasName);
+            } else {
+                console.log('❌ Suppression annulée par l\'utilisateur');
+            }
+        }
+        
+        // Fonction pour supprimer un atlas
+        async function deleteAtlas(atlasId, atlasName) {
+            console.log('🗑️ Suppression de l\'atlas:', atlasId);
+            
+            try {
+                // Vérifier l'authentification
+                const token = window.ptmAuth.getToken();
+                if (!token) {
+                    alert('Vous devez être connecté pour supprimer un atlas.');
+                    return;
+                }
+                
+                // Afficher un indicateur de chargement sur la carte
+                const atlasCard = document.querySelector(`[data-atlas-id="${atlasId}"]`);
+                if (atlasCard) {
+                    atlasCard.style.opacity = '0.5';
+                    atlasCard.style.pointerEvents = 'none';
+                    
+                    // Ajouter un spinner
+                    const deleteButton = atlasCard.querySelector('.fr-btn--tertiary-no-outline');
+                    if (deleteButton) {
+                        deleteButton.innerHTML = '<span class="fr-icon-refresh-line fr-mr-1w" aria-hidden="true"></span>Suppression...';
+                        deleteButton.disabled = true;
+                    }
+                }
+                
+                // Appeler l'API DELETE
+                const response = await fetch(`https://api.ptm.huma-num.fr/auth/app/galligeo/atlas/${atlasId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                console.log('📡 Réponse API suppression:', response.status, response.statusText);
+                
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        throw new Error('Session expirée. Veuillez vous reconnecter.');
+                    } else if (response.status === 403) {
+                        throw new Error('Vous n\'avez pas les droits pour supprimer cet atlas.');
+                    } else if (response.status === 404) {
+                        throw new Error('Atlas introuvable.');
+                    }
+                    
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.message || `Erreur ${response.status}: ${response.statusText}`);
+                }
+                
+                console.log('✅ Atlas supprimé avec succès');
+                
+                // Animer la suppression de la carte
+                if (atlasCard) {
+                    atlasCard.style.transition = 'all 0.3s ease-out';
+                    atlasCard.style.transform = 'translateX(-100%)';
+                    atlasCard.style.opacity = '0';
+                    
+                    // Supprimer l'élément du DOM après l'animation
+                    setTimeout(() => {
+                        atlasCard.remove();
+                        
+                        // Vérifier s'il reste des atlas
+                        const container = document.getElementById('atlas-list-container');
+                        const remainingCards = container.querySelectorAll('[data-atlas-id]');
+                        
+                        if (remainingCards.length === 0) {
+                            // Afficher le message "Aucun atlas"
+                            container.innerHTML = `
+                                <div class="fr-alert fr-alert--info">
+                                    <p class="fr-text--sm">
+                                        <span class="fr-icon-information-line fr-mr-1w" aria-hidden="true"></span>
+                                        Vous n'avez pas encore créé d'atlas. Sélectionnez des cartes dans la galerie et créez votre premier atlas !
+                                    </p>
+                                </div>
+                            `;
+                        }
+                        
+                        // Mettre à jour le message de statut
+                        const statusMessage = document.getElementById('atlas-status-message');
+                        if (statusMessage) {
+                            const count = remainingCards.length;
+                            statusMessage.textContent = count > 0 
+                                ? `${count} atlas trouvé${count > 1 ? 's' : ''}.` 
+                                : 'Aucun atlas pour le moment.';
+                        }
+                        
+                        // Afficher une notification de succès
+                        showAtlasNotification('success', `L'atlas "${atlasName}" a été supprimé avec succès.`);
+                        
+                    }, 300);
+                }
+                
+            } catch (error) {
+                console.error('❌ Erreur lors de la suppression:', error);
+                
+                // Restaurer la carte en cas d'erreur
+                const atlasCard = document.querySelector(`[data-atlas-id="${atlasId}"]`);
+                if (atlasCard) {
+                    atlasCard.style.opacity = '1';
+                    atlasCard.style.pointerEvents = 'auto';
+                    
+                    const deleteButton = atlasCard.querySelector('.fr-btn--tertiary-no-outline');
+                    if (deleteButton) {
+                        deleteButton.innerHTML = '<span class="fr-icon-delete-line" aria-hidden="true"></span>Supprimer';
+                        deleteButton.disabled = false;
+                    }
+                }
+                
+                // Afficher l'erreur
+                showAtlasNotification('error', error.message || 'Erreur lors de la suppression de l\'atlas.');
+            }
+        }
+        
+        // Fonction pour afficher une notification temporaire
+        function showAtlasNotification(type, message) {
+            const container = document.getElementById('atlas-list-container');
+            
+            const alertType = type === 'success' ? 'fr-alert--success' : 'fr-alert--error';
+            const iconType = type === 'success' ? 'fr-icon-checkbox-circle-line' : 'fr-icon-error-line';
+            
+            const notification = document.createElement('div');
+            notification.className = `fr-alert ${alertType} fr-mb-2w`;
+            notification.innerHTML = `
+                <p class="fr-text--sm">
+                    <span class="${iconType} fr-mr-1w" aria-hidden="true"></span>
+                    ${message}
+                </p>
+            `;
+            
+            // Insérer en haut du conteneur
+            container.insertBefore(notification, container.firstChild);
+            
+            // Supprimer après 5 secondes
+            setTimeout(() => {
+                notification.style.transition = 'opacity 0.3s ease-out';
+                notification.style.opacity = '0';
+                setTimeout(() => notification.remove(), 300);
+            }, 5000);
+        }
+        
+        // Exposer les fonctions pour debug
+        window.confirmDeleteAtlas = confirmDeleteAtlas;
+        window.deleteAtlas = deleteAtlas;
+        
+        // === FIN GESTION DES ATLAS ===
+
+        // Bouton flottant: retour en haut
+        (function() {
+            // Créer le bouton et l'insérer dans le DOM
+            const btn = document.createElement('button');
+            btn.id = 'back-to-top';
+            btn.title = 'Retour en haut';
+            btn.setAttribute('aria-label', 'Retourner en haut de la page');
+            btn.innerHTML = '&#8679;';
+            btn.style.display = 'none';
+            document.body.appendChild(btn);
+
+            // Montrer/masquer en fonction du scroll
+            function onScroll() {
+                const show = window.scrollY > 300;
+                btn.style.display = show ? 'flex' : 'none';
+            }
+
+            // Smooth scroll to top
+            btn.addEventListener('click', function() {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+
+            // Accessibilité clavier
+            btn.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    btn.click();
+                }
+            });
+
+            window.addEventListener('scroll', onScroll, { passive: true });
+            // Initial check
+            onScroll();
+        })();
+
+        // Fonction pour initialiser l'affichage de version
+        function initializeVersionDisplay() {
+            const versionDisplay = document.getElementById('version-display');
+            
+            if (!versionDisplay) return;
+            
+            // Attendre que les informations de version soient disponibles
+            function updateVersionInfo() {
+                if (window.APP_VERSION) {
+                    const version = window.APP_VERSION;
+                    versionDisplay.textContent = version.shortDisplayVersion;
+                } else {
+                    // Réessayer dans 100ms si les informations ne sont pas encore disponibles
+                    setTimeout(updateVersionInfo, 100);
+                }
+            }
+            
+            updateVersionInfo();
+        }
