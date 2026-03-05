@@ -5,6 +5,9 @@ backups/*
 node_modules/
 tmp/
 old/
+old/*
+backups/
+backups/*
 
 # Fichiers de version générés automatiquement
 version.json
