@@ -1,0 +1,465 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- DSFR -->
+    <link rel="stylesheet" href="../node_modules/@gouvfr/dsfr/dist/dsfr.min.css">
+    <link rel="stylesheet" href="../node_modules/@gouvfr/dsfr/dist/component/form/form.min.css">
+    <link rel="stylesheet" href="../node_modules/@gouvfr/dsfr/dist/component/table/table.min.css">
+    <link rel="stylesheet" href="../node_modules/@gouvfr/dsfr/dist/component/segmented/segmented.min.css">
+    <link rel="stylesheet" href="../node_modules/@gouvfr/dsfr/dist/core/core.min.css">
+    <link rel="stylesheet" href="../node_modules/@gouvfr/dsfr/dist/component/link/link.min.css">
+    <link rel="stylesheet" href="../node_modules/@gouvfr/dsfr/dist/component/badge/badge.min.css">
+    <link rel="stylesheet" href="../node_modules/@gouvfr/dsfr/dist/component/modal/modal.min.css">
+    <link rel="stylesheet" href="../node_modules/@gouvfr/dsfr/dist/component/tag/tag.min.css">
+    <link rel="stylesheet" href="../node_modules/@gouvfr/dsfr/dist/component/alert/alert.min.css">
+    <link rel="stylesheet" href="../node_modules/@gouvfr/dsfr/dist/utility/icons/icons.min.css">
+
+    <meta name="theme-color" content="#000091">
+    <link rel="apple-touch-icon" href="../img/favicon.png">
+    <link rel="icon" href="../img/favicon.png" type="image/png">
+    <title>Administration - Galligeo</title>
+
+    <style>
+      .admin-tab-panel { display: none; }
+      .admin-tab-panel.active { display: block; }
+
+      .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      .status-en-cours   { background: #dce8f9; color: #0063cb; }
+      .status-georef     { background: #b8fec9; color: #18753c; }
+      .status-deposee    { background: #e4c4fb; color: #6e3dd6; }
+      .status-unknown    { background: #eee; color: #555; }
+
+      #access-denied, #loading-screen { min-height: 60vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+
+      .admin-table-wrapper { overflow-x: auto; }
+
+      .user-pill {
+        display: inline-block;
+        background: #f0f0f0;
+        border-radius: 12px;
+        padding: 1px 8px;
+        font-size: 0.75rem;
+        margin: 1px;
+        cursor: default;
+      }
+
+      .map-thumb {
+        width: 48px;
+        height: 48px;
+        object-fit: cover;
+        border-radius: 4px;
+        vertical-align: middle;
+        background: #eee;
+      }
+
+      .search-bar { max-width: 420px; }
+
+      thead th { background: #f6f6f6; }
+
+      .action-btn-group { white-space: nowrap; }
+
+      /* Onglets personnalisés */
+      .admin-nav { border-bottom: 2px solid #ddd; margin-bottom: 1.5rem; }
+      .admin-nav button {
+        background: none; border: none; padding: 0.75rem 1.25rem; cursor: pointer;
+        font-size: 1rem; color: #555; border-bottom: 2px solid transparent; margin-bottom: -2px;
+      }
+      .admin-nav button.active { color: #000091; border-bottom-color: #000091; font-weight: 600; }
+      .admin-nav button:hover:not(.active) { color: #000091; }
+
+      .admin-stats { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+      .stat-card {
+        background: #f5f5fe; border-left: 4px solid #000091;
+        padding: 0.75rem 1.25rem; border-radius: 4px; min-width: 120px;
+      }
+      .stat-card .stat-val { font-size: 1.75rem; font-weight: 700; color: #000091; }
+      .stat-card .stat-lbl { font-size: 0.8rem; color: #555; }
+
+      /* ── Modales custom (sans DSFR JS) ── */
+      .admin-modal-overlay {
+        display: none; position: fixed; inset: 0;
+        background: rgba(0,0,0,.55); z-index: 9999;
+        overflow-y: auto; padding: 2rem 1rem;
+      }
+      .admin-modal-overlay.is-open { display: block; }
+      .admin-modal-box {
+        background: #fff; border-radius: 4px;
+        max-width: 820px; width: 100%;
+        margin: 2rem auto; padding: 2rem;
+      }
+      .admin-modal-box .fr-modal__header {
+        display: flex; justify-content: flex-end; margin-bottom: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+
+    <!-- ===================== HEADER ===================== -->
+    <header role="banner" class="fr-header">
+      <div class="fr-header__body">
+        <div class="fr-container--fluid">
+          <div class="fr-header__body-row">
+            <div class="fr-header__brand" style="margin-left: 24px;">
+              <div class="fr-header__brand-top">
+                <div class="fr-header__operator">
+                  <a href="../index.html" title="Retour à l'accueil - Galligeo" class="fr-enlarge-link">
+                    <img class="fr-responsive-img" style="width:auto; height:70px; margin-left: -32px;" src="../img/logo_galligeo.png" alt="Galligeo">
+                  </a>
+                </div>
+              </div>
+              <div class="fr-header__service">
+                <p class="fr-header__service-title">
+                  <span class="fr-icon-settings-5-line fr-mr-1w" aria-hidden="true"></span>
+                  Administration
+                </p>
+                <p class="fr-header__service-tagline">Interface réservée</p>
+              </div>
+            </div>
+            <div class="fr-header__tools">
+              <div class="fr-header__tools-links">
+                <ul class="fr-btns-group">
+                  <li>
+                    <a class="fr-btn fr-icon-home-4-line" href="../index.html" style="color:#000091;">Accueil</a>
+                  </li>
+                  <li id="admin-user-info">
+                    <!-- rempli par JS -->
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ===================== ACCÈS REFUSÉ ===================== -->
+    <div id="access-denied" style="display:none;">
+      <div class="fr-container">
+        <div class="fr-alert fr-alert--error fr-mt-4w" style="max-width: 500px;">
+          <h2 class="fr-alert__title">Accès non autorisé</h2>
+          <p>Cette interface est réservée à l'administrateur. Vous devez vous connecter avec le compte autorisé.</p>
+        </div>
+        <div class="fr-mt-2w">
+          <button class="fr-btn fr-icon-lock-line" onclick="redirectToLogin()">Se connecter avec ORCID</button>
+          <a class="fr-btn fr-btn--secondary fr-ml-2w" href="../index.html">Retour à l'accueil</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== ÉCRAN DE CHARGEMENT ===================== -->
+    <div id="loading-screen">
+      <span class="fr-icon-loader-line fr-icon--lg" aria-hidden="true" style="animation: spin 1s linear infinite;"></span>
+      <p class="fr-mt-2w fr-text--lead">Vérification des droits d'accès…</p>
+      <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+    </div>
+
+    <!-- ===================== INTERFACE ADMIN ===================== -->
+    <main id="admin-interface" style="display:none;" class="fr-container fr-py-4w">
+
+      <h1 class="fr-h2">
+        <span class="fr-icon-settings-5-line fr-mr-1w" aria-hidden="true"></span>
+        Administration Galligeo
+      </h1>
+
+      <!-- Stats rapides -->
+      <div class="admin-stats" id="admin-stats">
+        <div class="stat-card">
+          <div class="stat-val" id="stat-users">—</div>
+          <div class="stat-lbl">Utilisateurs</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" id="stat-maps">—</div>
+          <div class="stat-lbl">Cartes (total)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" id="stat-georef">—</div>
+          <div class="stat-lbl">Géoréférencées</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" id="stat-atlas">—</div>
+          <div class="stat-lbl">Atlas</div>
+        </div>
+      </div>
+
+      <!-- Navigation onglets -->
+      <nav class="admin-nav" role="tablist" aria-label="Sections d'administration">
+        <button id="tab-btn-users"  role="tab" aria-selected="true"  aria-controls="tab-users"  class="active" onclick="switchTab('users')">
+          <span class="fr-icon-user-line fr-mr-1w" aria-hidden="true"></span>Utilisateurs
+        </button>
+        <button id="tab-btn-maps"   role="tab" aria-selected="false" aria-controls="tab-maps"   onclick="switchTab('maps')">
+          <span class="fr-icon-map-2-line fr-mr-1w" aria-hidden="true"></span>Cartes
+        </button>
+        <button id="tab-btn-atlas"  role="tab" aria-selected="false" aria-controls="tab-atlas"  onclick="switchTab('atlas')">
+          <span class="fr-icon-book-2-line fr-mr-1w" aria-hidden="true"></span>Atlas
+        </button>
+      </nav>
+
+      <!-- ==================== ONGLET UTILISATEURS ==================== -->
+      <div id="tab-users" role="tabpanel" class="admin-tab-panel active">
+        <div class="fr-grid-row fr-grid-row--gutters fr-grid-row--middle fr-mb-2w">
+          <div class="fr-col-8">
+            <div class="fr-search-bar search-bar" role="search">
+              <label class="fr-label" for="search-users">Rechercher un utilisateur</label>
+              <input class="fr-input" type="search" id="search-users" name="search-users" placeholder="Nom, ORCID…" oninput="filterUsers(this.value)">
+              <button class="fr-btn" title="Rechercher">Rechercher</button>
+            </div>
+          </div>
+          <div class="fr-col-4 fr-text--right">
+            <button class="fr-btn fr-btn--secondary fr-btn--sm fr-icon-refresh-line" onclick="loadAllData()">
+              Actualiser
+            </button>
+          </div>
+        </div>
+
+        <div id="users-loading" class="fr-text--center fr-py-4w" style="display:none;">
+          <span class="fr-icon-loader-line fr-mr-1w" aria-hidden="true"></span>Chargement des utilisateurs…
+        </div>
+        <div id="users-error" class="fr-alert fr-alert--error fr-mb-2w" style="display:none;"></div>
+
+        <div class="fr-table fr-table--bordered admin-table-wrapper">
+          <table id="users-table">
+            <caption>Liste des utilisateurs Galligeo</caption>
+            <thead>
+              <tr>
+                <th scope="col">Utilisateur</th>
+                <th scope="col">Cartes (total)</th>
+                <th scope="col">En cours</th>
+                <th scope="col">Géoréférencées</th>
+                <th scope="col">Déposées</th>
+                <th scope="col">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="users-tbody">
+              <tr><td colspan="6" class="fr-text--center fr-py-4w">Aucune donnée chargée</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ==================== ONGLET CARTES ==================== -->
+      <div id="tab-maps" role="tabpanel" class="admin-tab-panel">
+        <div class="fr-grid-row fr-grid-row--gutters fr-grid-row--middle fr-mb-2w">
+          <div class="fr-col-12 fr-col-md-5">
+            <div class="fr-search-bar search-bar" role="search">
+              <label class="fr-label" for="search-maps">Rechercher une carte</label>
+              <input class="fr-input" type="search" id="search-maps" name="search-maps" placeholder="ARK, titre, utilisateur…" oninput="filterMaps(this.value)">
+              <button class="fr-btn" title="Rechercher">Rechercher</button>
+            </div>
+          </div>
+          <div class="fr-col-6 fr-col-md-4">
+            <label class="fr-label" for="filter-status">Filtrer par statut</label>
+            <select class="fr-select" id="filter-status" onchange="filterMaps(document.getElementById('search-maps').value)">
+              <option value="">Tous les statuts</option>
+              <option value="en-cours">En cours</option>
+              <option value="georeferenced">Géoréférencée</option>
+              <option value="deposee">Déposée</option>
+            </select>
+          </div>
+          <div class="fr-col-6 fr-col-md-3 fr-text--right">
+            <button class="fr-btn fr-btn--secondary fr-btn--sm fr-icon-refresh-line" onclick="loadAllData()">
+              Actualiser
+            </button>
+          </div>
+        </div>
+
+        <div id="maps-loading" class="fr-text--center fr-py-4w" style="display:none;">
+          <span class="fr-icon-loader-line fr-mr-1w" aria-hidden="true"></span>Chargement des cartes…
+        </div>
+        <div id="maps-error" class="fr-alert fr-alert--error fr-mb-2w" style="display:none;"></div>
+
+        <div class="fr-table fr-table--bordered admin-table-wrapper">
+          <table id="maps-table">
+            <caption>Liste de toutes les cartes Galligeo</caption>
+            <thead>
+              <tr>
+                <th scope="col">Vignette</th>
+                <th scope="col">ARK</th>
+                <th scope="col">Titre</th>
+                <th scope="col">Statut</th>
+                <th scope="col">Utilisateur(s)</th>
+                <th scope="col">Dernière màj</th>
+                <th scope="col">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="maps-tbody">
+              <tr><td colspan="7" class="fr-text--center fr-py-4w">Aucune donnée chargée</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ==================== ONGLET ATLAS ==================== -->
+      <div id="tab-atlas" role="tabpanel" class="admin-tab-panel">
+        <div class="fr-grid-row fr-grid-row--gutters fr-grid-row--middle fr-mb-2w">
+          <div class="fr-col-8">
+            <div class="fr-search-bar search-bar" role="search">
+              <label class="fr-label" for="search-atlas">Rechercher un atlas</label>
+              <input class="fr-input" type="search" id="search-atlas" name="search-atlas" placeholder="Nom, propriétaire…" oninput="filterAtlas(this.value)">
+              <button class="fr-btn" title="Rechercher">Rechercher</button>
+            </div>
+          </div>
+          <div class="fr-col-4 fr-text--right">
+            <button class="fr-btn fr-btn--secondary fr-btn--sm fr-icon-refresh-line" onclick="loadAtlas()">
+              Actualiser
+            </button>
+          </div>
+        </div>
+
+        <div id="atlas-loading" class="fr-text--center fr-py-4w" style="display:none;">
+          <span class="fr-icon-loader-line fr-mr-1w" aria-hidden="true"></span>Chargement des atlas…
+        </div>
+        <div id="atlas-error" class="fr-alert fr-alert--error fr-mb-2w" style="display:none;"></div>
+
+        <div class="fr-table fr-table--bordered admin-table-wrapper">
+          <table id="atlas-table">
+            <caption>Liste des atlas Galligeo</caption>
+            <thead>
+              <tr>
+                <th scope="col">Nom</th>
+                <th scope="col">Propriétaire (ORCID)</th>
+                <th scope="col">Nb cartes</th>
+                <th scope="col">Mode</th>
+                <th scope="col">Visibilité</th>
+                <th scope="col">Créé le</th>
+                <th scope="col">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="atlas-tbody">
+              <tr><td colspan="7" class="fr-text--center fr-py-4w">Aucune donnée chargée</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- ==================== MODALE : DÉTAIL UTILISATEUR ==================== -->
+    <div id="modal-user-detail" class="admin-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-user-detail-title" onclick="closeModalOnOverlay(event, 'modal-user-detail')">
+      <div class="admin-modal-box">
+        <div class="fr-modal__header">
+          <button class="fr-btn--close fr-btn" onclick="closeModal('modal-user-detail')" title="Fermer">Fermer</button>
+        </div>
+        <div class="fr-modal__content">
+          <h2 id="modal-user-detail-title" class="fr-modal__title">
+            <span class="fr-icon-user-line fr-mr-1w" aria-hidden="true"></span>
+            Détail utilisateur
+          </h2>
+          <div id="modal-user-detail-body"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== MODALE : ÉDITION MÉTADONNÉES CARTE ==================== -->
+    <div id="modal-map-meta" class="admin-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-map-meta-title" onclick="closeModalOnOverlay(event, 'modal-map-meta')">
+      <div class="admin-modal-box">
+        <div class="fr-modal__header">
+          <button class="fr-btn--close fr-btn" onclick="closeModal('modal-map-meta')" title="Fermer">Fermer</button>
+        </div>
+        <div class="fr-modal__content">
+          <h2 id="modal-map-meta-title" class="fr-modal__title">
+            <span class="fr-icon-edit-line fr-mr-1w" aria-hidden="true"></span>
+            Métadonnées de la carte
+          </h2>
+          <div id="modal-map-meta-body">
+            <input type="hidden" id="meta-ark-id">
+            <input type="hidden" id="meta-user-orcid">
+            <div class="fr-input-group fr-mb-2w">
+              <label class="fr-label" for="meta-title">Titre <span class="fr-hint-text">Gallica</span></label>
+              <input class="fr-input" type="text" id="meta-title" name="meta-title" placeholder="Titre de la carte">
+            </div>
+            <div class="fr-input-group fr-mb-2w">
+              <label class="fr-label" for="meta-producer">Producteur / Éditeur</label>
+              <input class="fr-input" type="text" id="meta-producer" name="meta-producer" placeholder="BnF, éditeur…">
+            </div>
+            <div class="fr-input-group fr-mb-2w">
+              <label class="fr-label" for="meta-date">Date</label>
+              <input class="fr-input" type="text" id="meta-date" name="meta-date" placeholder="AAAA">
+            </div>
+            <div class="fr-input-group fr-mb-2w">
+              <label class="fr-label" for="meta-status">Statut</label>
+              <select class="fr-select" id="meta-status" name="meta-status">
+                <option value="en-cours">En cours</option>
+                <option value="georeferenced">Géoréférencée</option>
+                <option value="deposee">Déposée</option>
+              </select>
+            </div>
+            <div id="meta-save-feedback" class="fr-alert fr-mb-2w" style="display:none;"></div>
+            <div class="fr-btns-group fr-btns-group--inline">
+              <button class="fr-btn" onclick="saveMapMetadata()">
+                <span class="fr-icon-save-line fr-mr-1w" aria-hidden="true"></span>Enregistrer
+              </button>
+              <button class="fr-btn fr-btn--secondary" onclick="closeModal('modal-map-meta')">Annuler</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== MODALE : SUPPRIMER CARTE D'UN UTILISATEUR ==================== -->
+    <div id="modal-delete-map" class="admin-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-delete-map-title" onclick="closeModalOnOverlay(event, 'modal-delete-map')">
+      <div class="admin-modal-box" style="max-width:560px;">
+        <div class="fr-modal__header">
+          <button class="fr-btn--close fr-btn" onclick="closeModal('modal-delete-map')" title="Fermer">Fermer</button>
+        </div>
+        <div class="fr-modal__content">
+          <h2 id="modal-delete-map-title" class="fr-modal__title">
+            <span class="fr-icon-delete-line fr-mr-1w" aria-hidden="true"></span>
+            Retirer une carte d'un utilisateur
+          </h2>
+          <div id="modal-delete-map-body">
+            <div class="fr-alert fr-alert--warning fr-mb-3w">
+              <p id="delete-map-confirm-text">Confirmez-vous la suppression ?</p>
+            </div>
+            <input type="hidden" id="delete-map-ark">
+            <input type="hidden" id="delete-map-orcid">
+            <div id="delete-map-feedback" class="fr-alert fr-mb-2w" style="display:none;"></div>
+            <div class="fr-btns-group fr-btns-group--inline">
+              <button class="fr-btn fr-btn--error" id="delete-map-confirm-btn" onclick="confirmDeleteMapFromUser()">
+                <span class="fr-icon-delete-line fr-mr-1w" aria-hidden="true"></span>Confirmer la suppression
+              </button>
+              <button class="fr-btn fr-btn--secondary" onclick="closeModal('modal-delete-map')">Annuler</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== FOOTER ==================== -->
+    <footer class="fr-footer fr-mt-6w" role="contentinfo">
+      <div class="fr-container">
+        <div class="fr-footer__body">
+          <div class="fr-footer__brand fr-enlarge-link">
+            <a href="../index.html" title="Retour à l'accueil Galligeo" class="fr-footer__brand-link">
+              <img class="fr-responsive-img" src="../img/logo_galligeo.png" style="height:40px;width:auto;" alt="Galligeo">
+            </a>
+          </div>
+          <div class="fr-footer__content">
+            <p class="fr-footer__content-desc">Interface d'administration — accès restreint</p>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <!-- DSFR JS -->
+    <script src="../node_modules/@gouvfr/dsfr/dist/dsfr.module.min.js" type="module"></script>
+    <script src="../node_modules/@gouvfr/dsfr/dist/dsfr.nomodule.min.js" nomodule></script>
+
+    <!-- Auth PTM -->
+    <script src="../js/ptm-auth.js"></script>
+
+    <!-- Admin JS -->
+    <script src="js/admin.js"></script>
+
+  </body>
+</html>
