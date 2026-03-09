@@ -223,6 +223,11 @@ Ce projet est sous licence [MIT](LICENSE).
 - **Développement** : Eric Mermet et Eric Grosso
 - **Partenaires** : BnF, Huma-Num, CNRS
 
+## Financement & Collaboration
+
+Nous remercions le BnF DataLab pour son soutien financier et son accompagnement technique en appui au projet
+« nom du projet » lauréat de l’appel à projet 2025-2026.
+
 ## 📞 Contact
 
 - **Site web** : [https://ptm.huma-num.fr/](https://ptm.huma-num.fr/)
