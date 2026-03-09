@@ -234,15 +234,18 @@ async function deposerSurNakala(apiKey_in, collection_id_in) {
     }
     
     // Ensure we have a valid 4-digit year (between 1000 and current year + 100)
+    // Fallback to "1750" if no date is available (nakala.fr/terms#created is mandatory)
     const currentYear = new Date().getFullYear();
     const yearNumber = parseInt(formattedDate);
-    if (formattedDate && formattedDate.length === 4 && 
-        !isNaN(yearNumber) && yearNumber >= 1000 && yearNumber <= currentYear + 100) {
-        metas.push({
-            "value": formattedDate,
-            "typeUri": "http://www.w3.org/2001/XMLSchema#string",
-            "propertyUri": "http://nakala.fr/terms#created"
-        });
+    const isValidYear = formattedDate && formattedDate.length === 4 &&
+        !isNaN(yearNumber) && yearNumber >= 1000 && yearNumber <= currentYear + 100;
+    metas.push({
+        "value": isValidYear ? formattedDate : "1750",
+        "typeUri": "http://www.w3.org/2001/XMLSchema#string",
+        "propertyUri": "http://nakala.fr/terms#created"
+    });
+    if (!isValidYear) {
+        console.warn('Date absente ou invalide ("' + window.metadataDict['Date'] + '"), utilisation de la date fictive "1750" pour nakala.fr/terms#created.');
     }
     metas.push({
         "value": LICENSE,

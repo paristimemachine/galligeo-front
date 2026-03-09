@@ -15,7 +15,10 @@ window.autoStatusCorrection = {
                 return;
             }
             
-            const response = await fetch('https://api.ptm.huma-num.fr/auth/admin/galligeo/georeferenced-maps-by-users');
+            const adminToken = window.ptmAuth.getToken();
+            const response = await fetch('https://api.ptm.huma-num.fr/auth/admin/galligeo/georeferenced-maps-by-users', {
+                headers: adminToken ? { 'Authorization': `Bearer ${adminToken}` } : {}
+            });
             
             if (!response.ok) {
                 return;

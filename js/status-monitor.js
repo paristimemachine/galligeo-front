@@ -17,7 +17,10 @@ window.statusMonitor = {
             }
             
             const localMaps = await window.ptmAuth.getWorkedMaps();
-            const response = await fetch('https://api.ptm.huma-num.fr/auth/admin/galligeo/georeferenced-maps-by-users');
+            const monitorToken = window.ptmAuth.getToken();
+            const response = await fetch('https://api.ptm.huma-num.fr/auth/admin/galligeo/georeferenced-maps-by-users', {
+                headers: monitorToken ? { 'Authorization': `Bearer ${monitorToken}` } : {}
+            });
             
             if (!response.ok) return;
             
@@ -25,8 +28,9 @@ window.statusMonitor = {
             if (apiData.status !== 'ok' || !apiData.users) return;
             
             const userProfile = await window.ptmAuth.getUserProfile();
+            const userOrcid = userProfile?.orcid || userProfile?.orcid_id;
             const currentUser = apiData.users.find(user => 
-                user.orcid_id === userProfile?.orcid_id
+                user.orcid_id === userOrcid || user.orcid === userOrcid
             );
             
             if (!currentUser) return;

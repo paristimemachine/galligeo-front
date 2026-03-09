@@ -386,6 +386,24 @@ class PTMAuthFixed {
     }
 
     /**
+     * Sauvegarde uniquement les paramètres (settings) sans écraser rec_ark
+     * Alias utilisé par settings-manager.js
+     */
+    async saveGalligeoSettings(settings) {
+        try {
+            const existingData = await this.getGalligeoData();
+            const updatedData = {
+                rec_ark: existingData.rec_ark || [],
+                settings: { ...(existingData.settings || {}), ...settings }
+            };
+            return await this.saveGalligeoData(updatedData);
+        } catch (error) {
+            console.error('❌ Erreur sauvegarde paramètres Galligeo:', error);
+            throw error;
+        }
+    }
+
+    /**
      * Sauvegarde les données Galligeo pour utilisateur authentifié  
      */
     async saveGalligeoData(data) {
