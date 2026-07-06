@@ -91,7 +91,10 @@
             setTimeout(() => {
                 // Initialiser le basculement de vue
                 initializeViewToggle();
-                
+
+                // Initialiser le sélecteur de taille des cartes
+                initializeCardSizeToggle();
+
                 // Initialiser la recherche et le filtrage
                 initializeSearchAndFilter();
                 
@@ -1052,6 +1055,7 @@
                     if ((i + 1) % 10 === 0 || i === total - 1) {
                         if (cardsGrid) {
                             cardsGrid.innerHTML = cardsHTML.join('');
+                            applyCardSizeToDOM(getStoredCardSize());
                         }
                         if (tableBody) {
                             tableBody.innerHTML = rowsHTML.join('');
@@ -1148,40 +1152,44 @@
             const tableContainer = document.getElementById('table-container');
             const cardsRadio = document.getElementById('view-cards');
             const tableRadio = document.getElementById('view-table');
-            
+            const sizeToggle = document.getElementById('card-size-toggle');
+
             if (!cardsContainer || !tableContainer) {
                 console.error('Conteneurs non trouvés');
                 return;
             }
-            
+
             // Ne PAS sauvegarder ici - utiliser uniquement le contenu sauvegardé au chargement
-            
+
             // Basculer l'affichage
             if (viewMode === 'cards') {
                 cardsContainer.classList.remove('hidden');
                 tableContainer.classList.add('hidden');
                 if (cardsRadio) cardsRadio.checked = true;
+                if (sizeToggle) sizeToggle.classList.remove('hidden');
                 currentView = 'cards';
-                
+
                 // Restaurer le contenu des cartes
                 const cardsGrid = document.getElementById('cards-grid');
                 if (cardsGrid && cardsHTMLContent) {
                     cardsGrid.innerHTML = cardsHTMLContent;
                 }
-                
+                applyCardSizeToDOM(getStoredCardSize());
+
             } else if (viewMode === 'table') {
                 cardsContainer.classList.add('hidden');
                 tableContainer.classList.remove('hidden');
                 if (tableRadio) tableRadio.checked = true;
+                if (sizeToggle) sizeToggle.classList.add('hidden');
                 currentView = 'table';
-                
+
                 // Restaurer le contenu du tableau
                 const tableBody = document.getElementById('table-body');
                 if (tableBody && tableHTMLContent) {
                     tableBody.innerHTML = tableHTMLContent;
                 }
             }
-            
+
             // Réappliquer immédiatement les filtres de recherche sauvegardés
             setTimeout(() => {
                 // Restaurer les valeurs de recherche dans les champs
@@ -1240,6 +1248,63 @@
             if (event.target.checked) {
                 switchView('table');
             }
+        }
+
+        // === TAILLE DES CARTES (Compact / Standard / Grand, cf. composant carte DSFR) ===
+
+        const CARD_SIZE_STORAGE_KEY = 'galligeo-galerie-card-size';
+        const VALID_CARD_SIZES = ['sm', 'md', 'lg'];
+
+        function getStoredCardSize() {
+            try {
+                const stored = localStorage.getItem(CARD_SIZE_STORAGE_KEY);
+                if (VALID_CARD_SIZES.includes(stored)) return stored;
+            } catch (e) {
+                // localStorage indisponible (navigation privée, etc.) : on retombe sur la valeur par défaut
+            }
+            return 'md';
+        }
+
+        // Applique la taille choisie sur la grille (densité des colonnes) et sur chaque carte
+        // déjà présente dans le DOM (classes DSFR fr-card--sm / fr-card--lg).
+        function applyCardSizeToDOM(size) {
+            if (!VALID_CARD_SIZES.includes(size)) size = 'md';
+
+            const cardsGrid = document.getElementById('cards-grid');
+            if (cardsGrid) cardsGrid.dataset.cardSize = size;
+
+            document.querySelectorAll('#cards-grid .fr-card').forEach(card => {
+                card.classList.remove('fr-card--sm', 'fr-card--lg');
+                if (size === 'sm') card.classList.add('fr-card--sm');
+                if (size === 'lg') card.classList.add('fr-card--lg');
+            });
+        }
+
+        let cardSizeToggleInitialized = false;
+
+        function initializeCardSizeToggle() {
+            if (cardSizeToggleInitialized) return;
+
+            const radios = document.querySelectorAll('#card-size-toggle input[name="card-size"]');
+            if (!radios.length) return;
+
+            const savedSize = getStoredCardSize();
+            radios.forEach(radio => {
+                radio.checked = (radio.value === savedSize);
+                radio.addEventListener('change', (event) => {
+                    if (!event.target.checked) return;
+                    const size = event.target.value;
+                    applyCardSizeToDOM(size);
+                    try {
+                        localStorage.setItem(CARD_SIZE_STORAGE_KEY, size);
+                    } catch (e) {
+                        // localStorage indisponible : la préférence ne sera pas mémorisée
+                    }
+                });
+            });
+
+            applyCardSizeToDOM(savedSize);
+            cardSizeToggleInitialized = true;
         }
 
         // Fonction globale pour basculer manuellement (debug)
@@ -1745,7 +1810,8 @@
             
             // Insérer dans le DOM
             cardsGrid.innerHTML = cardsHTML.join('');
-            
+            applyCardSizeToDOM(getStoredCardSize());
+
             // Sauvegarder le contenu pour restauration lors du changement de vue
             cardsHTMLContent = cardsGrid.innerHTML;
         }

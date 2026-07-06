@@ -121,59 +121,47 @@
             <!-- Titre de la page -->
             <div class="fr-grid-row fr-grid-row--center">
                 <div class="fr-col-12">
-                    <h1 class="fr-h1 fr-mb-4w">
+                    <h1 class="fr-h1 fr-mb-2w">
                         <span class="fr-icon-map-2-fill fr-mr-2w" aria-hidden="true"></span>
                         Cartes géoréférencées par la communauté
                     </h1>
-                    
-                    <p class="fr-text--lg fr-mb-4w">
+
+                    <p class="fr-text--lg fr-mb-2w">
                         Découvrir les cartes et plans issus des collections de <a href="https://gallica.bnf.fr" target="_blank" rel="noopener">Gallica (BnF)</a>  et géoréférencés par la communauté Galligeo.
                     </p>
                 </div>
             </div>
 
-        <!-- Statistiques -->
-        <div class="fr-grid-row fr-grid-row--center fr-mb-4w">
+        <!-- Statistiques (bandeau compact) -->
+        <div class="fr-grid-row fr-grid-row--center fr-mb-2w">
             <div class="fr-col-12">
                 <div class="stats-container">
                     <div class="fr-grid-row fr-grid-row--gutters">
                         <div class="fr-col-md-4 fr-col-12">
-                            <div class="fr-card fr-card--no-border">
-                                <div class="fr-card__body">
-                                    <div class="fr-card__content">
-                                        <h3 class="fr-card__title" id="total-count">
-                                            <span class="fr-icon-loader-line" aria-hidden="true"></span>
-                                            Chargement...
-                                        </h3>
-                                        <p class="fr-card__desc">Cartes et plans géoréférencés</p>
-                                    </div>
-                                </div>
+                            <div class="statistics-card">
+                                <p class="statistic-value" id="total-count">
+                                    <span class="fr-icon-loader-line" aria-hidden="true"></span>
+                                    Chargement...
+                                </p>
+                                <p class="statistic-label">Cartes et plans géoréférencés</p>
                             </div>
                         </div>
                         <div class="fr-col-md-4 fr-col-12">
-                            <div class="fr-card fr-card--no-border">
-                                <div class="fr-card__body">
-                                    <div class="fr-card__content">
-                                        <h3 class="fr-card__title" id="contributors-count">
-                                            <span class="fr-icon-loader-line" aria-hidden="true"></span>
-                                            Chargement...
-                                        </h3>
-                                        <p class="fr-card__desc">Contributeurs</p>
-                                    </div>
-                                </div>
+                            <div class="statistics-card">
+                                <p class="statistic-value" id="contributors-count">
+                                    <span class="fr-icon-loader-line" aria-hidden="true"></span>
+                                    Chargement...
+                                </p>
+                                <p class="statistic-label">Contributeurs</p>
                             </div>
                         </div>
                         <div class="fr-col-md-4 fr-col-12">
-                            <div class="fr-card fr-card--no-border">
-                                <div class="fr-card__body">
-                                    <div class="fr-card__content">
-                                        <h3 class="fr-card__title" id="recent-count">
-                                            <span class="fr-icon-loader-line" aria-hidden="true"></span>
-                                            Chargement...
-                                        </h3>
-                                        <p class="fr-card__desc">Ce mois-ci</p>
-                                    </div>
-                                </div>
+                            <div class="statistics-card">
+                                <p class="statistic-value" id="recent-count">
+                                    <span class="fr-icon-loader-line" aria-hidden="true"></span>
+                                    Chargement...
+                                </p>
+                                <p class="statistic-label">Ce mois-ci</p>
                             </div>
                         </div>
                     </div>
@@ -189,10 +177,10 @@
                         <label class="fr-label" for="search-input">
                             Rechercher dans les cartes géoréférencées
                         </label>
-                        <input class="fr-input" 
-                               placeholder="Entrez un titre, lieu, créateur, date..." 
-                               type="search" 
-                               id="search-input" 
+                        <input class="fr-input"
+                               placeholder="Entrez un titre, lieu, créateur, date..."
+                               type="search"
+                               id="search-input"
                                name="search-input">
                         <button class="fr-btn" title="Rechercher" id="search-button">
                             Rechercher
@@ -265,7 +253,36 @@
                             </div>
                         </fieldset>
                     </div>
-                    
+
+                    <!-- Taille des cartes (visible uniquement en vue Cartes) -->
+                    <div class="size-toggle" id="card-size-toggle">
+                        <fieldset class="fr-segmented fr-segmented--no-legend fr-segmented--sm">
+                            <legend class="fr-segmented__legend fr-segmented__legend--inline">
+                                Taille des cartes
+                            </legend>
+                            <div class="fr-segmented__elements">
+                                <div class="fr-segmented__element">
+                                    <input value="sm" type="radio" id="card-size-sm" name="card-size">
+                                    <label class="fr-label" for="card-size-sm" title="Cartes compactes">
+                                        Compact
+                                    </label>
+                                </div>
+                                <div class="fr-segmented__element">
+                                    <input value="md" checked type="radio" id="card-size-md" name="card-size">
+                                    <label class="fr-label" for="card-size-md" title="Cartes standard">
+                                        Standard
+                                    </label>
+                                </div>
+                                <div class="fr-segmented__element">
+                                    <input value="lg" type="radio" id="card-size-lg" name="card-size">
+                                    <label class="fr-label" for="card-size-lg" title="Grandes cartes">
+                                        Grand
+                                    </label>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </div>
+
                     <div class="view-toggle">
                         <fieldset class="fr-segmented fr-segmented--no-legend">
                             <legend class="fr-segmented__legend fr-segmented__legend--inline">
@@ -275,14 +292,14 @@
                                 <div class="fr-segmented__element">
                                     <input value="cards" checked type="radio" id="view-cards" name="view-mode">
                                     <label class="fr-label" for="view-cards">
-                                        <span class="fr-icon-grid-fill" aria-hidden="true"></span>
+                                        <span class="fr-icon-grid-fill fr-mr-1w" aria-hidden="true"></span>
                                         Cartes
                                     </label>
                                 </div>
                                 <div class="fr-segmented__element">
                                     <input value="table" type="radio" id="view-table" name="view-mode">
                                     <label class="fr-label" for="view-table">
-                                        <span class="fr-icon-table-line" aria-hidden="true"></span>
+                                        <span class="fr-icon-table-line fr-mr-1w" aria-hidden="true"></span>
                                         Tableau
                                     </label>
                                 </div>
@@ -293,13 +310,11 @@
             </div>
         </div>
 
-        <!-- Résultats -->
+        <!-- Résultats : affichage en cartes (largeur contenue) -->
         <div class="fr-grid-row fr-grid-row--center">
             <div class="fr-col-12">
-                
-                <!-- Affichage en cartes -->
                 <div id="cards-container" class="cards-container">
-                    <div class="fr-grid-row fr-grid-row--gutters" id="cards-grid">
+                    <div class="fr-grid-row fr-grid-row--gutters" id="cards-grid" data-card-size="md">
                         <!-- Loading initial -->
                         <div class="fr-col-12">
                             <div class="loading-spinner">
@@ -317,47 +332,62 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Affichage en tableau -->
-                <div id="table-container" class="table-container hidden">
-                    <div class="fr-table fr-table--lg">
-                        <table id="maps-table">
-                            <caption>Liste des cartes géoréférencées</caption>
-                            <thead>
-                                <tr>
-                                    <th scope="col">
-                                        <input type="checkbox" id="select-all" class="fr-checkbox-input" onchange="toggleSelectAll(this)">
-                                        <label for="select-all" class="fr-checkbox-label">Titre</label>
-                                    </th>
-                                    <th scope="col">Attribution</th>
-                                    <th scope="col">Date</th>
-                                    <th scope="col">Géoréférencé par</th>
-                                    <th scope="col">Géoréférencé le</th>
-                                    <th scope="col">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="table-body">
-                                <!-- Le contenu sera généré dynamiquement -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Pagination -->
-                <div class="pagination-container">
-                    <nav role="navigation" class="fr-pagination" aria-label="Pagination navigation" id="pagination-nav" style="display: none;">
-                        <ul class="fr-pagination__list">
-                            <!-- La pagination sera générée dynamiquement -->
-                        </ul>
-                    </nav>
-                </div>
-
             </div>
         </div>
 
-    </div>
-    <!-- END Container principal -->
-    
+        </div>
+        <!-- END Container principal (largeur contenue) -->
+
+        <!-- Résultats : affichage en tableau (pleine largeur de la page) -->
+        <div class="fr-container fr-container--fluid table-container-fluid">
+            <div id="table-container" class="table-container hidden">
+                <div class="fr-table fr-table--lg">
+                    <table id="maps-table">
+                        <caption>Liste des cartes géoréférencées</caption>
+                        <colgroup>
+                            <col style="width: 32%;">
+                            <col style="width: 18%;">
+                            <col style="width: 10%;">
+                            <col style="width: 16%;">
+                            <col style="width: 12%;">
+                            <col style="width: 12%;">
+                        </colgroup>
+                        <thead>
+                            <tr>
+                                <th scope="col">
+                                    <input type="checkbox" id="select-all" class="fr-checkbox-input" onchange="toggleSelectAll(this)">
+                                    <label for="select-all" class="fr-checkbox-label">Titre</label>
+                                </th>
+                                <th scope="col">Attribution</th>
+                                <th scope="col">Date</th>
+                                <th scope="col">Géoréférencé par</th>
+                                <th scope="col">Géoréférencé le</th>
+                                <th scope="col">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body">
+                            <!-- Le contenu sera généré dynamiquement -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pagination (largeur contenue) -->
+        <div class="fr-container">
+            <div class="fr-grid-row fr-grid-row--center">
+                <div class="fr-col-12">
+                    <div class="pagination-container">
+                        <nav role="navigation" class="fr-pagination" aria-label="Pagination navigation" id="pagination-nav" style="display: none;">
+                            <ul class="fr-pagination__list">
+                                <!-- La pagination sera générée dynamiquement -->
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
     <!-- END Zone de contenu scrollable -->
 

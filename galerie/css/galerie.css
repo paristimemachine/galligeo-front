@@ -220,35 +220,8 @@
     100% { transform: rotate(360deg); }
 }
 
-/* Styles pour les statistiques */
-.statistics-card {
-    border: 1px solid var(--border-default-grey);
-    border-radius: 8px;
-    padding: 1.5rem;
-    text-align: center;
-    background: white;
-    transition: box-shadow 0.2s ease;
-}
-
 .statistics-card:hover {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.statistics-card .statistic-value {
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--blue-france-main-525);
-    margin-bottom: 0.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-}
-
-.statistics-card .statistic-label {
-    font-size: 0.875rem;
-    color: var(--text-mention-grey);
-    margin: 0;
 }
 
 /* Améliorations pour les boutons d'action */
@@ -759,9 +732,21 @@ body {
 
 .view-toggle-container {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
+    align-items: flex-end;
+    gap: 1rem 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.size-toggle {
+    display: flex;
+    align-items: flex-end;
+}
+
+/* Masquée quand la vue tableau est active (la taille ne concerne que les cartes) */
+.size-toggle.hidden {
+    display: none !important;
 }
 
 .cards-container {
@@ -774,11 +759,26 @@ body {
 }
 
 /* Grille CSS pour l'alignement correct des cartes */
+/* Le nombre de colonnes s'adapte automatiquement (auto-fill) : pas de palier
+   fixe par largeur d'écran, la densité dépend uniquement de la taille de carte
+   choisie par l'utilisateur (Compact / Standard / Grand). On reste ainsi
+   "web design" (responsive) plutôt que de figer des tailles en pixels. */
 #cards-grid.fr-grid-row {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 1.5rem;
     padding: 0;
+    transition: gap 0.2s ease;
+}
+
+#cards-grid.fr-grid-row[data-card-size="sm"] {
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 1rem;
+}
+
+#cards-grid.fr-grid-row[data-card-size="lg"] {
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 2rem;
 }
 
 /* Assurer que les cartes prennent toute la largeur de leur colonne */
@@ -814,38 +814,46 @@ body {
     margin-top: auto;
 }
 
-/* Forcer les images à avoir une hauteur fixe */
+/* Forcer les images à avoir une hauteur fixe, adaptée à la taille de carte */
 #cards-grid .fr-card__img img {
     height: 200px;
     object-fit: cover;
     width: 100%;
+    transition: height 0.2s ease;
 }
 
-/* Responsive : ajuster le nombre de colonnes */
-@media (max-width: 768px) {
-    #cards-grid.fr-grid-row {
-        grid-template-columns: 1fr;
-    }
+#cards-grid[data-card-size="sm"] .fr-card__img img {
+    height: 120px;
 }
 
-@media (min-width: 769px) and (max-width: 1024px) {
-    #cards-grid.fr-grid-row {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (min-width: 1025px) {
-    #cards-grid.fr-grid-row {
-        grid-template-columns: repeat(3, 1fr);
-    }
+#cards-grid[data-card-size="lg"] .fr-card__img img {
+    height: 260px;
 }
 
 .table-container {
-    padding: 1rem;
+    padding: 1rem 0;
 }
 
 .table-container.hidden {
     display: none !important;
+}
+
+/* Le tableau occupe toute la largeur de la page (fr-container--fluid),
+   avec juste un peu de respiration horizontale */
+.table-container-fluid {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+}
+
+@media (max-width: 576px) {
+    .table-container-fluid {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+}
+
+#maps-table {
+    width: 100%;
 }
 
 /* Style de la scrollbar principale */
