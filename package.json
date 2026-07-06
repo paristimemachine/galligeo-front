@@ -9,7 +9,8 @@
     "dev": "npm run build-version && echo 'Version générée avec succès'",
     "start": "npm run build-version",
     "mock-api": "node mock-api-server.js",
-    "dev-with-api": "concurrently \"npm run mock-api\" \"npm run dev\""
+    "dev-with-api": "concurrently \"npm run mock-api\" \"npm run dev\"",
+    "test": "node --test tests/node"
   },
   "repository": {
     "type": "git",

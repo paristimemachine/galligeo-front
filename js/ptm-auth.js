@@ -9,7 +9,29 @@ class PTMAuthFixed {
         this.baseUrl = 'https://api.ptm.huma-num.fr/auth';
         this.token = null;
         this.userInfo = null;
-        this.anonymousUser = '0000-GALLI-ANONY-ME00';
+        // Identifiant de repli UNIQUE PAR NAVIGATEUR/APPAREIL, jamais partagé.
+        // ATTENTION: avant correction, cette valeur était une constante fixe
+        // ('0000-GALLI-ANONY-ME00') identique pour tous les visiteurs anonymes,
+        // ce qui mélangeait les travaux de géoréférencement de personnes
+        // différentes sous une même identité côté serveur.
+        this.anonymousUser = this.getOrCreateAnonymousDeviceId();
+    }
+
+    /**
+     * Génère (une seule fois) et persiste un identifiant anonyme propre à cet
+     * appareil/navigateur. Utilisé uniquement en secours quand le token JWT
+     * anonyme (getValidAnonymousToken) n'est pas disponible.
+     */
+    getOrCreateAnonymousDeviceId() {
+        const storageKey = 'galligeo_anonymous_device_id';
+        let deviceId = localStorage.getItem(storageKey);
+        if (!deviceId) {
+            deviceId = (typeof crypto !== 'undefined' && crypto.randomUUID)
+                ? `anon-${crypto.randomUUID()}`
+                : `anon-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+            localStorage.setItem(storageKey, deviceId);
+        }
+        return deviceId;
     }
 
     /**
@@ -699,7 +721,20 @@ class PTMAuthFixed {
         if (this.isAuthenticated()) {
             console.warn('⚠️ Utilisateur authentifié, utiliser getWorkedMaps() à la place');
         }
-        return await this.getMapsByStatus('worked');
+        try {
+            const data = await this.getGalligeoDataAnonymous();
+            // BUG CORRIGÉ: filtrait auparavant sur status === 'worked', une valeur
+            // qui n'a jamais existé parmi les statuts valides (en-cours/georeferenced/
+            // deposee) et qui rendait cette fonction toujours vide.
+            return (data.rec_ark || []).filter(item =>
+                item.status === 'en-cours' ||
+                item.status === 'georeferenced' ||
+                item.status === 'deposee'
+            );
+        } catch (error) {
+            console.error('❌ Erreur récupération cartes anonymes travaillées:', error);
+            throw error;
+        }
     }
 
     /**
