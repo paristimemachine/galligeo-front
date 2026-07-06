@@ -334,8 +334,15 @@ async function deposerSurNakala(apiKey_in, collection_id_in) {
             });
         }
 
-        // fermer la modale
-        document.getElementById('fr-modal-deposit').style.display = 'none';
+        // fermer la modale via l'API DSFR (garde l'état interne de DSFR
+        // synchronisé, sinon le bouton "Fermer"/"Annuler" reste sans effet)
+        const depositModal = document.getElementById('fr-modal-deposit');
+        const dsfrDepositModal = window.dsfr ? window.dsfr(depositModal).modal : null;
+        if (dsfrDepositModal) {
+            dsfrDepositModal.conceal();
+        } else {
+            depositModal.close();
+        }
 
 
         // add final stepper

@@ -253,7 +253,7 @@
                     Résultat
                 </button>
 
-                <button class="fr-btn fr-btn--secondary" id="btn_deposit" data-fr-opened="false" aria-controls="fr-modal-deposit" disabled>
+                <button type="button" class="fr-btn fr-btn--secondary" id="btn_deposit" data-fr-opened="false" aria-controls="fr-modal-deposit" disabled>
                     <!--<button class="fr-btn fr-btn--secondary" id="btn_deposit" data-fr-opened="false" aria-controls="fr-modal-deposit"> -->
                     Déposer
                 </button>
@@ -275,7 +275,7 @@
                 <div class="fr-col-12 fr-col-md-8 fr-col-lg-6">
                     <div class="fr-modal__body">
                         <div class="fr-modal__header">
-                            <button class="fr-link--close fr-link" aria-controls="fr-modal-deposit"">Fermer</button>
+                            <button type="button" class="fr-link--close fr-link" aria-controls="fr-modal-deposit">Fermer</button>
                         </div>
                         <div class="fr-modal__content">
                             <h1 id="fr-modal-2-title" class="fr-modal__title">
@@ -391,7 +391,7 @@
                         <div class="fr-modal__footer">
                             <ul class="fr-btns-group fr-btns-group--right fr-btns-group--inline-reverse fr-btns-group--inline-lg fr-btns-group--icon-left">
                                 <li>
-                                    <button class="fr-btn fr-fi-close-line fr-btn--secondary" aria-controls="fr-modal-deposit" onclick="document.getElementById('fr-modal-deposit').close()">
+                                    <button type="button" class="fr-btn fr-fi-close-line fr-btn--secondary" aria-controls="fr-modal-deposit">
                                         Annuler
                                     </button>
                                 </li>
@@ -419,7 +419,7 @@
                 <div class="fr-col-12 fr-col-md-8 fr-col-lg-6">
                     <div class="fr-modal__body">
                         <div class="fr-modal__header">
-                            <button class="fr-link--close fr-link" aria-controls="fr-modal-settings">Fermer</button>
+                            <button type="button" class="fr-link--close fr-link" aria-controls="fr-modal-settings">Fermer</button>
                         </div>
                         <div class="fr-modal__content">
                             <h2 id="fr-modal-settings-title" class="fr-modal__title">
@@ -1022,7 +1022,7 @@ function openExternalLink(url) {
                 <div class="fr-col-12 fr-col-md-8 fr-col-lg-6">
                     <div class="fr-modal__body">
                         <div class="fr-modal__header">
-                            <button class="fr-link--close fr-link" aria-controls="fr-modal-backup-restore">Fermer</button>
+                            <button type="button" class="fr-link--close fr-link" aria-controls="fr-modal-backup-restore">Fermer</button>
                         </div>
                         <div class="fr-modal__content">
                             <h1 id="fr-modal-backup-restore-title" class="fr-modal__title">
@@ -1037,7 +1037,7 @@ function openExternalLink(url) {
                         <div class="fr-modal__footer">
                             <ul class="fr-btns-group fr-btns-group--right fr-btns-group--inline-reverse fr-btns-group--inline-lg">
                                 <li>
-                                    <button class="fr-btn fr-btn--secondary" aria-controls="fr-modal-backup-restore">Annuler</button>
+                                    <button type="button" class="fr-btn fr-btn--secondary" aria-controls="fr-modal-backup-restore">Annuler</button>
                                 </li>
                                 <li>
                                     <button class="fr-btn fr-btn--secondary fr-btn--icon-left fr-icon-delete-line" onclick="window.controlPointsBackup?.clearAllBackupsSafely()">Vider toutes les sauvegardes</button>
@@ -1570,10 +1570,9 @@ function openExternalLink(url) {
         const loginButton = document.querySelector('button[onclick*="auth/login"]');
         if (loginButton) {
             const userMenuHtml = `
-                <button class="fr-btn fr-icon-account-circle-line user-menu-toggle" 
-                        data-fr-opened="false" 
-                        aria-controls="fr-modal-settings"
-                        onclick="document.getElementById('fr-modal-settings').showModal()">
+                <button type="button" class="fr-btn fr-icon-account-circle-line user-menu-toggle"
+                        data-fr-opened="false"
+                        aria-controls="fr-modal-settings">
                     ${userProfile.first_name} ${userProfile.last_name}
                 </button>
             `;

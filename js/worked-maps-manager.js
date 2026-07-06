@@ -476,10 +476,16 @@ class WorkedMapsManager {
             // Préremplir les informations utilisateur dans la modale
             await this.prefillUserDataInModal();
             
-            // Ouvrir la modale de dépôt
+            // Ouvrir la modale de dépôt via l'API DSFR (garde l'état interne de
+            // DSFR synchronisé, sinon le bouton "Fermer"/"Annuler" reste sans effet)
             const modal = document.getElementById('fr-modal-deposit');
             if (modal) {
-                modal.showModal();
+                const dsfrModal = window.dsfr ? window.dsfr(modal).modal : null;
+                if (dsfrModal) {
+                    dsfrModal.disclose();
+                } else {
+                    modal.showModal();
+                }
             } else {
                 console.error('Modale de dépôt non trouvée');
                 alert('Erreur : modale de dépôt non trouvée.');

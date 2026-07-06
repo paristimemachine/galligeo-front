@@ -819,17 +819,16 @@ class ControlPointsBackup {
             </div>
         `).join('');
 
-        // Ouvrir la modale en utilisant le système DSFR
+        // Ouvrir la modale via l'API DSFR (garde l'état interne de DSFR
+        // synchronisé, sinon les boutons "Fermer"/"Annuler" restent sans effet)
         try {
-            // Utiliser showModal() pour les navigateurs modernes
-            modal.showModal();
-            
-            // Ajouter la classe DSFR pour l'ouverture
-            modal.classList.add('fr-modal--opened');
-            
-            // S'assurer que la modale est visible (correction pour DSFR)
-            modal.setAttribute('open', '');
-            
+            const dsfrModal = window.dsfr ? window.dsfr(modal).modal : null;
+            if (dsfrModal) {
+                dsfrModal.disclose();
+            } else {
+                modal.showModal();
+            }
+
             // Focus sur le premier élément focusable
             setTimeout(() => {
                 const firstFocusableElement = modal.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
@@ -837,12 +836,9 @@ class ControlPointsBackup {
                     firstFocusableElement.focus();
                 }
             }, 100);
-            
+
         } catch (error) {
             console.error('Erreur lors de l\'ouverture de la modale:', error);
-            // Fallback pour les navigateurs plus anciens
-            modal.classList.add('fr-modal--opened');
-            modal.setAttribute('open', '');
         }
     }
 
@@ -853,20 +849,14 @@ class ControlPointsBackup {
         const modal = document.getElementById('fr-modal-backup-restore');
         if (modal) {
             try {
-                // Utiliser close() pour les navigateurs modernes
-                modal.close();
-                
-                // Retirer la classe DSFR d'ouverture
-                modal.classList.remove('fr-modal--opened');
-                
-                // S'assurer que la modale est cachée (correction pour DSFR)
-                modal.removeAttribute('open');
-                
+                const dsfrModal = window.dsfr ? window.dsfr(modal).modal : null;
+                if (dsfrModal) {
+                    dsfrModal.conceal();
+                } else {
+                    modal.close();
+                }
             } catch (error) {
                 console.error('Erreur lors de la fermeture de la modale:', error);
-                // Fallback pour les navigateurs plus anciens
-                modal.classList.remove('fr-modal--opened');
-                modal.removeAttribute('open');
             }
         }
     }
@@ -1432,7 +1422,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Gestion du bouton "Annuler" dans le footer
-    const cancelButton = document.querySelector('#fr-modal-backup-restore button[aria-controls="fr-modal-backup-restore"]');
+    const cancelButton = document.querySelector('#fr-modal-backup-restore button[aria-controls="fr-modal-backup-restore"]:not(.fr-link--close)');
     if (cancelButton) {
         cancelButton.addEventListener('click', function(e) {
             e.preventDefault();
