@@ -33,7 +33,7 @@ class WorkedMapsManager {
                 console.log('Cartes travaillées récupérées depuis l\'API:', workedMaps);
             } else {
                 // Utilisateur anonyme : charger depuis le localStorage
-                workedMaps = window.ptmAuth.getAnonymousWorkedMaps();
+                workedMaps = await window.ptmAuth.getAnonymousWorkedMaps();
                 console.log('Cartes travaillées récupérées depuis le localStorage (anonyme):', workedMaps);
             }
             
