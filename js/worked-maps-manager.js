@@ -46,10 +46,28 @@ class WorkedMapsManager {
     }
 
     /**
-     * Récupère les métadonnées Gallica pour un ARK donné
-     * Réutilise la logique du CartoqueteManager
+     * Récupère les métadonnées Gallica pour un ARK donné.
+     * Priorité : base interne (cachedData) → API BnF en fallback.
+     * @param {string} arkId
+     * @param {object|null} cachedData  - entrée rec_ark déjà stockée en base interne
      */
-    async getGallicaMetadata(arkId) {
+    async getGallicaMetadata(arkId, cachedData = null) {
+        // ── Priorité 1 : base interne déjà renseignée ──────────────────────────
+        if (cachedData && cachedData.gallica_title) {
+            console.log(`📂 Métadonnées de ${arkId} lues depuis la base interne (pas d'appel BnF)`);
+            return {
+                arkId,
+                metadata: {
+                    'Titre':    cachedData.gallica_title,
+                    'Créateur': cachedData.gallica_producer || '',
+                    'Date':     cachedData.gallica_date     || ''
+                },
+                thumbnailUrl: cachedData.gallica_thumbnail_url || this.generateThumbnailUrl(arkId),
+                gallicaUrl: `https://gallica.bnf.fr/ark:/12148/${arkId}`
+            };
+        }
+
+        // ── Priorité 2 : appel à l'API BnF (manifest IIIF) ────────────────────
         try {
             const manifestUrl = `https://openapi.bnf.fr/iiif/presentation/v3/ark:/12148/${arkId}/manifest.json`;
             // console.log(`Chargement des métadonnées pour ${arkId}`);
@@ -310,7 +328,8 @@ class WorkedMapsManager {
             const cardsHTML = [];
             for (const workedMap of workedMaps) {
                 try {
-                    const metadata = await this.getGallicaMetadata(workedMap.ark);
+                    // Passer workedMap pour utiliser la base interne si disponible
+                    const metadata = await this.getGallicaMetadata(workedMap.ark, workedMap);
                     const cardHTML = this.generateCardHTML(workedMap, metadata);
                     cardsHTML.push(cardHTML);
                 } catch (error) {

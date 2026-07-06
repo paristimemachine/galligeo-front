@@ -554,6 +554,21 @@ class PTMAuthFixed {
             mapData.doi = additionalData.doi;
         }
 
+        // Ajouter les métadonnées Gallica/BnF si fournies (pré-remplissage de la base interne)
+        if (additionalData.gallica_title) {
+            mapData.gallica_title = additionalData.gallica_title;
+            mapData.metadata_fetched_at = additionalData.metadata_fetched_at || new Date().toISOString();
+        }
+        if (additionalData.gallica_producer) {
+            mapData.gallica_producer = additionalData.gallica_producer;
+        }
+        if (additionalData.gallica_date) {
+            mapData.gallica_date = additionalData.gallica_date;
+        }
+        if (additionalData.gallica_thumbnail_url) {
+            mapData.gallica_thumbnail_url = additionalData.gallica_thumbnail_url;
+        }
+
         try {
             // Récupérer les données existantes
             let existingData;
