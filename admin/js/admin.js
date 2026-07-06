@@ -522,6 +522,80 @@ function openDeleteMapModal(ark, userOrcid, userName) {
 // ─── ACTIONS ─────────────────────────────────────────────────────────────────
 
 /**
+ * Remplit automatiquement les champs titre/éditeur/date de la modale
+ * en interrogeant le manifest IIIF BnF pour l'ARK courant.
+ * Ne remplace que les champs encore vides.
+ */
+async function autocompleteMetadataFromBnF() {
+  const ark = document.getElementById('meta-ark-id').value;
+  if (!ark) return;
+
+  const btn      = document.getElementById('meta-autocomplete-btn');
+  const feedback = document.getElementById('meta-autocomplete-feedback');
+
+  btn.disabled = true;
+  btn.textContent = 'Chargement…';
+  feedback.style.display = 'none';
+
+  try {
+    const url = `https://openapi.bnf.fr/iiif/presentation/v3/ark:/12148/${encodeURIComponent(ark)}/manifest.json`;
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`Erreur HTTP ${response.status}`);
+
+    const data = await response.json();
+
+    let title = '', producer = '', date = '';
+
+    if (data.metadata) {
+      data.metadata.forEach(el => {
+        const label = (typeof el.label === 'object'
+          ? (el.label.fr?.[0] || el.label.en?.[0] || el.label.none?.[0] || '')
+          : String(el.label || '')).toLowerCase();
+
+        const value = typeof el.value === 'object'
+          ? (el.value.fr?.[0] || el.value.en?.[0] || el.value.none?.[0] || '')
+          : String(el.value || '');
+
+        if (label === 'titre' || label === 'title') {
+          title = title || value;
+        } else if (label === 'éditeur' || label === 'editeur' || label === 'publisher') {
+          producer = producer || value;
+        } else if (label === 'créateur' || label === 'creator') {
+          producer = producer || value;
+        } else if (label === 'date' || label === 'date de publication') {
+          date = date || value;
+        }
+      });
+    }
+
+    // Ne remplacer que les champs vides
+    const titleEl    = document.getElementById('meta-title');
+    const producerEl = document.getElementById('meta-producer');
+    const dateEl     = document.getElementById('meta-date');
+
+    let filled = 0;
+    if (!titleEl.value    && title)    { titleEl.value    = title;    filled++; }
+    if (!producerEl.value && producer) { producerEl.value = producer; filled++; }
+    if (!dateEl.value     && date)     { dateEl.value     = date;     filled++; }
+
+    feedback.textContent = filled > 0
+      ? `${filled} champ(s) complété(s) depuis BnF.`
+      : 'Aucun champ vide à compléter (ou métadonnées absentes du manifest).';
+    feedback.style.color = filled > 0 ? '#18753c' : '#555';
+    feedback.style.display = 'inline';
+
+  } catch (err) {
+    feedback.textContent = `Erreur : ${escapeHtml(err.message)}`;
+    feedback.style.color = '#ce0500';
+    feedback.style.display = 'inline';
+    console.error('autocompleteMetadataFromBnF:', err);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Compléter depuis BnF';
+  }
+}
+
+/**
  * Sauvegarde les métadonnées d'une carte pour un utilisateur donné.
  * Utilise POST /auth/admin/galligeo/users/{orcid}/data pour modifier les données d'un autre user.
  */

@@ -374,6 +374,15 @@
           <div id="modal-map-meta-body">
             <input type="hidden" id="meta-ark-id">
             <input type="hidden" id="meta-user-orcid">
+            <div class="fr-mb-2w" style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+              <button class="fr-btn fr-btn--secondary fr-btn--sm fr-btn--icon-left fr-icon-download-line"
+                      id="meta-autocomplete-btn"
+                      onclick="autocompleteMetadataFromBnF()"
+                      title="Récupérer le titre, l'éditeur et la date depuis le manifest IIIF BnF">
+                Compléter depuis BnF
+              </button>
+              <span id="meta-autocomplete-feedback" class="fr-text--sm" style="display:none;"></span>
+            </div>
             <div class="fr-input-group fr-mb-2w">
               <label class="fr-label" for="meta-title">Titre <span class="fr-hint-text">Gallica</span></label>
               <input class="fr-input" type="text" id="meta-title" name="meta-title" placeholder="Titre de la carte">
