@@ -223,17 +223,26 @@ async function georef_api_post(url = urlToAPI, data = {}) {
     }
   } else {
     console.log('🔓 Utilisateur anonyme - préparation des headers et données...');
-    
-    // IMPORTANT: Ajouter l'utilisateur anonyme dans les données pour l'écriture en base
-    apiData.user_orcid_id = '0000-GALLI-ANONY-ME00';
-    
-    const anonymousSession = 'anonymous-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
-    headers['X-Anonymous-Session'] = anonymousSession;
+
+    // IMPORTANT: on utilise le token JWT anonyme PERSISTANT PAR APPAREIL
+    // (window.ptmAuth.getValidAnonymousToken) au lieu d'un identifiant
+    // partagé par tout le monde ('0000-GALLI-ANONY-ME00') ou d'une session
+    // jetable générée à chaque appel. Les deux anciennes approches faisaient
+    // que toutes les cartes géoréférencées anonymement par des personnes
+    // différentes finissaient rattachées à la même identité côté serveur.
+    try {
+      const anonymousToken = await window.ptmAuth.getValidAnonymousToken();
+      headers['Authorization'] = `Bearer ${anonymousToken}`;
+      console.log('🎫 Token JWT anonyme (par appareil) ajouté');
+    } catch (tokenError) {
+      console.warn('⚠️ Token JWT anonyme indisponible, repli sur identifiant d\'appareil:', tokenError.message);
+      apiData.user_orcid_id = window.ptmAuth.anonymousUser;
+    }
+
     headers['X-Anonymous-Mode'] = 'true';
     headers['X-Client-Type'] = 'galligeo-anonymous';
-    
-    console.log(`🔓 Session anonyme créée: ${anonymousSession}`);
-    console.log(`👤 Utilisateur anonyme défini: ${apiData.user_orcid_id}`);
+
+    console.log(`👤 Identifiant anonyme d'appareil (repli): ${window.ptmAuth.anonymousUser}`);
   }
   
   console.log(`📡 Envoi vers: ${url}`);
