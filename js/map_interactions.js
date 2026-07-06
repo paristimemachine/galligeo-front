@@ -259,6 +259,26 @@ function add_wms_layers(map) {
         }
     );
 
+    var IGN_Ortho = L.tileLayer(
+        "https://data.geopf.fr/wmts?" +
+        "&REQUEST=GetTile&SERVICE=WMTS&VERSION=1.0.0" +
+        "&STYLE=normal" +
+        "&TILEMATRIXSET=PM" +
+        "&FORMAT=image/jpeg" +
+        "&LAYER=ORTHOIMAGERY.ORTHOPHOTOS" +
+        "&TILEMATRIX={z}" +
+        "&TILEROW={y}" +
+        "&TILECOL={x}",
+        {
+            attribution: "IGN-F/Geoportail",
+            minNativeZoom: 0,
+            maxNativeZoom: 19,
+            minZoom: 0,
+            maxZoom: 21,
+            tileSize: 256
+        }
+    );
+
     var IGN_Scan1950_Histo = L.tileLayer(
         "https://data.geopf.fr/wmts?" +
         "&REQUEST=GetTile&SERVICE=WMTS&VERSION=1.0.0" +
@@ -332,6 +352,7 @@ function add_wms_layers(map) {
         "Black" : OpenStreetMap_BLK,
         "OpenTopoMap" : OpenTopoMap,
         "Plan IGN" : IGN_Plan_actuel,
+        "IGN Ortho" : IGN_Ortho,
         "IGN Scan50 Histo" : IGN_Scan1950_Histo,
         "IGN Etat-Major 40" : IGN_EtatMajor40,
         "Carte de Cassini" : Ehess_IGN_Cassini,
