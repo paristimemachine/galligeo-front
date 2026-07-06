@@ -480,7 +480,8 @@ class WorkedMapsManager {
             // DSFR synchronisé, sinon le bouton "Fermer"/"Annuler" reste sans effet)
             const modal = document.getElementById('fr-modal-deposit');
             if (modal) {
-                const dsfrModal = window.dsfr ? window.dsfr(modal).modal : null;
+                const dsfrInstance = window.dsfr ? window.dsfr(modal) : null;
+                const dsfrModal = dsfrInstance ? dsfrInstance.modal : null;
                 if (dsfrModal) {
                     dsfrModal.disclose();
                 } else {

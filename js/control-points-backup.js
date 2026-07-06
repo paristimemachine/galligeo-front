@@ -822,7 +822,8 @@ class ControlPointsBackup {
         // Ouvrir la modale via l'API DSFR (garde l'état interne de DSFR
         // synchronisé, sinon les boutons "Fermer"/"Annuler" restent sans effet)
         try {
-            const dsfrModal = window.dsfr ? window.dsfr(modal).modal : null;
+            const dsfrInstance = window.dsfr ? window.dsfr(modal) : null;
+            const dsfrModal = dsfrInstance ? dsfrInstance.modal : null;
             if (dsfrModal) {
                 dsfrModal.disclose();
             } else {
@@ -849,7 +850,8 @@ class ControlPointsBackup {
         const modal = document.getElementById('fr-modal-backup-restore');
         if (modal) {
             try {
-                const dsfrModal = window.dsfr ? window.dsfr(modal).modal : null;
+                const dsfrInstance = window.dsfr ? window.dsfr(modal) : null;
+                const dsfrModal = dsfrInstance ? dsfrInstance.modal : null;
                 if (dsfrModal) {
                     dsfrModal.conceal();
                 } else {

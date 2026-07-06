@@ -800,12 +800,20 @@
                                     <tr>
                                         <th scope="col">Point source</th>
                                         <th scope="col">Point cible</th>
+                                        <th scope="col" title="Qualité du géoréférencement (indicateur d'erreur résiduelle)">Q</th>
                                     </tr>
                                 </thead>
                                 <tbody id='table_body'>
                                     <!-- Le contenu sera généré dynamiquement par JavaScript -->
                                 </tbody>
                             </table>
+                        </div>
+
+                        <div class="fr-toggle fr-toggle--sm fr-mt-2w">
+                            <input type="checkbox" class="fr-toggle__input" id="toggle-show-error-vectors">
+                            <label class="fr-toggle__label" for="toggle-show-error-vectors">
+                                Afficher les vecteurs d'erreur sur la carte
+                            </label>
                         </div>
 
                     </div>
@@ -1053,6 +1061,35 @@ function openExternalLink(url) {
     <!-- END Modal Backup Restore  -->
     <!--  -->
 
+    <!--  -->
+    <!-- Modal détail qualité d'un point de contrôle -->
+    <!--  -->
+    <dialog class="fr-modal" id="fr-modal-point-quality" aria-labelledby="fr-modal-point-quality-title">
+        <div class="fr-container fr-container--fluid fr-container-md">
+            <div class="fr-grid-row fr-grid-row--center">
+                <div class="fr-col-12 fr-col-md-8 fr-col-lg-6">
+                    <div class="fr-modal__body">
+                        <div class="fr-modal__header">
+                            <button type="button" class="fr-link--close fr-link" aria-controls="fr-modal-point-quality">Fermer</button>
+                        </div>
+                        <div class="fr-modal__content">
+                            <h1 id="fr-modal-point-quality-title" class="fr-modal__title">
+                                <span class="fr-icon-focus-3-line fr-icon--lg" aria-hidden="true"></span>
+                                Qualité du point <span id="fr-modal-point-quality-title-id"></span>
+                            </h1>
+                            <div id="fr-modal-point-quality-body">
+                                <!-- Contenu généré dynamiquement par control-points-quality.js -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </dialog>
+    <!--  -->
+    <!-- END Modal détail qualité -->
+    <!--  -->
+
     <!-- Script en version es6 module et nomodule pour les navigateurs le ne supportant pas -->
     <script type="module" src="node_modules/@gouvfr/dsfr/dist/dsfr.module.min.js"></script>
     <script type="text/javascript" nomodule src="node_modules/@gouvfr/dsfr/dist/dsfr.nomodule.min.js"></script>
@@ -1061,6 +1098,7 @@ function openExternalLink(url) {
     <script src="js/version.js"></script>
     <script src="js/clonelayers.js"></script>
     <script src="js/init.js"></script>
+    <script src="js/control-points-quality.js"></script>
     <!-- <script src="js/simple-layout.js"></script> -->
     <script src="js/advanced-input-system.js"></script>
     <script src="js/map_interactions.js"></script>

@@ -395,6 +395,21 @@ nav.fr-nav .fr-grid-row {
     text-align: center;
 }
 
+/* Colonne Q (qualité des points de contrôle) : plus étroite, texte du badge
+   autorisé à passer à la ligne pour ne pas être tronqué dans une fr-table
+   fixed-layout. */
+#table-control-points .fr-table th:last-child,
+#table-control-points .fr-table td:last-child {
+    width: 84px;
+    text-align: center;
+}
+
+#table-control-points .control-points-quality-badge,
+#table-control-points [data-quality-cell] .fr-badge {
+    white-space: normal;
+    line-height: 1.2;
+}
+
 /* Ligne avec paire complète */
 #table-control-points .fr-table tr[style*="border-left"] {
     background-color: #f9f8f6 !important;
@@ -1173,3 +1188,10 @@ nav.fr-nav .fr-grid-row {
 }
 
 /* ===================================================================== */
+
+/* Badge cliquable de la colonne "Q" (qualité des points de contrôle) */
+.control-points-quality-badge {
+  border: none;
+  cursor: pointer;
+  font: inherit;
+}

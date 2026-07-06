@@ -2,6 +2,7 @@ function ControlPointPair(id, leftPoint = null, rightPoint = null) {
     this.id = id;
     this.leftPoint = leftPoint; // {lat, lng, marker, originalCoords}
     this.rightPoint = rightPoint; // {lat, lng, marker, originalCoords}
+    this.quality = null; // { status: 'pending'|'unavailable'|'good'|'warning'|'bad', dx, dy, norm, unit }
     this.isComplete = function() {
         return this.leftPoint !== null && this.rightPoint !== null;
     };
@@ -572,6 +573,8 @@ function updateControlPointsTable() {
             
             const leftCell = document.createElement('td');
             const rightCell = document.createElement('td');
+            const qualityCell = document.createElement('td');
+            qualityCell.setAttribute('data-quality-cell', pair.id);
             
             if (pair.leftPoint) {
                 leftCell.innerHTML = `
@@ -607,8 +610,13 @@ function updateControlPointsTable() {
                 rightCell.innerHTML = `<em class="text-muted">Point ${pair.id} manquant</em>`;
             }
             
+            qualityCell.innerHTML = window.controlPointsQuality
+                ? window.controlPointsQuality.renderBadge(pair)
+                : '';
+
             row.appendChild(leftCell);
             row.appendChild(rightCell);
+            row.appendChild(qualityCell);
             tableBody.appendChild(row);
         });
     } else {
@@ -621,7 +629,12 @@ function updateControlPointsTable() {
 
     // Mettre à jour les données de géoréférencement
     updateGeoreferencingData();
-    
+
+    // Planifier un contrôle qualité des points (debounced)
+    if (window.controlPointsQuality) {
+        window.controlPointsQuality.scheduleCheck();
+    }
+
     // Émettre un événement pour notifier les changements
     const event = new CustomEvent('controlPointsChanged', {
         detail: { 
@@ -938,7 +951,10 @@ function removeIndividualPoint(pointId, side) {
         }
         pair.rightPoint = null;
     }
-    
+
+    // La paire n'est plus complète : son ancien indicateur qualité n'est plus valide
+    pair.quality = null;
+
     // Si la paire est maintenant vide, la supprimer complètement
     if (!pair.leftPoint && !pair.rightPoint) {
         window.pointPairs.splice(pairIndex, 1);

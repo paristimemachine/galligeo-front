@@ -51,8 +51,9 @@ async function deposerSurNakala(apiKey_in, collection_id_in) {
     }
     
     // Générer le contenu du fichier points de contrôle
-    let coordsContent = "# Points de contrôle générés par GallicaGeo\n";
-    coordsContent += "id,lat_image,lng_image,lat_geo,lng_geo\n";
+    // let coordsContent = "# Points de contrôle générés par GallicaGeo\n";
+    // let coordsContent = "";
+    let coordsContent = "id,lat_image,lng_image,lat_geo,lng_geo\n";
     
     const completePairs = window.pointPairs.filter(pair => pair.isComplete());
     if (completePairs.length === 0) {
@@ -337,10 +338,11 @@ async function deposerSurNakala(apiKey_in, collection_id_in) {
         // fermer la modale via l'API DSFR (garde l'état interne de DSFR
         // synchronisé, sinon le bouton "Fermer"/"Annuler" reste sans effet)
         const depositModal = document.getElementById('fr-modal-deposit');
-        const dsfrDepositModal = window.dsfr ? window.dsfr(depositModal).modal : null;
+        const dsfrDepositInstance = window.dsfr ? window.dsfr(depositModal) : null;
+        const dsfrDepositModal = dsfrDepositInstance ? dsfrDepositInstance.modal : null;
         if (dsfrDepositModal) {
             dsfrDepositModal.conceal();
-        } else {
+        } else if (depositModal && typeof depositModal.close === 'function') {
             depositModal.close();
         }
 
