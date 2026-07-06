@@ -104,8 +104,8 @@ class AnonymousUserManager {
     /**
      * Affiche des informations sur les données sauvegardées localement
      */
-    showLocalStorageInfo() {
-        const anonymousMaps = window.ptmAuth.getAnonymousWorkedMaps();
+    async showLocalStorageInfo() {
+        const anonymousMaps = await window.ptmAuth.getAnonymousWorkedMaps();
         if (anonymousMaps.length > 0) {
             console.log(`${anonymousMaps.length} carte(s) sauvegardée(s) localement en mode anonyme`);
             
@@ -131,21 +131,25 @@ class AnonymousUserManager {
      */
     async migrateAnonymousData() {
         if (window.ptmAuth && window.ptmAuth.isAuthenticated()) {
-            const anonymousMaps = window.ptmAuth.getAnonymousWorkedMaps();
-            
+            const anonymousMaps = await window.ptmAuth.getAnonymousWorkedMaps();
+
             if (anonymousMaps.length > 0) {
                 console.log(`Migration de ${anonymousMaps.length} cartes anonymes vers le compte utilisateur...`);
-                
+
                 let migratedCount = 0;
                 for (const map of anonymousMaps) {
                     try {
-                        await window.ptmAuth.updateWorkedMap(map.ark, map, map.status);
+                        // BUG CORRIGÉ: l'ordre des arguments ne correspondait pas à la
+                        // signature updateWorkedMap(arkId, status, additionalData), ce qui
+                        // faisait échouer systématiquement la validation du statut et
+                        // empêchait toute migration réelle.
+                        await window.ptmAuth.updateWorkedMap(map.ark, map.status, map);
                         migratedCount++;
                     } catch (error) {
                         console.error(`Erreur lors de la migration de la carte ${map.ark}:`, error);
                     }
                 }
-                
+
                 if (migratedCount > 0) {
                     localStorage.removeItem('galligeo_anonymous_maps');
                     this.showMigrationSuccessMessage(migratedCount);
