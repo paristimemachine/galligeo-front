@@ -2,6 +2,20 @@
 <html lang="fr">
   <head>
     <meta charset="utf-8">
+    <script>
+      // Redirige les nouveaux visiteurs vers la landing page de présentation.
+      // Les liens profonds (paramètres d'URL, ex: ?ark=...) et les visiteurs déjà venus ne sont pas redirigés.
+      (function () {
+        try {
+          if (window.location.search) return;
+          if (localStorage.getItem('galligeo_visited')) return;
+          localStorage.setItem('galligeo_visited', '1');
+          window.location.replace('presentation/');
+        } catch (e) {
+          // localStorage indisponible (navigation privée, etc.) : ne pas bloquer l'accès à l'app
+        }
+      })();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="stylesheet" href="node_modules/@gouvfr/dsfr/dist/dsfr.min.css">
     <link rel="stylesheet" href="node_modules/@gouvfr/dsfr/dist/component/form/form.min.css">
@@ -2090,7 +2104,7 @@ function openExternalLink(url) {
     _paq.push(['trackPageView']);
     _paq.push(['enableLinkTracking']);
     (function() {
-        var u="//ptm.huma-num.fr/matomo/";
+        var u="//ptm02.huma-num.fr/matomo/";
         _paq.push(['setTrackerUrl', u+'matomo.php']);
         _paq.push(['setSiteId', '23']);
         var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
@@ -2098,6 +2112,7 @@ function openExternalLink(url) {
     })();
     </script>
     <!-- End Matomo Code -->
+
 
   </body>
 </html>

@@ -73,14 +73,32 @@ html, body {
     display: flex;
     gap: 1rem;
     align-items: center;
+    flex-wrap: wrap;
+}
+
+/* Les boutons/toggles ne doivent pas se comprimer les uns les autres : DSFR calcule la
+   largeur du libellé d'un fr-toggle en fonction de la largeur de son conteneur
+   (calc(100% - 2rem)), donc un conteneur trop comprimé fait retomber le texte
+   caractère par caractère. On fige une largeur confortable et on laisse la barre
+   passer à la ligne (flex-wrap) plutôt que d'écraser chaque contrôle. */
+.atlas-controls > * {
+    flex-shrink: 0;
+}
+
+#view-mode-toggle-container {
+    margin: 0;
+    min-width: 12.5rem;
 }
 
 #sync-toggle-container {
     margin: 0;
+    min-width: 15rem;
 }
 
+#view-mode-toggle-container .fr-toggle__label,
 #sync-toggle-container .fr-toggle__label {
     font-size: 0.875rem;
+    white-space: nowrap;
 }
 
 .content-wrapper {

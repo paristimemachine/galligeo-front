@@ -25,20 +25,20 @@ let layers = [];
 let currentView = 'single';
 let syncEnabled = false;
 
-// Fonction pour attendre que PTMAuth soit prêt
+// Fonction pour attendre que PTMAuth soit prêt (instance globale : window.ptmAuth)
 async function waitForPTMAuth() {
-    if (typeof PTMAuth !== 'undefined' && PTMAuth) {
-        return PTMAuth;
+    if (typeof window.ptmAuth !== 'undefined' && window.ptmAuth) {
+        return window.ptmAuth;
     }
     // Attendre maximum 1 seconde pour les atlas publics
     return new Promise((resolve) => {
         let attempts = 0;
         const checkInterval = setInterval(() => {
             attempts++;
-            if (typeof PTMAuth !== 'undefined' && PTMAuth) {
+            if (typeof window.ptmAuth !== 'undefined' && window.ptmAuth) {
                 clearInterval(checkInterval);
                 console.log('✅ PTMAuth chargé');
-                resolve(PTMAuth);
+                resolve(window.ptmAuth);
             } else if (attempts > 10) { // 10 * 100ms = 1s
                 clearInterval(checkInterval);
                 console.warn('⚠️ PTMAuth non disponible, continuons sans authentification');
@@ -48,6 +48,31 @@ async function waitForPTMAuth() {
     });
 }
 
+// Titres/dates Gallica mis en cache côté serveur (ark → valeur), lus depuis /app/galligeo/data
+// pour éviter de refaire un appel au manifest IIIF de la BnF pour des cartes déjà géoréférencées
+let cachedTitlesByArk = {};
+let cachedDatesByArk = {};
+
+async function loadCachedTitles(ptmAuth) {
+    if (!ptmAuth || typeof ptmAuth.isAuthenticated !== 'function' || !ptmAuth.isAuthenticated()) {
+        return;
+    }
+    try {
+        const data = await ptmAuth.getGalligeoData();
+        (data.rec_ark || []).forEach(item => {
+            if (item.ark && item.gallica_title) {
+                cachedTitlesByArk[item.ark] = item.gallica_title;
+            }
+            if (item.ark && item.gallica_date) {
+                cachedDatesByArk[item.ark] = item.gallica_date;
+            }
+        });
+        console.log(`📂 ${Object.keys(cachedTitlesByArk).length} titre(s) récupéré(s) depuis le cache interne`);
+    } catch (error) {
+        console.warn('⚠️ Impossible de récupérer les titres en cache depuis /app/galligeo/data:', error);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     try {
         // Attendre que PTMAuth soit prêt
@@ -55,7 +80,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (ptmAuth && typeof ptmAuth.checkAuthStatus === 'function') {
             await ptmAuth.checkAuthStatus();
         }
-        
+        await loadCachedTitles(ptmAuth);
+
         const slug = getAtlasSlugFromURL();
         if (!slug) {
             showError('URL invalide', 'Le format d\'URL attendu est : /atlas/?slug={slug}');
@@ -101,8 +127,8 @@ async function loadAtlasData(urlSlug) {
     updateLoadingMessage('Chargement des informations de l\'atlas...');
     
     try {
-        const token = (typeof PTMAuth !== 'undefined' && PTMAuth && typeof PTMAuth.getToken === 'function') 
-            ? PTMAuth.getToken() 
+        const token = (typeof window.ptmAuth !== 'undefined' && window.ptmAuth && typeof window.ptmAuth.getToken === 'function')
+            ? window.ptmAuth.getToken()
             : null;
         const headers = {
             'Accept': 'application/json'
@@ -177,30 +203,77 @@ async function loadAtlasData(urlSlug) {
     }
 }
 
+// Récupère le titre et la date Gallica/BnF d'un ark depuis le manifest IIIF
+async function fetchBnFMetadata(arkId) {
+    const result = { title: null, date: null };
+    try {
+        const url = `https://openapi.bnf.fr/iiif/presentation/v3/ark:/12148/${arkId}/manifest.json`;
+        const response = await fetch(url);
+        if (!response.ok) return result;
+
+        const data = await response.json();
+        if (!data.metadata) return result;
+
+        for (const el of data.metadata) {
+            const label = (typeof el.label === 'object'
+                ? (el.label.fr?.[0] || el.label.en?.[0] || el.label.none?.[0] || '')
+                : String(el.label || '')).toLowerCase();
+
+            const value = typeof el.value === 'object'
+                ? (el.value.fr?.[0] || el.value.en?.[0] || el.value.none?.[0] || '')
+                : String(el.value || '');
+            if (!value) continue;
+
+            if (!result.title && (label === 'titre' || label === 'title')) {
+                result.title = value;
+            } else if (!result.date && label === 'date') {
+                result.date = value;
+            }
+        }
+        return result;
+    } catch (error) {
+        console.warn(`⚠️ Impossible de récupérer les métadonnées BnF pour ${arkId}:`, error);
+        return result;
+    }
+}
+
 async function loadMapsMetadata() {
     updateLoadingMessage('Chargement des métadonnées des cartes...');
-    
+
     if (!atlasData || !atlasData.ark_ids || atlasData.ark_ids.length === 0) {
         throw new Error('Aucune carte associée à cet atlas');
     }
-    
-    // Pour le serveur PTM, on n'a pas besoin de charger les métadonnées IIIF
-    // On crée directement les données des cartes
-    mapsData = atlasData.ark_ids.map((arkId, index) => {
+
+    // Pour le serveur PTM, on n'a pas besoin de charger les tuiles IIIF, seulement le titre.
+    // Priorité : cache interne (/app/galligeo/data, déjà en mémoire) → manifest IIIF BnF en fallback,
+    // pour éviter de solliciter inutilement l'API Gallica (cf. doc/GALLICA_METADATA_CACHING.md)
+    mapsData = await Promise.all(atlasData.ark_ids.map(async (arkId, index) => {
         // Normaliser l'ARK ID (enlever le préfixe ark:/12148/ s'il existe)
         let cleanArkId = arkId.replace(/^ark:\/12148\//, '');
-        
+        let title = cachedTitlesByArk[cleanArkId] || cachedTitlesByArk[arkId];
+        let date = cachedDatesByArk[cleanArkId] || cachedDatesByArk[arkId];
+
+        if (!title) {
+            const bnf = await fetchBnFMetadata(cleanArkId);
+            title = bnf.title;
+            date = date || bnf.date;
+        }
+
+        const displayTitle = title
+            ? (date ? `${title} (${date})` : title)
+            : `Carte ${index + 1}`;
+
         return {
             arkId: cleanArkId,
             index: index,
-            title: `Carte ${index + 1}`,
+            title: displayTitle,
             tileUrl: `https://{s}.tile.ptm.huma-num.fr/tiles/ark/12148/${cleanArkId}/{z}/{x}/{y}.png`
         };
-    });
-    
+    }));
+
     console.log('Métadonnées des cartes chargées:', mapsData);
-    
-    // Tenter de récupérer les bounds de la première carte
+
+    // Centrer la vue initiale sur la carte affichée par défaut
     await tryToFitBounds();
 }
 
@@ -321,14 +394,30 @@ async function fitToTilesBounds() {
     }
 }
 
-// Fonction pour ajuster la vue sur les tuiles
+// Fonction pour centrer la vue initiale sur la carte affichée par défaut (la première, seule visible au chargement)
 async function tryToFitBounds() {
     try {
-        // Utiliser la nouvelle API info_tiles
-        await fitToTilesBounds();
+        const firstMap = mapsData[0];
+        if (!firstMap) throw new Error('Aucune carte à centrer');
+
+        const info = await fetchTileInfo(firstMap.arkId);
+        if (!info || !info.bounds) throw new Error('Bounds indisponibles pour la carte affichée');
+
+        const bounds = L.latLngBounds(
+            [info.bounds.minLat, info.bounds.minLng],
+            [info.bounds.maxLat, info.bounds.maxLng]
+        );
+
+        // Ne centrer que la carte visible (maps.single) : maps.left/right sont masquées
+        // (display:none) tant que la vue éclatée n'est pas active, et un fitBounds sur un
+        // conteneur caché calcule un zoom invalide. Elles sont recentrées sur la vue courante
+        // au moment du passage en vue éclatée (cf. switchToSplitView).
+        maps.single.fitBounds(bounds, { padding: [20, 20] });
+
+        console.log('📍 Vue initiale centrée sur l\'emprise de la carte affichée:', firstMap.arkId, bounds);
     } catch (error) {
-        console.warn('⚠️ Impossible de récupérer les bounds, utilisation des bounds par défaut');
-        
+        console.warn('⚠️ Impossible de récupérer les bounds de la carte affichée, utilisation des bounds par défaut:', error.message);
+
         // Bounds par défaut pour la France
         const franceBounds = L.latLngBounds(
             [41.3, -5.2],  // Sud-Ouest (Perpignan)
@@ -474,7 +563,7 @@ function createLayerControlElement(layer) {
     
     let html = `
         <div class="layer-header">
-            <div class="layer-title">
+            <div class="layer-title" title="${escapeHtml(layer.title)}">
                 <span class="fr-icon-map-pin-2-line" aria-hidden="true"></span>
                 <span>${escapeHtml(layer.title)}</span>
             </div>
@@ -512,33 +601,35 @@ function createLayerControlElement(layer) {
                            oninput="updateOpacity('${layer.id}', this.value)">
                 </div>
                 
-                <div class="split-selector">
-                    <label class="fr-text--xs">Vue éclatée:</label>
-                    <div class="split-buttons">
-                        <button class="split-btn ${layer.splitView === 'none' ? 'active' : ''}"
-                                data-view="none"
-                                onclick="setSplitView('${layer.id}', 'none')"
-                                title="Aucune">
-                            <span class="fr-icon-close-line" aria-hidden="true"></span>
-                        </button>
-                        <button class="split-btn ${layer.splitView === 'left' ? 'active' : ''}"
-                                data-view="left"
-                                onclick="setSplitView('${layer.id}', 'left')"
-                                title="Gauche">
-                            <span class="fr-icon-arrow-left-line" aria-hidden="true"></span>
-                        </button>
-                        <button class="split-btn ${layer.splitView === 'right' ? 'active' : ''}"
-                                data-view="right"
-                                onclick="setSplitView('${layer.id}', 'right')"
-                                title="Droite">
-                            <span class="fr-icon-arrow-right-line" aria-hidden="true"></span>
-                        </button>
-                    </div>
+                <div class="split-selector" style="display: ${currentView === 'split' ? 'block' : 'none'};">
+                    <fieldset class="fr-segmented fr-segmented--sm">
+                        <legend class="fr-segmented__legend fr-text--xs">Affichage en vue éclatée</legend>
+                        <div class="fr-segmented__elements">
+                            <div class="fr-segmented__element">
+                                <input value="none" type="radio" id="split-${layer.id}-none" name="split-${layer.id}"
+                                       ${layer.splitView === 'none' ? 'checked' : ''}
+                                       onchange="setSplitView('${layer.id}', 'none')">
+                                <label class="fr-label" for="split-${layer.id}-none">Masquée</label>
+                            </div>
+                            <div class="fr-segmented__element">
+                                <input value="left" type="radio" id="split-${layer.id}-left" name="split-${layer.id}"
+                                       ${layer.splitView === 'left' ? 'checked' : ''}
+                                       onchange="setSplitView('${layer.id}', 'left')">
+                                <label class="fr-label" for="split-${layer.id}-left">Gauche</label>
+                            </div>
+                            <div class="fr-segmented__element">
+                                <input value="right" type="radio" id="split-${layer.id}-right" name="split-${layer.id}"
+                                       ${layer.splitView === 'right' ? 'checked' : ''}
+                                       onchange="setSplitView('${layer.id}', 'right')">
+                                <label class="fr-label" for="split-${layer.id}-right">Droite</label>
+                            </div>
+                        </div>
+                    </fieldset>
                 </div>
             </div>
         `;
     }
-    
+
     div.innerHTML = html;
     return div;
 }
@@ -574,19 +665,9 @@ function updateOpacity(layerId, value) {
 function setSplitView(layerId, view) {
     const layer = layers.find(l => l.id === layerId);
     if (!layer) return;
-    
+
     layer.splitView = view;
-    
-    const control = document.getElementById(`control-${layerId}`);
-    const buttons = control.querySelectorAll('.split-btn');
-    buttons.forEach(btn => {
-        if (btn.dataset.view === view) {
-            btn.classList.add('active');
-        } else {
-            btn.classList.remove('active');
-        }
-    });
-    
+
     if (currentView === 'split') {
         updateSplitViewLayers();
     }
@@ -611,33 +692,31 @@ function updateSplitViewLayers() {
     });
 }
 
-function toggleView() {
-    if (currentView === 'single') {
-        switchToSplitView();
-    } else {
-        switchToSingleView();
-    }
-}
-
 function switchToSingleView() {
     currentView = 'single';
-    
+
     // Masquer la vue split et afficher la vue simple
     const singleView = document.getElementById('single-view');
     const splitView = document.getElementById('split-view');
-    
+
     singleView.style.display = 'block';
     splitView.style.display = 'none';
-    
-    const toggleBtn = document.getElementById('toggle-view-btn');
-    toggleBtn.innerHTML = '<span class="fr-icon-layout-grid-line" aria-hidden="true"></span> Mode éclaté';
-    
-    document.getElementById('sync-toggle-container').style.display = 'none';
-    
+
+    const viewToggle = document.getElementById('toggle-view-mode');
+    if (viewToggle) viewToggle.checked = false;
+
+    // visibility (et non display) pour ne pas décaler les autres contrôles de la barre
+    document.getElementById('sync-toggle-container').style.visibility = 'hidden';
+
+    // Le choix "gauche/droite" n'a de sens qu'en vue éclatée
+    document.querySelectorAll('.split-selector').forEach(el => {
+        el.style.display = 'none';
+    });
+
     if (syncEnabled) {
         unsyncMaps();
     }
-    
+
     layers.forEach(layer => {
         if (layer.tileLayer) {
             maps.left.removeLayer(layer.tileLayer);
@@ -656,35 +735,71 @@ function switchToSingleView() {
 
 function switchToSplitView() {
     currentView = 'split';
-    
+
     // Masquer la vue simple et afficher la vue split
     const singleView = document.getElementById('single-view');
     const splitView = document.getElementById('split-view');
-    
+
     singleView.style.display = 'none';
     splitView.style.display = 'flex';
-    
-    const toggleBtn = document.getElementById('toggle-view-btn');
-    toggleBtn.innerHTML = '<span class="fr-icon-layout-masonry-line" aria-hidden="true"></span> Mode simple';
-    
-    document.getElementById('sync-toggle-container').style.display = 'block';
-    
+
+    const viewToggle = document.getElementById('toggle-view-mode');
+    if (viewToggle) viewToggle.checked = true;
+
+    document.getElementById('sync-toggle-container').style.visibility = 'visible';
+
+    document.querySelectorAll('.split-selector').forEach(el => {
+        el.style.display = 'block';
+    });
+
+    // S'assurer qu'une couche est affichée à gauche et une à droite (sinon vue vide)
+    ensureSplitLayersAssigned();
+
     layers.forEach(layer => {
         if (layer.tileLayer) {
             maps.single.removeLayer(layer.tileLayer);
         }
     });
-    
+
     updateSplitViewLayers();
-    
+
+    // Repartir du centre/zoom déjà affiché en mode simple plutôt que de la vue par défaut
+    const center = maps.single.getCenter();
+    const zoom = maps.single.getZoom();
+    maps.left.setView(center, zoom, { animate: false });
+    maps.right.setView(center, zoom, { animate: false });
+
     setTimeout(() => {
         maps.left.invalidateSize();
         maps.right.invalidateSize();
     }, 100);
-    
+
     if (!syncEnabled) {
         syncMaps();
     }
+}
+
+// S'assure qu'au moins une couche est assignée à gauche et une à droite en vue éclatée,
+// sans modifier les choix déjà faits manuellement par l'utilisateur
+function ensureSplitLayersAssigned() {
+    const eligible = layers.filter(l => l.tileLayer && !l.error);
+    if (eligible.length === 0) return;
+
+    const hasLeft = eligible.some(l => l.splitView === 'left');
+    const hasRight = eligible.some(l => l.splitView === 'right');
+    const unassigned = eligible.filter(l => l.splitView === 'none');
+
+    if (!hasLeft) {
+        (unassigned.shift() || eligible[0]).splitView = 'left';
+    }
+    if (!hasRight) {
+        (unassigned.shift() || eligible.find(l => l.splitView !== 'left') || eligible[0]).splitView = 'right';
+    }
+
+    layers.forEach(layer => {
+        const radio = document.getElementById(`split-${layer.id}-${layer.splitView}`);
+        if (radio) radio.checked = true;
+    });
 }
 
 function syncMaps() {
@@ -790,9 +905,19 @@ function disableManualSync() {
 }
 
 function setupEventListeners() {
-    // Bouton de bascule de vue
-    document.getElementById('toggle-view-btn').addEventListener('click', toggleView);
-    
+    // Toggle DSFR de bascule de vue (simple / éclatée)
+    const viewToggle = document.getElementById('toggle-view-mode');
+    if (viewToggle) {
+        viewToggle.addEventListener('change', function() {
+            if (this.checked) {
+                switchToSplitView();
+            } else {
+                switchToSingleView();
+            }
+        });
+    }
+
+
     // Toggle DSFR de synchronisation
     const syncToggle = document.getElementById('toggle-sync');
     if (syncToggle) {

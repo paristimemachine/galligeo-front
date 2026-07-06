@@ -39,16 +39,27 @@ body {
 }
 
 .layer-title {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
     font-weight: 600;
     font-size: 0.875rem;
     flex: 1;
+    min-width: 0;
     margin-right: 0.5rem;
+}
+
+.layer-title span:last-child {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 .layer-controls {
     display: flex;
-    align-items: center;
-    gap: 0.5rem;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
 }
 
 .layer-toggle {
@@ -95,35 +106,33 @@ body {
 
 /* Split view selector */
 .split-selector {
-    display: flex;
-    gap: 0.5rem;
     margin-top: 0.5rem;
 }
 
-.split-btn {
+/* Le contrôle segmenté DSFR doit rester dans la largeur du panneau des couches :
+   les 3 segments se partagent la largeur à parts égales plutôt que de suivre la
+   largeur naturelle de leur libellé (qui déborderait sinon). */
+.split-selector .fr-segmented {
+    display: block;
+    width: 100%;
+}
+
+.split-selector .fr-segmented__elements {
+    width: 100%;
+}
+
+.split-selector .fr-segmented__element {
     flex: 1;
-    padding: 0.25rem 0.5rem;
-    border: 1px solid #ddd;
-    background: #fff;
-    border-radius: 4px;
-    font-size: 0.75rem;
-    cursor: pointer;
-    transition: all 0.2s;
+    min-width: 0;
 }
 
-.split-btn:hover {
-    background: #f5f5f5;
-}
-
-.split-btn.active {
-    background: #000091;
-    color: white;
-    border-color: #000091;
-}
-
-.split-btn.none {
-    background: #e5e5e5;
-    border-color: #ccc;
+.split-selector .fr-segmented__element label {
+    justify-content: center;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* Map divider (resizable) */

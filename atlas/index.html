@@ -42,22 +42,28 @@
                 
                 <div class="atlas-controls">
                     <!-- Fit to Bounds Button -->
-                    <button id="fit-bounds-btn" 
-                            class="fr-btn fr-btn--secondary fr-btn--sm fr-icon-focus-3-line"
-                            title="Centrer sur l'emprise des tuiles"
+                    <button id="fit-bounds-btn"
+                            class="fr-btn fr-btn--secondary fr-btn--sm fr-icon-fullscreen-line"
+                            title="Centrer sur l'emprise des cartes"
                             onclick="fitToTilesBounds()">
                         Centrer sur les cartes
                     </button>
-                    
-                    <!-- View Mode Toggle -->
-                    <button id="toggle-view-btn" 
-                            class="fr-btn fr-btn--secondary fr-btn--sm fr-icon-layout-grid-line"
-                            title="Basculer en mode éclaté">
-                        Mode éclaté
-                    </button>
-                    
-                    <!-- Sync Toggle DSFR (only visible in split view) -->
-                    <div class="fr-toggle" id="sync-toggle-container" style="display: none;">
+
+                    <!-- View Mode Toggle DSFR -->
+                    <div class="fr-toggle" id="view-mode-toggle-container">
+                        <input type="checkbox"
+                               class="fr-toggle__input"
+                               id="toggle-view-mode">
+                        <label class="fr-toggle__label"
+                               for="toggle-view-mode"
+                               data-fr-checked-label="Vue éclatée"
+                               data-fr-unchecked-label="Vue simple">
+                            Mode d'affichage
+                        </label>
+                    </div>
+
+                    <!-- Sync Toggle DSFR (visibility toggled, not display, to avoid shifting the other controls) -->
+                    <div class="fr-toggle" id="sync-toggle-container" style="visibility: hidden;">
                         <input type="checkbox" 
                                class="fr-toggle__input" 
                                id="toggle-sync" 
