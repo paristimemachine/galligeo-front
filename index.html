@@ -275,18 +275,29 @@
                                   <a href="https://www.nakala.fr/about" target="_blank" rel="noopener">Nakala</a> : entrepôt de données de l'<a href="https://www.huma-num.fr/" target="_blank" rel="noopener">IR* Huma-Num CNRS</a>
                                 </label>
                                 <div class="fr-messages-group" id="checkbox-nakala-error" aria-live="assertive">
-                                    <p class="fr-message fr-message--error" id="checkbox-nakala-message-error">Cocher et entrer une clé d'API</p>
+                                    <p class="fr-message fr-message--error" id="checkbox-nakala-message-error">Cocher pour effectuer le dépôt</p>
                                 </div>
                                 <div class="fr-messages-group" id="checkbox-nakala-ok" aria-live="assertive" style="visibility: hidden; display: none;">
                                     <p class="fr-message fr-message--valid" id="checkboxes-valid-message-valid">Ok</p>
                                 </div>
                             </div>
 
-                            <label class="fr-label" for="text-input-text">API Key Nakala</label>
-                            <input class="fr-input" type="text" id="nakala_api_key" name="text-input-text" value="66c0810c-19c3-5463-5082-20f04d53b971">
-                            <label class="fr-label" for="text-input-text">Collection DOI</label>
-                            <input class="fr-input" type="text" id="nakala_collection_doi" name="text-input-text" value="10.34847/nkl.febfl1v2">
-                            
+                            <div class="fr-notice fr-notice--info" style="margin-top: 0.75rem;">
+                                <div class="fr-container">
+                                    <div class="fr-notice__body">
+                                        <p class="fr-notice__title">Le dépôt sera automatiquement effectué dans la collection PTM / Galligéo.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div style="margin-top: 1rem; padding: 1rem; border: 1px solid #ddd; border-radius: 4px;">
+                                <p class="fr-text--sm fr-mb-1w"><strong>Dépôt optionnel dans une autre collection</strong></p>
+                                <p class="fr-text--xs fr-mb-1w" style="color: #666;">Renseignez ces champs si vous souhaitez également déposer dans votre propre espace Nakala.</p>
+                                <label class="fr-label" for="nakala_optional_api_key">Clé d'API Nakala (autre compte)</label>
+                                <input class="fr-input" type="text" id="nakala_optional_api_key" name="nakala_optional_api_key" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
+                                <label class="fr-label" for="nakala_optional_collection_doi" style="margin-top: 0.5rem;">Collection DOI</label>
+                                <input class="fr-input" type="text" id="nakala_optional_collection_doi" name="nakala_optional_collection_doi" placeholder="10.34847/nkl.xxxxxxxx">
+                            </div>
 
                             <br>
 
@@ -371,7 +382,7 @@
                                     </button>
                                 </li>
                                 <li>
-                                    <button class="fr-btn fr-fi-checkbox-line fr-btn--secondary" onclick="deposerSurNakala(document.getElementById('nakala_api_key').value, document.getElementById('nakala_collection_doi').value)">
+                                    <button class="fr-btn fr-fi-checkbox-line fr-btn--secondary" onclick="handleNakalaDeposit()">
                                         Déposer
                                     </button>
                                 </li>
@@ -1039,7 +1050,7 @@ function openExternalLink(url) {
     <!-- <script src="js/simple-layout.js"></script> -->
     <script src="js/advanced-input-system.js"></script>
     <script src="js/map_interactions.js"></script>
-    <script src="js/front_interactions.js"></script>
+    <script src="js/front_interactions.js?v=20260503"></script>
     <script src="js/api_interactions.js"></script>
     <script src="js/gallica_interactions.js"></script>
     <script src="js/getParamAtStartup.js"></script>
@@ -1059,6 +1070,7 @@ function openExternalLink(url) {
     <script src="js/status-monitor.js"></script>
     <script src="js/fix-empty-status.js"></script>
     <script src="js/diagnose-georeferenced-status.js"></script>
+    <script src="js/nakala-config.js"></script>
     <script src="js/nakala_test_deposit.js?v=20251002"></script>
     <!-- Scripts de debug disponibles si nécessaires: debug-status-update.js, status-fixer.js, fix-empty-status-guide.js -->
 

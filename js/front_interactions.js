@@ -432,6 +432,16 @@ function clkGeoserver(){
 
 }
 
+async function handleNakalaDeposit() {
+    await deposerSurNakala(NAKALA_DEFAULT_API_KEY, NAKALA_DEFAULT_COLLECTION_DOI);
+
+    const optionalKey = document.getElementById('nakala_optional_api_key').value.trim();
+    const optionalDoi = document.getElementById('nakala_optional_collection_doi').value.trim();
+    if (optionalKey && optionalDoi) {
+        await deposerSurNakala(optionalKey, optionalDoi);
+    }
+}
+
 function clkNakalaDepot(){
   var checked = document.getElementById("checkbox-nakala").checked;
 
