@@ -28,8 +28,36 @@ let allAtlasData   = [];   // atlas de l'API
 
 // ─── HELPERS UTILISATEURS ────────────────────────────────────────────────────
 
+// Ancien identifiant partagé par TOUS les visiteurs anonymes (bug historique,
+// cf. js/ptm-auth.js). Peut encore apparaître sur des cartes anciennes.
+const LEGACY_SHARED_ANONYMOUS_ORCID = '0000-GALLI-ANONY-ME00';
+
 /**
- * Retourne le nom complet d'un objet user (prénom + nom ou name ou ORCID).
+ * Un "orcid" d'utilisateur anonyme n'est pas un vrai ORCID : c'est soit le
+ * nouvel identifiant unique par appareil (préfixe "anon-"), soit l'ancien
+ * identifiant partagé par tout le monde (bug corrigé, cf. conversation).
+ */
+function isAnonymousOrcid(orcid) {
+  if (!orcid) return false;
+  return orcid.startsWith('anon-') || orcid === LEGACY_SHARED_ANONYMOUS_ORCID;
+}
+
+/**
+ * Libellé lisible pour un contributeur anonyme, avec un identifiant court
+ * pour pouvoir distinguer deux contributeurs anonymes différents.
+ */
+function formatAnonymousLabel(orcid) {
+  if (orcid === LEGACY_SHARED_ANONYMOUS_ORCID) {
+    return 'Anonyme (ancien compte partagé)';
+  }
+  // "anon-3f2a1c9e-45b6-4d21-..." → "anon-3f2a1c9e"
+  const shortId = orcid.split('-').slice(0, 2).join('-');
+  return `Anonyme (${shortId})`;
+}
+
+/**
+ * Retourne le nom complet d'un objet user (prénom + nom, ou libellé anonyme
+ * distinctif, ou ORCID).
  */
 function formatUserName(user) {
   if (!user) return '—';
@@ -37,7 +65,22 @@ function formatUserName(user) {
   const family = user.family_name || user.familyName || user.last_name   || '';
   if (given || family) return `${given} ${family}`.trim();
   const orcid  = user.orcid_id || user.orcid || '';
+  if (isAnonymousOrcid(orcid)) return formatAnonymousLabel(orcid);
   return user.name || user.display_name || orcid || '—';
+}
+
+/**
+ * Rendu HTML de la cellule "identifiant" : lien ORCID cliquable pour un vrai
+ * utilisateur, simple texte (pas de lien, ce n'est pas un ORCID valide) pour
+ * un contributeur anonyme.
+ */
+function renderOrcidCell(orcid) {
+  const safeOrcid = escapeHtml(orcid || '—');
+  if (isAnonymousOrcid(orcid)) {
+    return `<span class="fr-text--sm" style="font-family:monospace;color:#666;" title="Identifiant technique anonyme, pas un ORCID">${safeOrcid}</span>`;
+  }
+  return `<a href="https://orcid.org/${safeOrcid}" target="_blank" rel="noopener"
+     class="fr-link fr-text--sm" style="font-family:monospace;">${safeOrcid}</a>`;
 }
 
 /**
@@ -246,6 +289,7 @@ function renderUsersTable(users) {
   tbody.innerHTML = users.map(user => {
     const maps      = user.georeferenced_maps || user.maps || [];
     const orcid     = user.orcid_id || user.orcid || '—';
+    const anonymous = isAnonymousOrcid(orcid);
     const fullName  = escapeHtml(formatUserName(user));
     const enCours   = maps.filter(m => m.status === 'en-cours').length;
     const georef    = maps.filter(m => m.status === 'georeferenced').length;
@@ -254,9 +298,10 @@ function renderUsersTable(users) {
     return `
       <tr>
         <td>
-          <strong>${fullName}</strong><br>
-          <a href="https://orcid.org/${escapeHtml(orcid)}" target="_blank" rel="noopener"
-             class="fr-link fr-text--sm" style="font-family:monospace;">${escapeHtml(orcid)}</a>
+          <strong>${fullName}</strong>
+          ${anonymous ? '<span class="status-badge status-anonymous">Anonyme</span>' : ''}
+          <br>
+          ${renderOrcidCell(orcid)}
         </td>
         <td><strong>${maps.length}</strong></td>
         <td>${enCours > 0 ? `<span class="status-badge status-en-cours">${enCours}</span>` : '0'}</td>
@@ -368,8 +413,7 @@ function renderAtlasTable(atlases) {
         </td>
         <td>
           ${ownerName ? `<strong>${ownerName}</strong><br>` : ''}
-          <a href="https://orcid.org/${escapeHtml(ownerOrcid)}" target="_blank" rel="noopener"
-             class="fr-link fr-text--sm" style="font-family:monospace;">${escapeHtml(ownerOrcid || '—')}</a>
+          ${renderOrcidCell(ownerOrcid)}
         </td>
         <td>${nbMaps}</td>
         <td><span class="fr-badge fr-badge--blue-cumulus fr-badge--sm">${mode}</span></td>
@@ -448,8 +492,10 @@ function openUserDetail(orcid) {
 
   body.innerHTML = `
     <dl class="fr-grid-row fr-grid-row--gutters fr-mb-1w">
-      <dt class="fr-col-4"><strong>ORCID</strong></dt>
-      <dd class="fr-col-8"><a href="https://orcid.org/${escapeHtml(orcid)}" target="_blank" rel="noopener" class="fr-link"><code>${escapeHtml(orcid)}</code></a></dd>
+      <dt class="fr-col-4"><strong>${isAnonymousOrcid(orcid) ? 'Identifiant' : 'ORCID'}</strong></dt>
+      <dd class="fr-col-8">${isAnonymousOrcid(orcid)
+        ? `<code>${escapeHtml(orcid)}</code> <span class="status-badge status-anonymous">Anonyme</span>`
+        : `<a href="https://orcid.org/${escapeHtml(orcid)}" target="_blank" rel="noopener" class="fr-link"><code>${escapeHtml(orcid)}</code></a>`}</dd>
       <dt class="fr-col-4"><strong>Nom complet</strong></dt>
       <dd class="fr-col-8">${fullName}</dd>
       ${givenName ? `<dt class="fr-col-4">Prénom</dt><dd class="fr-col-8">${givenName}</dd>` : ''}
