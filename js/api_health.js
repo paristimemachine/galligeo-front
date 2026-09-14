@@ -140,7 +140,7 @@ class APIHealthMonitor {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), this.timeoutDuration);
             
-            const response = await fetch(this.gallicaTestUrl, {
+            const response = await window.GallicaIIIFAuth.fetch(this.gallicaTestUrl, {
                 method: 'GET',
                 signal: controller.signal,
                 mode: 'cors'

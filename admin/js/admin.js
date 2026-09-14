@@ -350,7 +350,7 @@ function renderMapsTable(maps) {
     return `
       <tr data-ark="${escapeHtml(ark)}" data-status="${escapeHtml(status)}" data-search="${escapeHtml((title + ' ' + ark + ' ' + (map.users || []).map(u => u.name+' '+u.orcid).join(' ')).toLowerCase())}">
         <td>
-          <img src="${escapeHtml(thumb)}" alt="Vignette ${escapeHtml(ark)}" class="map-thumb"
+          <img data-gallica-src="${escapeHtml(thumb)}" alt="Vignette ${escapeHtml(ark)}" class="map-thumb"
                onerror="this.style.display='none'">
         </td>
         <td>
@@ -384,6 +384,10 @@ function renderMapsTable(maps) {
         </td>
       </tr>`;
   }).join('');
+
+  if (window.GallicaIIIFAuth) {
+    window.GallicaIIIFAuth.hydrateImages(tbody);
+  }
 }
 
 function renderAtlasTable(atlases) {
@@ -585,7 +589,7 @@ async function autocompleteMetadataFromBnF() {
 
   try {
     const url = `https://openapi.bnf.fr/iiif/presentation/v3/ark:/12148/${encodeURIComponent(ark)}/manifest.json`;
-    const response = await fetch(url);
+    const response = await window.GallicaIIIFAuth.fetch(url);
     if (!response.ok) throw new Error(`Erreur HTTP ${response.status}`);
 
     const data = await response.json();

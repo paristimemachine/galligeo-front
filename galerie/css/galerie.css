@@ -638,19 +638,28 @@ body {
     border-radius: 8px;
     padding: 1rem;
     margin-bottom: 2rem;
-    display: none; /* Masqué par défaut */
-}
-
-.selection-bar.active {
     display: block;
 }
 
+.selection-hint {
+    font-weight: 500;
+    color: #3a3a3a;
+}
+
 .selection-info {
-    display: flex;
+    display: none;
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
     gap: 1rem;
+}
+
+.selection-bar.active .selection-info {
+    display: flex;
+}
+
+.selection-bar.active .selection-hint {
+    display: none;
 }
 
 .selection-count {
@@ -809,9 +818,10 @@ body {
     flex-direction: column;
 }
 
-/* L'élément fr-card__start doit rester en bas */
+/* L'élément fr-card__start suit directement le contenu, sans grand vide
+   quand le titre/la description est court (pas de margin-top: auto) */
 #cards-grid .fr-card__start {
-    margin-top: auto;
+    margin-top: .75rem;
 }
 
 /* Forcer les images à avoir une hauteur fixe, adaptée à la taille de carte */

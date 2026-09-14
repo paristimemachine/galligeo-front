@@ -192,6 +192,7 @@
         <div class="fr-grid-row fr-grid-row--center">
             <div class="fr-col-12">
                 <div class="selection-bar" id="selection-bar">
+                    <p class="selection-hint" id="selection-hint">Sélectionner des cartes pour créer un Atlas.</p>
                     <div class="selection-info">
                         <div>
                             <span class="selection-count" id="selection-count">0 carte(s) sélectionnée(s)</span>
@@ -695,9 +696,17 @@
     <script src="../js/version.js"></script>
     <!-- Système d'authentification PTM (avec support JWT anonyme) -->
     <script src="../js/ptm-auth.js"></script>
+    <!-- Jeton d'authentification requis par les API IIIF openapi.bnf.fr -->
+    <script src="../js/gallica-iiif-auth.js"></script>
     <!-- Système de stockage local des métadonnées Gallica -->
     <script src="../js/gallica-metadata-storage.js"></script>
-    <script src="../js/cartes-georeferencees.js"></script>
+    <!-- js/cartes-georeferencees.js retiré : classe jamais initialisée sur cette page
+         (son .init() n'est jamais appelé) mais son constructeur attachait quand même
+         des écouteurs concurrents sur #search-input/#period-filter/#view-cards/#view-table,
+         les mêmes éléments gérés par galerie-page.js, avec un risque réel de conflit
+         (ex: applyFilters() de cette classe morte réinitialisait #cards-grid avec une
+         liste vide "Aucune carte trouvée"). Elle ciblait aussi une page
+         ../cartes-georeferencees.html qui n'existe plus. -->
 
     <script src="js/galerie-page.js"></script>
 

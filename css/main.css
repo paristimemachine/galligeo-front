@@ -9,12 +9,15 @@ body {
     height: 100vh;
     overflow-x: hidden;
     overflow-y: hidden; /* Empêcher explicitement le scroll vertical */
+    display: flex;
+    flex-direction: column;
 }
 
 /* Header garde sa position normale */
 .fr-header {
     position: relative;
     z-index: 1000;
+    flex: 0 0 auto;
 }
 
 /* Navigation avec taille contrôlée */
@@ -36,15 +39,19 @@ nav.fr-nav .fr-grid-row {
 .main-content-container {
     position: relative;
     width: 100%;
+    flex: 1 1 auto;
+    min-height: 0; /* Permet au container de rétrécir sous son contenu et d'éviter le débordement */
+    display: flex;
+    flex-direction: column;
 }
 
-/* Le grid row principal - hauteur calculée pour éviter le scroll */
+/* Le grid row principal - occupe l'espace restant entre nav et footer */
 .main-content-row {
     display: flex;
     flex-direction: row;
     width: 100%;
-    height: calc(100vh - 240px); /* Réservation plus importante pour éviter tout débordement */
-    max-height: calc(100vh - 240px);
+    flex: 1 1 auto;
+    min-height: 0;
     overflow: hidden;
     margin-bottom: 5px; /* Réduction de la marge */
 }
@@ -61,20 +68,18 @@ nav.fr-nav .fr-grid-row {
     object-fit: cover;
 }
 
-/* Footer garde sa position normale */
+/* Footer collé en bas grâce au flex du body */
 .footer {
     position: relative;
-    bottom: 0;
     width: 100%;
     background-color: #f6f6f6;
     border-top: 1px solid #ddd;
     color: #666;
     text-align: center;
-    height: 50px;
     padding: 0.75rem 0;
     font-size: 0.875rem;
     z-index: 1000;
-    margin-top: -4px;
+    flex: 0 0 auto;
 }
 
 /* ===================================================== */

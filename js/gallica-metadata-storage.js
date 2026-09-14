@@ -46,7 +46,7 @@ class GallicaMetadataStorage {
             await this.rateLimiter.throttle();
             
             const manifestUrl = `https://openapi.bnf.fr/iiif/presentation/v3/ark:/12148/${arkId}/manifest.json`;
-            const response = await fetch(manifestUrl);
+            const response = await window.GallicaIIIFAuth.fetch(manifestUrl);
             
             if (!response.ok) {
                 // Gérer erreur quota
@@ -219,6 +219,57 @@ class GallicaMetadataStorage {
             
         } catch (error) {
             console.error(`❌ Erreur sauvegarde métadonnées ${arkId}:`, error);
+            return false;
+        }
+    }
+
+    /**
+     * Sauvegarde les métadonnées de plusieurs cartes en un seul aller-retour
+     * (1 GET + 1 POST vers /app/galligeo/data), au lieu d'un aller-retour par carte.
+     * Utilisé par la galerie qui découvre plusieurs cartes sans métadonnées lors
+     * d'un même chargement de page.
+     * @param {Array<{ark, gallica_title, gallica_producer, gallica_date, gallica_thumbnail_url, metadata_fetched_at}>} entries
+     */
+    async saveMetadataBatch(entries) {
+        if (!entries || entries.length === 0) {
+            return true;
+        }
+
+        try {
+            let existingData;
+            if (window.ptmAuth.isAuthenticated()) {
+                existingData = await window.ptmAuth.getGalligeoData();
+            } else {
+                existingData = await window.ptmAuth.getGalligeoDataAnonymous();
+            }
+
+            const rec_ark = existingData.rec_ark || [];
+
+            entries.forEach(({ ark, ...fullMetadata }) => {
+                const existingIndex = rec_ark.findIndex(item => item.ark === ark);
+                if (existingIndex >= 0) {
+                    rec_ark[existingIndex] = { ...rec_ark[existingIndex], ...fullMetadata };
+                } else {
+                    rec_ark.push({ ark, status: 'georeferenced', ...fullMetadata });
+                }
+            });
+
+            const updatedData = {
+                rec_ark: rec_ark,
+                settings: existingData.settings || {}
+            };
+
+            if (window.ptmAuth.isAuthenticated()) {
+                await window.ptmAuth.saveGalligeoData(updatedData);
+            } else {
+                await window.ptmAuth.saveGalligeoDataAnonymous(updatedData);
+            }
+
+            console.log(`✅ Métadonnées sauvegardées en lot pour ${entries.length} carte(s)`);
+            return true;
+
+        } catch (error) {
+            console.error(`❌ Erreur sauvegarde en lot des métadonnées:`, error);
             return false;
         }
     }

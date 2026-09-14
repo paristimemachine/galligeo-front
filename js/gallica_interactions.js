@@ -95,10 +95,17 @@ async function load_ark_picture() {
         console.log(`📐 Dimensions scalées calculées: ${document.image_width_scaled} x ${document.image_height_scaled}`);
         
         var string_url = 'https://openapi.bnf.fr/iiif/image/v3/ark:/12148/'+input_ark+'/f1/full/3200,/0/default.webp';
-        
+
         console.log(string_url);
 
-        imageUrl = string_url;
+        try {
+            imageUrl = await window.GallicaIIIFAuth.loadImageObjectUrl(string_url);
+        } catch (error) {
+            console.error('❌ Erreur lors du chargement de l\'image IIIF authentifiée:', error);
+            alert('Erreur: Impossible de récupérer l\'image depuis Gallica. Veuillez réessayer.');
+            map.fire('dataload');
+            return;
+        }
 
         var img = new Image();
             img.onload = function() {
@@ -121,7 +128,7 @@ async function load_ark_picture() {
             });
 
         }
-        img.src = string_url;
+        img.src = imageUrl;
 
         //manage display hidden and visible div : map / video
         // Vérifier que l'élément existe avant de le supprimer (peut être null au 2e chargement)
@@ -160,7 +167,7 @@ async function load_image_dimensions_from_iiif_image_api(input_ark) {
     console.log('🔍 Tentative de récupération des dimensions depuis l\'API Image IIIF:', infoUrl);
     
     try {
-        const response = await fetch(infoUrl);
+        const response = await window.GallicaIIIFAuth.fetch(infoUrl);
         if (!response.ok) {
             throw new Error(`Erreur HTTP ${response.status}`);
         }
@@ -191,7 +198,7 @@ async function load_oai_metada(input_ark) {
         // string_url += input_ark;
         // console.log(string_url);
 
-        return fetch(string_url)
+        return window.GallicaIIIFAuth.fetch(string_url)
         .then(response => response.json())
         .then(data => {
             var inner_html_metadata = '';

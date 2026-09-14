@@ -210,7 +210,7 @@ class GalerieManager {
         try {
             const manifestUrl = `https://openapi.bnf.fr/iiif/presentation/v3/ark:/12148/${arkId}/manifest.json`;
             
-            const response = await fetch(manifestUrl);
+            const response = await window.GallicaIIIFAuth.fetch(manifestUrl);
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}`);
             }
@@ -494,6 +494,9 @@ class GalerieManager {
 
         const cardsHTML = mapsToShow.map(map => this.generateSelectableCardHTML(map)).join('');
         cardsGrid.innerHTML = cardsHTML;
+        if (window.GallicaIIIFAuth) {
+            window.GallicaIIIFAuth.hydrateImages(cardsGrid);
+        }
     }
 
     /**
@@ -544,8 +547,8 @@ class GalerieManager {
                     ${thumbnailUrl ? `
                     <div class="fr-card__header">
                         <div class="fr-card__img">
-                            <img class="fr-responsive-img card-image" 
-                                 src="${thumbnailUrl}" 
+                            <img class="fr-responsive-img card-image"
+                                 data-gallica-src="${thumbnailUrl}"
                                  alt="${title}"
                                  onerror="this.parentElement.style.display='none';" />
                         </div>

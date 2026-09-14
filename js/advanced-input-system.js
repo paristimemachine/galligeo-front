@@ -1013,7 +1013,17 @@ function clearAllControlPoints() {
         alert('La saisie est verrouillée. Désactivez le verrou pour supprimer tous les points.');
         return;
     }
-    
+
+    const pointsCount = window.pointPairs ? window.pointPairs.length : 0;
+    if (pointsCount === 0) {
+        resetInputSystem();
+        return;
+    }
+
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer tous les points de contrôle (${pointsCount}) ? Cette action est irréversible.`)) {
+        return;
+    }
+
     resetInputSystem();
 }
 
@@ -1025,7 +1035,12 @@ function clearEmprise() {
         alert('La saisie est verrouillée. Désactivez le verrou pour supprimer l\'emprise.');
         return;
     }
-    
+
+    const hasEmprise = !!window.currentPolygon || (window.list_points_polygon_crop && window.list_points_polygon_crop.length > 0);
+    if (hasEmprise && !confirm('Êtes-vous sûr de vouloir supprimer l\'emprise ? Cette action est irréversible.')) {
+        return;
+    }
+
     if (window.currentPolygon) {
         if (window.currentPolygon.layer) {
             layer_img_emprise_left.removeLayer(window.currentPolygon.layer);

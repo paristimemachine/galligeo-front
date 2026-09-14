@@ -223,6 +223,12 @@
                     <div class="fr-messages-group" id="toggle-messages" aria-live="polite">
                     </div>
                 </div>
+                <div class="fr-toggle" title="Synchronise le centrage et le zoom des deux cartes à partir des points de contrôle communs (nécessite au moins 2 points saisis de part et d'autre)">
+                    <input type="checkbox" class="fr-toggle__input" id="toggle-sync-views" disabled aria-describedby="toggle-sync-views-messages">
+                    <label class="fr-toggle__label" for="toggle-sync-views" data-fr-checked-label="Vues synchronisées" data-fr-unchecked-label="Vues indépendantes"></label>
+                    <div class="fr-messages-group" id="toggle-sync-views-messages" aria-live="polite">
+                    </div>
+                </div>
                 <fieldset class="fr-segmented fr-segmented--no-legend" title="Saisir des points de contrôle et l'emprise utile de la carte, la zone exclue sera découpée">
                     <legend class="fr-segmented__legend fr-segmented__legend--inline">
                         Saisir
@@ -851,11 +857,15 @@
             <div class="fr-col-5" id="map-container-right">
 
                 <div id="map-right"></div>
+
+                <button type="button" id="btn_copy_tile_url" class="fr-btn fr-btn--secondary fr-btn--icon-left fr-icon-clipboard-line" style="display:none;" onclick="copyTileUrl()" title="Copier le lien XYZ du flux de tuiles">
+                    Copier le lien des tuiles
+                </button>
             </div>
 
         </div>
         </div>
-    
+
     <!--  -->
     <!-- END MAP -->
     <!--  -->
@@ -1102,8 +1112,10 @@ function openExternalLink(url) {
     <!-- <script src="js/simple-layout.js"></script> -->
     <script src="js/advanced-input-system.js"></script>
     <script src="js/map_interactions.js"></script>
+    <script src="js/view-sync.js"></script>
     <script src="js/front_interactions.js?v=20260503"></script>
     <script src="js/api_interactions.js"></script>
+    <script src="js/gallica-iiif-auth.js"></script>
     <script src="js/gallica_interactions.js"></script>
     <script src="js/getParamAtStartup.js"></script>
     <!-- Système d'authentification PTM (avec support JWT anonyme) -->

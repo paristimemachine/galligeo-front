@@ -15,6 +15,11 @@ class PTMAuthFixed {
         // ce qui mélangeait les travaux de géoréférencement de personnes
         // différentes sous une même identité côté serveur.
         this.anonymousUser = this.getOrCreateAnonymousDeviceId();
+        // Cache mémoire du profil utilisateur : évite de refaire /api/profile
+        // à chaque ouverture de la modale "Mon espace" ou de l'onglet "Mes atlas"
+        // alors que le profil ne change pas pendant la session.
+        this._userProfileCache = null;
+        this._userProfilePromise = null;
     }
 
     /**
@@ -45,6 +50,8 @@ class PTMAuthFixed {
         
         this.token = token;
         localStorage.setItem('ptm_auth_token', token);
+        this._userProfileCache = null;
+        this._userProfilePromise = null;
         console.log('✅ Token défini manuellement');
     }
 
@@ -266,6 +273,8 @@ class PTMAuthFixed {
     logout() {
         this.token = null;
         this.userInfo = null;
+        this._userProfileCache = null;
+        this._userProfilePromise = null;
         localStorage.removeItem('ptm_auth_token');
         localStorage.removeItem('anonymous_token');
         localStorage.removeItem('anonymous_token_expires');
@@ -274,16 +283,35 @@ class PTMAuthFixed {
 
     /**
      * Récupère les informations du profil utilisateur
+     * Mis en cache en mémoire pour la durée de la session (voir this._userProfileCache) :
+     * le profil est sollicité à plusieurs endroits indépendants de l'UI (menu utilisateur,
+     * modale paramètres, onglet atlas) qui n'ont pas besoin de le refetcher à chaque fois.
+     * Les appels concurrents pendant le premier chargement partagent la même promesse.
      */
-    async getUserProfile() {
-        try {
-            return await this.authenticatedApiCall('/api/profile', {
-                method: 'GET'
-            });
-        } catch (error) {
-            console.error('❌ Erreur récupération profil:', error);
-            throw error;
+    async getUserProfile({ forceRefresh = false } = {}) {
+        if (!forceRefresh && this._userProfileCache) {
+            return this._userProfileCache;
         }
+        if (!forceRefresh && this._userProfilePromise) {
+            return this._userProfilePromise;
+        }
+
+        this._userProfilePromise = (async () => {
+            try {
+                const profile = await this.authenticatedApiCall('/api/profile', {
+                    method: 'GET'
+                });
+                this._userProfileCache = profile;
+                return profile;
+            } catch (error) {
+                console.error('❌ Erreur récupération profil:', error);
+                throw error;
+            } finally {
+                this._userProfilePromise = null;
+            }
+        })();
+
+        return this._userProfilePromise;
     }
 
     /**

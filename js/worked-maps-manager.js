@@ -72,7 +72,7 @@ class WorkedMapsManager {
             const manifestUrl = `https://openapi.bnf.fr/iiif/presentation/v3/ark:/12148/${arkId}/manifest.json`;
             // console.log(`Chargement des métadonnées pour ${arkId}`);
             
-            const response = await fetch(manifestUrl);
+            const response = await window.GallicaIIIFAuth.fetch(manifestUrl);
             if (!response.ok) {
                 throw new Error(`Erreur HTTP: ${response.status}`);
             }
@@ -268,8 +268,8 @@ class WorkedMapsManager {
                     ${thumbnailUrl && !metadata.error ? `
                     <div class="fr-card__header">
                         <div class="fr-card__img">
-                            <img class="fr-responsive-img" 
-                                 src="${thumbnailUrl}" 
+                            <img class="fr-responsive-img"
+                                 data-gallica-src="${thumbnailUrl}"
                                  alt="${title}"
                                  onerror="this.parentElement.style.display='none';" />
                         </div>
@@ -341,7 +341,10 @@ class WorkedMapsManager {
             // Afficher toutes les cartes
             if (cardsHTML.length > 0) {
                 workedMapsContainer.innerHTML = cardsHTML.join('');
-                
+                if (window.GallicaIIIFAuth) {
+                    window.GallicaIIIFAuth.hydrateImages(workedMapsContainer);
+                }
+
                 // Afficher la section des cartes travaillées
                 const workedMapsSection = document.getElementById('worked-maps-section');
                 if (workedMapsSection) {

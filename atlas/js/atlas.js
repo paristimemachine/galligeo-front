@@ -208,7 +208,7 @@ async function fetchBnFMetadata(arkId) {
     const result = { title: null, date: null };
     try {
         const url = `https://openapi.bnf.fr/iiif/presentation/v3/ark:/12148/${arkId}/manifest.json`;
-        const response = await fetch(url);
+        const response = await window.GallicaIIIFAuth.fetch(url);
         if (!response.ok) return result;
 
         const data = await response.json();

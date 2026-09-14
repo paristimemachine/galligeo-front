@@ -40,8 +40,8 @@ async function fetchGallicaMetadataForMigration(arkId) {
     try {
         const manifestUrl = `https://openapi.bnf.fr/iiif/presentation/v3/ark:/12148/${arkId}/manifest.json`;
         
-        const response = await fetch(manifestUrl);
-        
+        const response = await window.GallicaIIIFAuth.fetch(manifestUrl);
+
         if (!response.ok) {
             throw new Error(`Erreur Gallica API: ${response.status}`);
         }

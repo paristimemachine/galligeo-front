@@ -205,6 +205,22 @@ function display_result(input_ark) {
   window.open('./georef/?ark=' + input_ark, '_blank').focus();
 }
 
+function copyTileUrl() {
+  const url = window.currentTileUrlTemplate;
+  if (!url) return;
+
+  navigator.clipboard.writeText(url).then(() => {
+    const btn = document.getElementById('btn_copy_tile_url');
+    if (!btn) return;
+    const originalText = btn.textContent;
+    btn.textContent = 'Lien copié !';
+    setTimeout(() => { btn.textContent = originalText; }, 2000);
+  }).catch((error) => {
+    console.error('Erreur lors de la copie du lien des tuiles:', error);
+    alert(url);
+  });
+}
+
 async function georef_api_post(url = urlToAPI, data = {}) {
   const headers = {
     "Content-Type": "application/json",
@@ -352,9 +368,15 @@ async function georef_api_post(url = urlToAPI, data = {}) {
     }).addTo(right_map);
 
     galligeoLayer.bringToFront();
-    
+
     window.currentGeoreferencedLayer = galligeoLayer;
-    
+
+    window.currentTileUrlTemplate = URL_TILE_SERVER + '12148/' + input_ark + '/{z}/{x}/{y}.png';
+    const btnCopyTileUrl = document.getElementById('btn_copy_tile_url');
+    if (btnCopyTileUrl) {
+      btnCopyTileUrl.style.display = '';
+    }
+
     if (window.opacityControl) {
       console.log("🎨 Affichage du contrôle de transparence");
       window.opacityControl.show();

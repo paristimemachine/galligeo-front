@@ -73,7 +73,7 @@ class CartoqueteManager {
             const manifestUrl = `https://openapi.bnf.fr/iiif/presentation/v3/ark:/12148/${arkId}/manifest.json`;
             // console.log(`Chargement des métadonnées pour ${arkId}`);
             
-            const response = await fetch(manifestUrl);
+            const response = await window.GallicaIIIFAuth.fetch(manifestUrl);
             if (!response.ok) {
                 throw new Error(`Erreur HTTP: ${response.status}`);
             }
@@ -223,8 +223,8 @@ class CartoqueteManager {
                     ${thumbnailUrl && !metadata.error ? `
                     <div class="fr-card__header">
                         <div class="fr-card__img">
-                            <img class="fr-responsive-img" 
-                                 src="${thumbnailUrl}" 
+                            <img class="fr-responsive-img"
+                                 data-gallica-src="${thumbnailUrl}"
                                  alt="${title}"
                                  onerror="this.parentElement.style.display='none';" />
                         </div>
@@ -303,7 +303,10 @@ class CartoqueteManager {
             // Afficher toutes les cartes
             if (cardsHTML.length > 0) {
                 favoritesContainer.innerHTML = cardsHTML.join('');
-                
+                if (window.GallicaIIIFAuth) {
+                    window.GallicaIIIFAuth.hydrateImages(favoritesContainer);
+                }
+
                 // Afficher la section des favoris Cartoquete
                 const favoritesSection = document.getElementById('cartoquete-favorites-section');
                 if (favoritesSection) {

@@ -646,6 +646,26 @@
         function generateGeoreferenceUrl(arkId) {
             return `https://app.ptm.huma-num.fr/galligeo/georef/?ark=${arkId}`;
         }
+
+        // Fonction pour générer l'URL XYZ du flux de tuiles
+        function generateTileUrl(arkId) {
+            return `https://tile.ptm.huma-num.fr/tiles/ark/12148/${arkId}/{z}/{x}/{y}.png`;
+        }
+
+        // Copie l'URL XYZ du flux de tuiles dans le presse-papiers
+        function copyTileUrl(event, arkId, buttonEl) {
+            if (event) event.stopPropagation();
+            const url = generateTileUrl(arkId);
+            navigator.clipboard.writeText(url).then(() => {
+                if (!buttonEl) return;
+                const originalHtml = buttonEl.innerHTML;
+                buttonEl.innerHTML = 'Lien copié !';
+                setTimeout(() => { buttonEl.innerHTML = originalHtml; }, 2000);
+            }).catch((error) => {
+                console.error('Erreur lors de la copie du lien des tuiles:', error);
+                alert(url);
+            });
+        }
         
         // Cache pour les métadonnées Gallica (éviter les requêtes en double)
         const gallicaMetadataCache = new Map();
@@ -723,8 +743,8 @@
                 await gallicaRateLimiter.throttle();
                 
                 const manifestUrl = `https://openapi.bnf.fr/iiif/presentation/v3/ark:/12148/${arkId}/manifest.json`;
-                
-                const response = await fetch(manifestUrl);
+
+                const response = await window.GallicaIIIFAuth.fetch(manifestUrl);
                 
                 if (!response.ok) {
                     // Vérifier si c'est une erreur 429 avec quota
@@ -859,17 +879,10 @@
                 console.log(`✓ ${mapData.ark} : métadonnées depuis la base`);
             } else {
                 // PRIORITÉ 2 : Récupérer depuis l'API Gallica (avec gestion quota)
+                // La sauvegarde en base est faite en un seul lot après le chargement
+                // complet de la galerie (voir pendingGallicaMetadata dans loadRealContent),
+                // pas ici carte par carte.
                 metadata = await fetchGallicaMetadata(mapData.ark);
-                
-                // Si récupération réussie, sauvegarder pour usage futur
-                if (metadata && metadata.title && !metadata.quotaExceeded && window.gallicaMetadataStorage) {
-                    window.gallicaMetadataStorage.saveMetadata(mapData.ark, {
-                        gallica_title: metadata.title,
-                        gallica_producer: metadata.attribution,
-                        gallica_date: metadata.date,
-                        metadata_fetched_at: new Date().toISOString()
-                    }).catch(err => console.warn(`⚠️ Sauvegarde métadonnées ${mapData.ark}:`, err));
-                }
             }
             
             const thumbnailUrl = mapData.gallica_thumbnail_url || generateGallicaThumbnail(mapData.ark);
@@ -899,6 +912,9 @@
                                 <p class="fr-card__desc">
                                     <a href="${georefUrl}" target="_blank" rel="noopener">Voir le géoréférencement</a>
                                 </p>
+                                <p class="fr-card__desc">
+                                    <button type="button" class="fr-btn fr-btn--tertiary fr-btn--sm fr-btn--icon-left fr-icon-clipboard-line" onclick="copyTileUrl(event, '${mapData.ark}', this)" title="Copier le lien XYZ du flux de tuiles">Copier le lien des tuiles</button>
+                                </p>
                                 <div class="fr-card__start">
                                     <ul class="fr-tags-group">
                                         <li><p class="fr-tag fr-tag--green-emeraude">Géoréférencée</p></li>
@@ -912,9 +928,10 @@
                         </div>
                         <div class="fr-card__header">
                             <div class="fr-card__img">
-                                <img class="fr-responsive-img" 
-                                     src="${thumbnailUrl}" 
+                                <img class="fr-responsive-img"
+                                     data-gallica-src="${thumbnailUrl}"
                                      alt="${metadata.title}"
+                                     decoding="async"
                                      onerror="this.parentElement.style.display='none';" />
                             </div>
                         </div>
@@ -1029,16 +1046,31 @@
                     }
                 }
                 
+                // Métadonnées Gallica nouvellement récupérées durant ce chargement,
+                // sauvegardées en une seule fois (1 GET + 1 POST) à la fin de la boucle
+                // au lieu d'un aller-retour par carte vers /app/galligeo/data.
+                const pendingGallicaMetadata = [];
+
                 // Charger les cartes séquentiellement pour respecter le rate limit
                 for (let i = 0; i < total; i++) {
                     const mapData = realMapsData[i];
-                    
+
                     // Si pas de métadonnées en base, pré-charger depuis Gallica UNE SEULE FOIS
                     if (!mapData.gallica_title) {
                         const metadata = await fetchGallicaMetadata(mapData.ark);
                         // Le cache est maintenant rempli, les deux fonctions suivantes vont l'utiliser
+                        if (metadata && metadata.title && !metadata.quotaExceeded) {
+                            pendingGallicaMetadata.push({
+                                ark: mapData.ark,
+                                gallica_title: metadata.title,
+                                gallica_producer: metadata.attribution,
+                                gallica_date: metadata.date,
+                                gallica_thumbnail_url: mapData.gallica_thumbnail_url || generateGallicaThumbnail(mapData.ark),
+                                metadata_fetched_at: new Date().toISOString()
+                            });
+                        }
                     }
-                    
+
                     // Générer carte et ligne en parallèle (utilisent le cache si appel Gallica fait ci-dessus)
                     const [cardHTML, rowHTML] = await Promise.all([
                         generateRealMapCard(mapData),
@@ -1056,6 +1088,9 @@
                         if (cardsGrid) {
                             cardsGrid.innerHTML = cardsHTML.join('');
                             applyCardSizeToDOM(getStoredCardSize());
+                            if (window.GallicaIIIFAuth) {
+                                window.GallicaIIIFAuth.hydrateImages(cardsGrid);
+                            }
                         }
                         if (tableBody) {
                             tableBody.innerHTML = rowsHTML.join('');
@@ -1063,7 +1098,15 @@
                         console.log(`✓ ${i + 1}/${total} cartes chargées`);
                     }
                 }
-                
+
+                // Sauvegarde groupée des métadonnées Gallica nouvellement récupérées
+                // (1 seul GET + 1 seul POST vers /app/galligeo/data, quel que soit le
+                // nombre de cartes enrichies durant ce chargement)
+                if (pendingGallicaMetadata.length > 0 && window.gallicaMetadataStorage) {
+                    window.gallicaMetadataStorage.saveMetadataBatch(pendingGallicaMetadata)
+                        .catch(err => console.warn('⚠️ Sauvegarde groupée des métadonnées Gallica:', err));
+                }
+
                 // Sauvegarder le contenu final
                 cardsHTMLContent = cardsGrid.innerHTML;
                 tableHTMLContent = tableBody.innerHTML;
@@ -1173,6 +1216,9 @@
                 const cardsGrid = document.getElementById('cards-grid');
                 if (cardsGrid && cardsHTMLContent) {
                     cardsGrid.innerHTML = cardsHTMLContent;
+                    if (window.GallicaIIIFAuth) {
+                        window.GallicaIIIFAuth.hydrateImages(cardsGrid);
+                    }
                 }
                 applyCardSizeToDOM(getStoredCardSize());
 
@@ -1317,6 +1363,9 @@
             const cardsGrid = document.getElementById('cards-grid');
             if (cardsGrid && cardsHTMLContent) {
                 cardsGrid.innerHTML = cardsHTMLContent;
+                if (window.GallicaIIIFAuth) {
+                    window.GallicaIIIFAuth.hydrateImages(cardsGrid);
+                }
             }
         };
         window.forceRestoreTable = function() {
@@ -1811,6 +1860,9 @@
             // Insérer dans le DOM
             cardsGrid.innerHTML = cardsHTML.join('');
             applyCardSizeToDOM(getStoredCardSize());
+            if (window.GallicaIIIFAuth) {
+                window.GallicaIIIFAuth.hydrateImages(cardsGrid);
+            }
 
             // Sauvegarder le contenu pour restauration lors du changement de vue
             cardsHTMLContent = cardsGrid.innerHTML;
@@ -2002,6 +2054,9 @@
             // ÉTAPE 1: Restaurer le contenu complet depuis les sauvegardes
             if (cardsHTMLContent && cardsHTMLContent.length > 100) {
                 cardsGrid.innerHTML = cardsHTMLContent;
+                if (window.GallicaIIIFAuth) {
+                    window.GallicaIIIFAuth.hydrateImages(cardsGrid);
+                }
             }
             
             if (tableHTMLContent && tableHTMLContent.length > 100) {
