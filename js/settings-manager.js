@@ -63,9 +63,10 @@ class SettingsManager {
             if (window.ptmAuth && window.ptmAuth.isAuthenticated()) {
                 try {
                     console.log('Utilisateur authentifié, chargement des paramètres depuis le serveur...');
-                    const cloudSettings = await window.ptmAuth.getGalligeoSettings();
-                    
-                    if (cloudSettings) {
+                    const cloudData = await window.ptmAuth.getGalligeoSettings();
+                    const cloudSettings = cloudData && cloudData.settings ? cloudData.settings : cloudData;
+
+                    if (cloudSettings && Object.keys(cloudSettings).length > 0) {
                         // Utiliser les paramètres du cloud
                         this.settings = cloudSettings;
                         this.saveLocalSettings(this.settings); // Synchroniser le localStorage
@@ -358,9 +359,10 @@ class SettingsManager {
             console.log('Rechargement des paramètres après connexion...');
             
             // Recharger les paramètres depuis le serveur
-            const cloudSettings = await window.ptmAuth.getGalligeoSettings();
-            
-            if (cloudSettings) {
+            const cloudData = await window.ptmAuth.getGalligeoSettings();
+            const cloudSettings = cloudData && cloudData.settings ? cloudData.settings : cloudData;
+
+            if (cloudSettings && Object.keys(cloudSettings).length > 0) {
                 // Merge avec les paramètres locaux existants
                 const currentSettings = this.loadLocalSettings();
                 const mergedSettings = { ...currentSettings, ...cloudSettings };

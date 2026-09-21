@@ -576,7 +576,7 @@ class ControlPointsBackup {
                     
                     // Restaurer le point gauche
                     if (pairData.leftPoint) {
-                        const leftMarker = this.createMarkerFromData(pairData.leftPoint, pairData.id, 'left');
+                        const leftMarker = this.createMarkerFromData(pairData.leftPoint, pairData.id, 'left', pair);
                         pair.leftPoint = {
                             lat: pairData.leftPoint.lat,
                             lng: pairData.leftPoint.lng,
@@ -591,7 +591,7 @@ class ControlPointsBackup {
 
                     // Restaurer le point droit
                     if (pairData.rightPoint) {
-                        const rightMarker = this.createMarkerFromData(pairData.rightPoint, pairData.id, 'right');
+                        const rightMarker = this.createMarkerFromData(pairData.rightPoint, pairData.id, 'right', pair);
                         pair.rightPoint = {
                             lat: pairData.rightPoint.lat,
                             lng: pairData.rightPoint.lng,
@@ -658,6 +658,11 @@ class ControlPointsBackup {
                 if (typeof window.updatePolygonData === 'function') {
                     window.updatePolygonData();
                 }
+
+                // Reconstruire les poignées d'édition si on est en mode emprise
+                if (window.inputMode === 'emprise' && typeof window.rebuildEmpriseVertexHandles === 'function') {
+                    window.rebuildEmpriseVertexHandles();
+                }
             } else {
                 // Pas d'emprise à restaurer
                 window.currentPolygon = null;
@@ -691,10 +696,10 @@ class ControlPointsBackup {
     /**
      * Crée un marqueur à partir des données sauvegardées
      */
-    createMarkerFromData(pointData, pointId, side) {
+    createMarkerFromData(pointData, pointId, side, pointPair) {
         const originalCoords = pointData.originalCoords || { lat: pointData.lat, lng: pointData.lng };
         const latLng = L.latLng(originalCoords.lat, originalCoords.lng);
-        
+
         const marker = L.marker(latLng, {
             icon: typeof customMarker === 'function' ? new customMarker() : new L.Icon.Default(),
             draggable: true
@@ -707,10 +712,13 @@ class ControlPointsBackup {
             className: "labels-points"
         });
 
-        // Configurer les événements de drag si la fonction existe
+        // Configurer les événements de drag si la fonction existe. La paire doit être
+        // celle passée par l'appelant (pas encore poussée dans window.pointPairs à ce
+        // stade de restoreBackup()) : y chercher pointId ici échouait systématiquement
+        // et retombait sur un objet orphelin, jamais mis à jour par dragend.
         if (typeof window.setupMarkerDragEvents === 'function') {
-            const pointPair = window.pointPairs.find(p => p.id === pointId) || { id: pointId };
-            window.setupMarkerDragEvents(marker, pointPair, side);
+            const resolvedPair = pointPair || window.pointPairs.find(p => p.id === pointId) || { id: pointId };
+            window.setupMarkerDragEvents(marker, resolvedPair, side);
         }
 
         return marker;

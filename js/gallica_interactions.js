@@ -1,3 +1,41 @@
+/**
+ * Parse une URL Ark Gallica et en extrait l'identifiant ark et, le cas échéant,
+ * le numéro de feuille/folio (f1, f2, ...).
+ *
+ * Formats acceptés, par ex. :
+ *  - https://gallica.bnf.fr/ark:/12148/btv1b550111195
+ *  - https://gallica.bnf.fr/ark:/12148/btv1b550111195/f2.item
+ *  - https://gallica.bnf.fr/ark:/12148/btv1b550111195.item
+ *  - ark:/12148/btv1b550111195/f2
+ *
+ * @param {string} input
+ * @returns {{arkId: string, folio: string, folioNum: number}|null}
+ */
+function parseGallicaArkUrl(input) {
+    if (!input) return null;
+
+    var match = input.trim().match(/ark:\/12148\/([a-zA-Z0-9]+)(?:[\/.]f(\d+))?/i);
+
+    if (!match) return null;
+
+    var arkId = match[1];
+    var folioNum = match[2] ? parseInt(match[2], 10) : 1;
+
+    return {
+        arkId: arkId,
+        folio: 'f' + folioNum,
+        folioNum: folioNum
+    };
+}
+
+/**
+ * Affiche/masque la barre de chargement indéterminée sous le champ de saisie Gallica.
+ */
+function setSearchInputLoading(isLoading) {
+    const bar = document.getElementById('search-784-loading-bar');
+    if (bar) bar.hidden = !isLoading;
+}
+
 async function load_ark_picture() {
         console.log("load ark picture");
 
@@ -12,24 +50,26 @@ async function load_ark_picture() {
             return;
         }
 
-        input_ark = input.substr(input.lastIndexOf("/")+1);
+        setSearchInputLoading(true);
 
-        var splitUrl = input.split('/');
-        
-        console.log(splitUrl);
-        console.log(splitUrl[5]);
-        if( splitUrl[5].length > 13) {
-            temp_string = splitUrl[5]
-            temp_string2 = temp_string.split(".");
-            console.log(' . ' +temp_string2);
-            input_ark = temp_string2[0];
-        }else{
-            input_ark = splitUrl[5];
+        // Parse une URL Gallica du type :
+        // https://gallica.bnf.fr/ark:/12148/btv1b550111195
+        // https://gallica.bnf.fr/ark:/12148/btv1b550111195/f2.item
+        // Un même arkid peut désigner un document à plusieurs feuilles (f1, f2, ...).
+        var parsed = parseGallicaArkUrl(input);
+
+        if (!parsed) {
+            document.querySelector('#search-784-input').value = '!!!! URL Ark Gallica invalide !!!!';
+            setSearchInputLoading(false);
+            return;
         }
 
+        input_ark = parsed.arkId;
         window.input_ark = input_ark;
+        window.input_folio = parsed.folio;
+        window.input_folio_num = parsed.folioNum;
 
-        console.log(input_ark)
+        console.log(input_ark, window.input_folio)
 
         try {
             const wait = await load_oai_metada(input_ark);
@@ -46,6 +86,7 @@ async function load_ark_picture() {
                     console.error('❌ Impossible de récupérer les dimensions de l\'image depuis les deux APIs');
                     alert('Erreur: Impossible de récupérer les dimensions de l\'image. Veuillez réessayer.');
                     map.fire('dataload');
+                    setSearchInputLoading(false);
                     return;
                 }
             }
@@ -62,13 +103,15 @@ async function load_ark_picture() {
             console.error('❌ Erreur lors du chargement des métadonnées:', error);
             document.querySelector('#search-784-input').value = "L'API de Gallica ne répond pas...";
             map.fire('dataload');
+            setSearchInputLoading(false);
             return;
         }
-        
+
         if (!document.height_image || !document.width_image) {
             console.error('❌ Les dimensions de l\'image n\'ont pas pu être récupérées');
             alert('Erreur: Impossible de récupérer les dimensions de l\'image. Veuillez réessayer.');
             map.fire('dataload');
+            setSearchInputLoading(false);
             return;
         }
         
@@ -94,7 +137,7 @@ async function load_ark_picture() {
         
         console.log(`📐 Dimensions scalées calculées: ${document.image_width_scaled} x ${document.image_height_scaled}`);
         
-        var string_url = 'https://openapi.bnf.fr/iiif/image/v3/ark:/12148/'+input_ark+'/f1/full/3200,/0/default.webp';
+        var string_url = 'https://openapi.bnf.fr/iiif/image/v3/ark:/12148/'+input_ark+'/'+window.input_folio+'/full/3200,/0/default.webp';
 
         console.log(string_url);
 
@@ -104,6 +147,7 @@ async function load_ark_picture() {
             console.error('❌ Erreur lors du chargement de l\'image IIIF authentifiée:', error);
             alert('Erreur: Impossible de récupérer l\'image depuis Gallica. Veuillez réessayer.');
             map.fire('dataload');
+            setSearchInputLoading(false);
             return;
         }
 
@@ -125,6 +169,7 @@ async function load_ark_picture() {
             imgoverlay.on('load',function(e){
                 console.log("dataload image overlay")
                 map.fire('dataload');
+                setSearchInputLoading(false);
             });
 
         }
@@ -162,7 +207,8 @@ async function load_ark_picture() {
  * Utilisé comme fallback si le manifest ne contient pas les dimensions
  */
 async function load_image_dimensions_from_iiif_image_api(input_ark) {
-    const infoUrl = `https://openapi.bnf.fr/iiif/image/v3/ark:/12148/${input_ark}/f1/info.json`;
+    const folio = window.input_folio || 'f1';
+    const infoUrl = `https://openapi.bnf.fr/iiif/image/v3/ark:/12148/${input_ark}/${folio}/info.json`;
     
     console.log('🔍 Tentative de récupération des dimensions depuis l\'API Image IIIF:', infoUrl);
     
@@ -214,11 +260,14 @@ async function load_oai_metada(input_ark) {
                 }
             }
 
-            // Récupérer le canvas (items[0] dans IIIF v3)
-            const canvas = data.items && data.items[0];
-            
-            console.log('📊 Manifest IIIF chargé');
-            console.log('📊 Canvas trouvé:', canvas ? 'OUI' : 'NON');
+            // Récupérer le canvas correspondant à la feuille demandée (f1 => items[0], f2 => items[1], ...)
+            // Un manifest IIIF v3 contient un item par feuille pour les documents multi-feuillets.
+            const folioNum = window.input_folio_num || 1;
+            const canvasIndex = Math.min(Math.max(folioNum - 1, 0), (data.items ? data.items.length - 1 : 0));
+            const canvas = data.items && data.items[canvasIndex];
+
+            console.log('📊 Manifest IIIF chargé, nombre de feuilles:', data.items ? data.items.length : 0);
+            console.log('📊 Canvas trouvé pour la feuille', window.input_folio, ':', canvas ? 'OUI' : 'NON');
             if (canvas) {
                 console.log('📊 Dimensions du canvas:', canvas.width, 'x', canvas.height);
             }

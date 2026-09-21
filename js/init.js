@@ -26,6 +26,8 @@ let first_gallimap_clicked = false;
 let count_points = 0;
 let randomColor;
 let input_ark = 0;
+window.input_folio = 'f1';
+window.input_folio_num = 1;
 let imageUrl;
 
 let ratio_wh_img = 0

@@ -400,9 +400,17 @@ nav.fr-nav .fr-grid-row {
     text-align: center;
 }
 
-/* Colonne Q (qualité des points de contrôle) : plus étroite, texte du badge
-   autorisé à passer à la ligne pour ne pas être tronqué dans une fr-table
-   fixed-layout. */
+/* Colonne ID : juste assez large pour l'identifiant, sans jamais passer à la
+   ligne. Colonne Q (qualité) : plus étroite, texte du badge autorisé à passer
+   à la ligne pour ne pas être tronqué dans une fr-table fixed-layout. Les
+   colonnes Source/Cible se partagent le reste à parts égales. */
+#table-control-points .fr-table th:first-child,
+#table-control-points .fr-table td:first-child {
+    width: 28px;
+    text-align: center;
+    white-space: nowrap;
+}
+
 #table-control-points .fr-table th:last-child,
 #table-control-points .fr-table td:last-child {
     width: 84px;
@@ -413,6 +421,117 @@ nav.fr-nav .fr-grid-row {
 #table-control-points [data-quality-cell] .fr-badge {
     white-space: normal;
     line-height: 1.2;
+}
+
+/* Cellules Source / Cible : la coordonnée (sur deux lignes, x/lat puis y/lng)
+   et le bouton de suppression sont posés côte à côte sans casser le rendu
+   tabulaire (pas de display:flex sur le td lui-même, qui décale les colonnes
+   sous fr-table--layout-fixed). */
+#table-control-points .fr-table td:nth-child(2),
+#table-control-points .fr-table td:nth-child(3) {
+    text-align: left;
+}
+
+#table-control-points .control-points-table-cell {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+}
+
+#table-control-points .control-points-table-coord {
+    font-variant-numeric: tabular-nums;
+    line-height: 1.3;
+}
+
+#table-control-points .control-points-table-coord span {
+    display: block;
+    white-space: nowrap;
+}
+
+/* Sélecteur rapide d'algorithme (contrôle qualité) : petit bouton flèche
+   accolé à droite du bouton "Géoréférencer" (reste un enfant direct de
+   #nav-tools4, aligné comme les autres boutons de la barre), qui déplie un
+   menu sous l'ensemble. */
+.quick-algo-dropdown {
+    position: relative;
+    display: inline-flex;
+}
+
+.quick-algo-dropdown #btn_georef {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.quick-algo-dropdown__toggle {
+    padding: 0 6px !important;
+    min-width: auto !important;
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+    border-left: 1px solid rgba(0, 0, 0, 0.16) !important;
+}
+
+.quick-algo-dropdown__toggle::before {
+    margin-right: 0 !important;
+}
+
+.quick-algo-dropdown__menu {
+    /* fixed + z-index très élevé : comme .user-dropdown-menu plus bas dans ce
+       fichier, un simple z-index en position absolute ne suffit pas à passer
+       au-dessus de la carte Leaflet (son .leaflet-container crée son propre
+       contexte d'empilement, indépendant de celui de ce menu). En position
+       fixed, le menu sort du flux de .quick-algo-dropdown : top/left sont
+       recalculés en JS (voir initQuickAlgoDropdown) à l'ouverture, à partir
+       de la position réelle du bouton toggle. */
+    position: fixed;
+    z-index: 99999 !important;
+    margin: 0;
+    padding: 4px 0;
+    list-style: none;
+    min-width: 220px;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.24);
+    border-radius: 4px;
+}
+
+.quick-algo-dropdown__item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 8px 12px;
+    border: none;
+    background: none;
+    font-size: 0.875rem;
+    cursor: pointer;
+}
+
+.quick-algo-dropdown__item:hover:not(:disabled) {
+    background-color: #f0f0f0;
+}
+
+.quick-algo-dropdown__item[aria-checked="true"] {
+    font-weight: 600;
+    color: #000091;
+}
+
+.quick-algo-dropdown__item:disabled {
+    color: #999;
+    cursor: not-allowed;
+}
+
+.quick-algo-dropdown__soon,
+.quick-algo-dropdown__hint {
+    font-size: 0.75rem;
+    font-style: italic;
+}
+
+.quick-algo-dropdown__hint {
+    display: block;
+    color: #999;
+}
+
+#table-control-points .point-delete-btn {
+    vertical-align: middle;
 }
 
 /* Ligne avec paire complète */
@@ -1012,6 +1131,12 @@ nav.fr-nav .fr-grid-row {
   filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4));
 }
 
+/* Poignées d'édition de l'emprise (sommets déplaçables + milieux de segment) */
+.leaflet-interactive:hover {
+  filter: brightness(1.1);
+}
+
+
 /* Styles pour les cartes en mode saisie */
 .leaflet-container.input-mode-points {
   cursor: crosshair !important;
@@ -1199,4 +1324,29 @@ nav.fr-nav .fr-grid-row {
   border: none;
   cursor: pointer;
   font: inherit;
+}
+
+/* ===================================================================== */
+
+/* Barre de chargement indéterminée sous le champ de saisie Gallica,
+   affichée pendant la récupération du manifest/de l'image (load_ark_picture). */
+.gallica-loading-bar {
+  width: 100%;
+  height: 3px;
+  margin-top: 4px;
+  background-color: #e5e5e5;
+  overflow: hidden;
+  border-radius: 2px;
+}
+
+.gallica-loading-bar-inner {
+  width: 40%;
+  height: 100%;
+  background-color: #000091;
+  animation: gallica-loading-bar-slide 1.2s ease-in-out infinite;
+}
+
+@keyframes gallica-loading-bar-slide {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(350%); }
 }

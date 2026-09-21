@@ -40,7 +40,7 @@
             fallback: '/galligeo/node_modules/leaflet/dist/leaflet.css',
             essential: true
         },
-        'https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css': {
+        'https://unpkg.com/leaflet-control-geocoder@2.4.0/dist/Control.Geocoder.css': {
             type: 'css',
             fallback: '/galligeo/css/Control.Geocoder.css',
             essential: false
@@ -58,7 +58,7 @@
             essential: true,
             globalCheck: () => window.L && typeof window.L.map === 'function'
         },
-        'https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js': {
+        'https://unpkg.com/leaflet-control-geocoder@2.4.0/dist/Control.Geocoder.js': {
             type: 'js',
             fallback: null, // Pas de fallback local
             essential: false,

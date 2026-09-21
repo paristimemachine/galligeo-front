@@ -100,33 +100,262 @@ function setMapCursors(cursor) {
 
 /**
  * Désactive l'édition de l'emprise pour éviter les conflits avec la saisie de points
- * CORRECTION Issue #1: Cette fonction résout le problème où le curseur de saisie de points 
+ * CORRECTION Issue #1: Cette fonction résout le problème où le curseur de saisie de points
  * était remplacé par une main de déplacement quand une emprise recouvrait la zone de clic.
  * En mode saisie de points, l'emprise n'est plus éditable pour donner priorité à la saisie.
  */
 function disableEmpriseEditing() {
-    if (window.currentPolygon && window.currentPolygon.layer && window.currentPolygon.layer.editing) {
-        try {
-            window.currentPolygon.layer.editing.disable();
-            if (window.inputMode === 'points' && typeof left_map !== 'undefined') {
-                left_map.getContainer().style.cursor = 'crosshair';
-            }
-        } catch (error) {
-            console.warn('Erreur lors de la désactivation de l\'édition d\'emprise:', error);
-        }
+    removeEmpriseVertexHandles();
+    if (window.inputMode === 'points' && typeof left_map !== 'undefined') {
+        left_map.getContainer().style.cursor = 'crosshair';
     }
 }
 
 /**
- * Active l'édition de l'emprise uniquement en mode emprise
+ * Active l'édition de l'emprise uniquement en mode emprise :
+ * affiche les poignées de sommet (déplacer/supprimer) et les poignées
+ * de milieu de segment (ajouter un point entre deux sommets existants).
  */
 function enableEmpriseEditing() {
-    if (window.currentPolygon && window.currentPolygon.layer && window.currentPolygon.layer.editing) {
-        try {
-            window.currentPolygon.layer.editing.enable();
-        } catch (error) {
-            console.warn('Erreur lors de l\'activation de l\'édition d\'emprise:', error);
+    if (window.currentPolygon && window.currentPolygon.layer) {
+        rebuildEmpriseVertexHandles();
+    }
+}
+
+/**
+ * Supprime toutes les poignées d'édition de l'emprise (sommets + milieux de segment)
+ */
+function removeEmpriseVertexHandles() {
+    if (!window.currentPolygon) return;
+
+    if (window.currentPolygon.vertexMarkers) {
+        window.currentPolygon.vertexMarkers.forEach(marker => {
+            layer_img_emprise_left.removeLayer(marker);
+        });
+    }
+    window.currentPolygon.vertexMarkers = [];
+
+    if (window.currentPolygon.midpointMarkers) {
+        window.currentPolygon.midpointMarkers.forEach(marker => {
+            layer_img_emprise_left.removeLayer(marker);
+        });
+    }
+    window.currentPolygon.midpointMarkers = [];
+}
+
+/**
+ * (Re)construit les poignées de sommet et de milieu de segment à partir de
+ * window.currentPolygon.points. Appelé après chaque ajout/suppression/déplacement
+ * de point pour garder les poignées synchronisées avec la géométrie.
+ */
+function rebuildEmpriseVertexHandles() {
+    if (!window.currentPolygon || !window.currentPolygon.layer) return;
+    if (window.inputMode !== 'emprise' || window.isInputLocked) return;
+
+    removeEmpriseVertexHandles();
+
+    const points = window.currentPolygon.points;
+    window.currentPolygon.vertexMarkers = points.map((point, index) => createEmpriseVertexMarker(point, index));
+
+    // Poignées de milieu de segment, une entre chaque sommet consécutif (polygone fermé)
+    window.currentPolygon.midpointMarkers = points.map((point, index) => {
+        const nextPoint = points[(index + 1) % points.length];
+        const midLatLng = L.latLng(
+            (point.lat + nextPoint.lat) / 2,
+            (point.lng + nextPoint.lng) / 2
+        );
+        return createEmpriseMidpointMarker(midLatLng, index);
+    });
+}
+
+/**
+ * Crée une poignée de sommet déplaçable/supprimable pour l'emprise.
+ * Modèle repris de setupMarkerDragEvents() (déplacement des points de contrôle).
+ */
+function createEmpriseVertexMarker(latLng, index) {
+    const marker = L.circleMarker(latLng, {
+        radius: 6,
+        color: '#ffffff',
+        weight: 2,
+        fillColor: POLYGON_STROKE_COLOR,
+        fillOpacity: 1,
+        pane: 'markerPane',
+        interactive: true,
+        draggable: true
+    });
+
+    // L.circleMarker n'est pas draggable nativement, contrairement à L.Marker : drag maison ci-dessous.
+    makeCircleMarkerDraggable(marker);
+
+    marker.on('mouseover', function() {
+        if (!window.isInputLocked) {
+            const el = marker.getElement();
+            if (el) el.style.cursor = 'move';
         }
+    });
+
+    marker.on('contextmenu', function(e) {
+        L.DomEvent.stopPropagation(e);
+        L.DomEvent.preventDefault(e);
+        removeEmpriseVertex(marker._vertexIndex);
+    });
+
+    marker._vertexIndex = index;
+    layer_img_emprise_left.addLayer(marker);
+    return marker;
+}
+
+/**
+ * Crée une poignée semi-transparente au milieu d'un segment : un clic dessus
+ * insère un nouveau sommet à cet endroit, entre les deux points du segment.
+ */
+function createEmpriseMidpointMarker(latLng, segmentIndex) {
+    const marker = L.circleMarker(latLng, {
+        radius: 5,
+        color: POLYGON_STROKE_COLOR,
+        weight: 2,
+        fillColor: '#ffffff',
+        fillOpacity: 0.9,
+        opacity: 0.6,
+        interactive: true
+    });
+
+    marker.on('mouseover', function() {
+        if (!window.isInputLocked) {
+            const el = marker.getElement();
+            if (el) el.style.cursor = 'copy';
+            marker.setStyle({ radius: 7, opacity: 1 });
+        }
+    });
+    marker.on('mouseout', function() {
+        marker.setStyle({ radius: 5, opacity: 0.6 });
+    });
+
+    marker.on('click', function(e) {
+        L.DomEvent.stopPropagation(e);
+        insertEmpriseVertexAfter(marker._segmentIndex, latLng);
+    });
+
+    marker._segmentIndex = segmentIndex;
+    layer_img_emprise_left.addLayer(marker);
+    return marker;
+}
+
+/**
+ * Ajoute le support du drag natif Leaflet à un L.CircleMarker (qui n'est pas
+ * draggable nativement, contrairement à L.Marker). Utilise L.Handler.MarkerDrag
+ * en le faisant croire à un marker classique via son icône DOM.
+ */
+function makeCircleMarkerDraggable(circleMarker) {
+    let dragging = false;
+
+    circleMarker.on('mousedown', function(e) {
+        if (window.isInputLocked) return;
+        dragging = true;
+        window.isDragging = true;
+
+        L.DomEvent.stopPropagation(e.originalEvent);
+        L.DomEvent.preventDefault(e.originalEvent);
+        left_map.dragging.disable();
+
+        const el = circleMarker.getElement();
+        if (el) el.style.cursor = 'move';
+
+        circleMarker.fire('dragstart');
+
+        function onMouseMove(moveEvt) {
+            if (!dragging) return;
+            const containerPoint = left_map.mouseEventToContainerPoint(moveEvt);
+            const newLatLng = left_map.containerPointToLatLng(containerPoint);
+            circleMarker.setLatLng(newLatLng);
+            circleMarker.fire('drag', { latlng: newLatLng });
+        }
+
+        function onMouseUp(upEvt) {
+            if (!dragging) return;
+            dragging = false;
+            window.isDragging = false;
+            left_map.dragging.enable();
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+            circleMarker.fire('dragend', { latlng: circleMarker.getLatLng() });
+        }
+
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+    });
+
+    circleMarker.on('dragend', function(e) {
+        const index = circleMarker._vertexIndex;
+        if (typeof index !== 'number' || !window.currentPolygon) return;
+
+        window.currentPolygon.points[index] = e.latlng;
+        redrawEmprisePolygon();
+        updatePolygonData();
+        rebuildEmpriseVertexHandles();
+
+        if (window.controlPointsBackup && typeof window.controlPointsBackup.saveCurrentStateIfChanged === 'function') {
+            window.controlPointsBackup.markUnsavedChanges();
+            setTimeout(() => {
+                window.controlPointsBackup.saveCurrentStateIfChanged('emprise-vertex-moved');
+            }, 100);
+        }
+    });
+}
+
+/**
+ * Redessine le polygone d'emprise à partir de window.currentPolygon.points
+ * (utilisé après déplacement/ajout/suppression d'un sommet).
+ */
+function redrawEmprisePolygon() {
+    if (!window.currentPolygon || !window.currentPolygon.layer) return;
+    window.currentPolygon.layer.setLatLngs(window.currentPolygon.points);
+}
+
+/**
+ * Supprime un sommet de l'emprise (clic droit sur une poignée de sommet).
+ * Refuse si le polygone ne peut pas descendre sous 3 points.
+ */
+function removeEmpriseVertex(index) {
+    if (window.isInputLocked || !window.currentPolygon) return;
+    if (typeof index !== 'number') return;
+
+    if (window.currentPolygon.points.length <= 3) {
+        alert('Un polygone d\'emprise doit conserver au moins 3 points.');
+        return;
+    }
+
+    window.currentPolygon.points.splice(index, 1);
+    redrawEmprisePolygon();
+    updatePolygonData();
+    rebuildEmpriseVertexHandles();
+
+    if (window.controlPointsBackup && typeof window.controlPointsBackup.saveCurrentStateIfChanged === 'function') {
+        window.controlPointsBackup.markUnsavedChanges();
+        setTimeout(() => {
+            window.controlPointsBackup.saveCurrentStateIfChanged('emprise-vertex-removed');
+        }, 100);
+    }
+}
+
+/**
+ * Insère un nouveau sommet entre le point à segmentIndex et le suivant
+ * (clic sur une poignée de milieu de segment).
+ */
+function insertEmpriseVertexAfter(segmentIndex, latLng) {
+    if (window.isInputLocked || !window.currentPolygon) return;
+    if (typeof segmentIndex !== 'number') return;
+
+    window.currentPolygon.points.splice(segmentIndex + 1, 0, latLng);
+    redrawEmprisePolygon();
+    updatePolygonData();
+    rebuildEmpriseVertexHandles();
+
+    if (window.controlPointsBackup && typeof window.controlPointsBackup.saveCurrentStateIfChanged === 'function') {
+        window.controlPointsBackup.markUnsavedChanges();
+        setTimeout(() => {
+            window.controlPointsBackup.saveCurrentStateIfChanged('emprise-vertex-added');
+        }, 100);
     }
 }
 
@@ -428,26 +657,15 @@ function handleEmpriseClick(event, map) {
         });
         
         layer_img_emprise_left.addLayer(window.currentPolygon.layer);
-        
-        // Rendre le polygone éditable seulement si on est en mode emprise
-        if (window.inputMode === 'emprise' && window.currentPolygon.layer.editing) {
-            window.currentPolygon.layer.editing.enable();
-            
-            // Écouter les événements d'édition pour déclencher la sauvegarde
-            window.currentPolygon.layer.on('edit', function() {
-                syncPolygonDataFromLayer();
-            });
-            
-            // Écouter aussi les événements de fin d'édition
-            window.currentPolygon.layer.on('editable:vertex:dragend', function() {
-                setTimeout(() => {
-                    syncPolygonDataFromLayer();
-                }, 100); // Petit délai pour laisser la géométrie se mettre à jour
-            });
-        }
-        
+
         // Convertir pour les données
         updatePolygonData();
+
+        // Rafraîchir les poignées d'édition (sommets + milieux de segment)
+        // tant que l'utilisateur continue à cliquer pour ajouter des points
+        if (window.inputMode === 'emprise') {
+            rebuildEmpriseVertexHandles();
+        }
         
         // Déclencher une sauvegarde automatique après modification de l'emprise
         if (window.controlPointsBackup && typeof window.controlPointsBackup.saveCurrentStateIfChanged === 'function') {
@@ -570,52 +788,52 @@ function updateControlPointsTable() {
         // Ajouter les paires de points
         window.pointPairs.forEach(pair => {
             const row = document.createElement('tr');
-            
-            const leftCell = document.createElement('td');
-            const rightCell = document.createElement('td');
+
+            const idCell = document.createElement('td');
+            idCell.innerHTML = `<strong>${pair.id}</strong>`;
+
+            const sourceCell = document.createElement('td');
+            const targetCell = document.createElement('td');
             const qualityCell = document.createElement('td');
             qualityCell.setAttribute('data-quality-cell', pair.id);
-            
+
+            const removeButton = (side) => `
+                <button type="button"
+                        class="fr-btn fr-btn--sm fr-btn--tertiary-no-outline fr-btn--icon-left fr-icon-close-circle-fill point-delete-btn"
+                        onclick="removeIndividualPoint(${pair.id}, '${side}')"
+                        title="Supprimer ce point">
+                </button>
+            `;
+
             if (pair.leftPoint) {
-                leftCell.innerHTML = `
-                    <div class="point-info">
-                        <strong>${pair.id}</strong><br>
-                        <small>Lat: ${pair.leftPoint.lat.toFixed(6)}<br>
-                        Lng: ${pair.leftPoint.lng.toFixed(6)}</small>
-                        <button class="fr-btn fr-btn--sm fr-btn--tertiary-no-outline fr-btn--icon-left fr-icon-close-circle-fill fr-mt-1v" 
-                                onclick="removeIndividualPoint(${pair.id}, 'left')" 
-                                title="Supprimer ce point"
-                                style="color: #ce0500;">
-                        </button>
+                sourceCell.innerHTML = `
+                    <div class="control-points-table-cell">
+                        <span class="control-points-table-coord"><span>${pair.leftPoint.lat.toFixed(4)}</span><span>${pair.leftPoint.lng.toFixed(4)}</span></span>
+                        ${removeButton('left')}
                     </div>
                 `;
             } else {
-                leftCell.innerHTML = `<em class="text-muted">Point ${pair.id} manquant</em>`;
+                sourceCell.innerHTML = `<em class="text-muted">manquant</em>`;
             }
-            
+
             if (pair.rightPoint) {
-                rightCell.innerHTML = `
-                    <div class="point-info">
-                        <strong>${pair.id}</strong><br>
-                        <small>Lat: ${pair.rightPoint.lat.toFixed(6)}<br>
-                        Lng: ${pair.rightPoint.lng.toFixed(6)}</small>
-                        <button class="fr-btn fr-btn--sm fr-btn--tertiary-no-outline fr-btn--icon-left fr-icon-close-circle-fill fr-mt-1v" 
-                                onclick="removeIndividualPoint(${pair.id}, 'right')" 
-                                title="Supprimer ce point"
-                                style="color: #ce0500;">
-                        </button>
+                targetCell.innerHTML = `
+                    <div class="control-points-table-cell">
+                        <span class="control-points-table-coord"><span>${pair.rightPoint.lat.toFixed(4)}</span><span>${pair.rightPoint.lng.toFixed(4)}</span></span>
+                        ${removeButton('right')}
                     </div>
                 `;
             } else {
-                rightCell.innerHTML = `<em class="text-muted">Point ${pair.id} manquant</em>`;
+                targetCell.innerHTML = `<em class="text-muted">manquant</em>`;
             }
-            
+
             qualityCell.innerHTML = window.controlPointsQuality
                 ? window.controlPointsQuality.renderBadge(pair)
                 : '';
 
-            row.appendChild(leftCell);
-            row.appendChild(rightCell);
+            row.appendChild(idCell);
+            row.appendChild(sourceCell);
+            row.appendChild(targetCell);
             row.appendChild(qualityCell);
             tableBody.appendChild(row);
         });
@@ -1042,6 +1260,7 @@ function clearEmprise() {
     }
 
     if (window.currentPolygon) {
+        removeEmpriseVertexHandles();
         if (window.currentPolygon.layer) {
             layer_img_emprise_left.removeLayer(window.currentPolygon.layer);
         }
@@ -1050,13 +1269,13 @@ function clearEmprise() {
         }
         window.currentPolygon = null;
     }
-    
+
     // Vider aussi la structure de données de l'emprise
     window.list_points_polygon_crop = [];
-    
+
     list_points_polygon_crop = [];
     updateUIForInputMode();
-    
+
     // Déclencher une sauvegarde automatique après suppression de l'emprise
     if (window.controlPointsBackup && typeof window.controlPointsBackup.saveCurrentStateIfChanged === 'function') {
         window.controlPointsBackup.markUnsavedChanges();
@@ -1071,6 +1290,9 @@ function finalizeEmprise() {
     if (window.currentPolygon && window.currentPolygon.points.length >= 3) {
         // Forcer la fermeture du polygone
         updatePolygonData();
+        if (window.inputMode === 'emprise') {
+            rebuildEmpriseVertexHandles();
+        }
         return true;
     }
     return false;
@@ -1121,5 +1343,7 @@ window.exportGeoreferencingData = exportGeoreferencingData;
 window.removeControlPoint = removeControlPoint;
 window.validatePointParity = validatePointParity;
 window.finalizeEmprise = finalizeEmprise;
+window.rebuildEmpriseVertexHandles = rebuildEmpriseVertexHandles;
+window.updatePolygonData = updatePolygonData;
 
 console.log('Système de saisie avancé chargé et prêt');

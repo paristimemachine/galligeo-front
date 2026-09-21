@@ -8,6 +8,8 @@ old/
 old/*
 backups/
 backups/*
+dead_code/
+dead_code/*
 
 # Fichiers de version générés automatiquement
 version.json
@@ -68,6 +70,12 @@ tests/js/ptm-auth-test.js
 tests/js/test-deposit-button.js
 tests/js/test-runner.js
 tests/js/test-worked-maps.js
+tests/js/fix-empty-status-guide.js
+tests/js/georef-workflow-tester.js
+tests/js/migrate-gallica-metadata.js
+tests/js/status-fixer.js
+tests/js/test-nakala-deposit-status.js
+tests/js/test-status-validation.js
 
 tests/mock/mock-api-server-complet.js
 tests/mock/mock-api-server.js

@@ -128,7 +128,12 @@ function click_georef(image, points, polygon, input_ark) {
 
     setGeoreferencingButtonState('loading');
 
-    var urlToRessource = base_url + input_ark;
+    // Le backend n'est pas encore prêt à traiter des documents à plusieurs feuilles :
+    // on anticipe en envoyant à la fois l'URL Gallica complète (avec /f{n}.item si
+    // la feuille n'est pas la première) et un champ "folio" explicite et redondant,
+    // pour qu'il puisse utiliser l'un ou l'autre selon ce qui sera implémenté.
+    var folio = window.input_folio || 'f1';
+    var urlToRessource = base_url + input_ark + '/' + folio + '.item';
 
     right_map.fire('dataloading');
 
@@ -162,8 +167,9 @@ function click_georef(image, points, polygon, input_ark) {
         }
     }
 
-   georef_api_post(urlToAPI, { 
+   georef_api_post(urlToAPI, {
      "gallica_ark_url": urlToRessource,
+     "folio": folio,
      "image_width": imageWidth,
      "image_height": imageHeight,
      "gcp_pairs": points,
@@ -202,7 +208,8 @@ Vos points de contrôle resteront sauvegardés et seront transférés lors de vo
 }
 
 function display_result(input_ark) {
-  window.open('./georef/?ark=' + input_ark, '_blank').focus();
+  var folio = window.input_folio || 'f1';
+  window.open('./georef/?ark=' + input_ark + '&f=' + folio, '_blank').focus();
 }
 
 function copyTileUrl() {

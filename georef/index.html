@@ -136,6 +136,11 @@
   const URL_TILE_SERVER_SUB = "https://{s}.tile.ptm.huma-num.fr/tiles/ark/";
   const params = new URLSearchParams(document.location.search);
   const ark = params.get("ark");
+  // Numéro de feuille (f1, f2, ...) pour les documents Gallica à plusieurs feuillets.
+  // Le serveur de tuiles ne sait pas encore distinguer les feuilles d'un même ark ;
+  // on lit et propage déjà le paramètre pour ne pas avoir à retoucher le front
+  // une fois que le backend saura l'exploiter.
+  const folio = params.get("f") || "f1";
 
   const url_info = URL_TILE_SERVER + "info_tiles/12148/" + ark;
  
@@ -191,7 +196,7 @@
 
   function renderMapMetadata(metadata) {
     const container = document.getElementById("map-metadata");
-    const gallicaUrl = `https://gallica.bnf.fr/ark:/12148/${ark}`;
+    const gallicaUrl = `https://gallica.bnf.fr/ark:/12148/${ark}/${folio}.item`;
     const title = (metadata && metadata.title) || ark;
     const parts = metadata ? [metadata.producer, metadata.date].filter(Boolean).join(" — ") : "";
 

@@ -43,11 +43,11 @@
     <!-- Leaflet Draw désactivé - non utilisé dans cette application -->
     <!-- <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw-src.css" /> -->
     <!-- <link rel="stylesheet" href="https://unpkg.com/leaflet-geosearch@3.1.0/dist/geosearch.css"/> -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder@2.4.0/dist/Control.Geocoder.css" />
     <link rel="stylesheet" href="https://rawgithub.com/ebrelsford/Leaflet.loading/master/src/Control.Loading.css" />
 
     <!-- internal -->
-    <link rel="stylesheet" href="css/main.css"/>
+    <link rel="stylesheet" href="css/main.css?v=20260921c"/>
     <link rel="stylesheet" href="css/map.css"/>
 
     <!-- js -->
@@ -56,7 +56,7 @@
     <script src="https://unpkg.com/leaflet-geosearch@3.1.0/dist/bundle.min.js"></script>
     <!-- Leaflet Draw désactivé - non utilisé dans cette application -->
     <!-- <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw-src.js"></script> -->
-    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+    <script src="https://unpkg.com/leaflet-control-geocoder@2.4.0/dist/Control.Geocoder.js"></script>
     <script src="https://rawgithub.com/ebrelsford/Leaflet.loading/master/src/Control.Loading.js"></script>
     <!-- Leaflet Rotate Plugin -->
     <script src="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate-src.js"></script>
@@ -204,7 +204,8 @@
                                 (1) Charger une image depuis Gallica
                             </label>
                             </td><td>
-                                <input class="fr-input" placeholder="Entrer une URL Gallica Ark de type : https://gallica.bnf.fr/ark:/12148/btv1b106799487" type="search" id="search-784-input" name="search-784-input"> <!--list="sites_list"> -->
+                                <input class="fr-input" placeholder="Entrer une URL Gallica Ark de type : https://gallica.bnf.fr/ark:/12148/btv1b106799487 (ou .../f2.item pour une feuille précise)" type="search" id="search-784-input" name="search-784-input"> <!--list="sites_list"> -->
+                                <div id="search-784-loading-bar" class="gallica-loading-bar" hidden><div class="gallica-loading-bar-inner"></div></div>
                                     </td><td>
                                 <button class="fr-btn" title="Charger une image depuis Gallica" onclick='load_ark_picture()'>
                                 </button>
@@ -225,7 +226,7 @@
                 </div>
                 <div class="fr-toggle" title="Synchronise le centrage et le zoom des deux cartes à partir des points de contrôle communs (nécessite au moins 2 points saisis de part et d'autre)">
                     <input type="checkbox" class="fr-toggle__input" id="toggle-sync-views" disabled aria-describedby="toggle-sync-views-messages">
-                    <label class="fr-toggle__label" for="toggle-sync-views" data-fr-checked-label="Vues synchronisées" data-fr-unchecked-label="Vues indépendantes"></label>
+                    <label class="fr-toggle__label" for="toggle-sync-views" data-fr-checked-label="Syncho" data-fr-unchecked-label="Libre"></label>
                     <div class="fr-messages-group" id="toggle-sync-views-messages" aria-live="polite">
                     </div>
                 </div>
@@ -251,9 +252,25 @@
                 </fieldset>
                 </fieldset>
 
-                <button class="fr-btn fr-btn--secondary" id="btn_georef" disabled onclick="click_georef('', list_georef_points, list_points_polygon_crop, input_ark)"> 
-                    Géoréférencer
-                </button>
+                <div class="quick-algo-dropdown" id="quick-algo-dropdown">
+                    <button class="fr-btn fr-btn--secondary" id="btn_georef" disabled onclick="click_georef('', list_georef_points, list_points_polygon_crop, input_ark)">
+                        Géoréférencer
+                    </button><button type="button"
+                            class="fr-btn fr-btn--secondary fr-btn--icon-right fr-icon-arrow-down-s-line quick-algo-dropdown__toggle"
+                            id="quick-algo-toggle"
+                            aria-expanded="false"
+                            aria-controls="quick-algo-menu"
+                            aria-label="Choisir l'algorithme utilisé pour le contrôle qualité des points"
+                            title="Algorithme utilisé pour le contrôle qualité des points (colonne Q). N'affecte pas le géoréférencement, déclenché uniquement par le bouton Géoréférencer.">
+                    </button>
+                    <ul class="quick-algo-dropdown__menu" id="quick-algo-menu" role="menu" hidden>
+                        <li role="none"><button type="button" class="quick-algo-dropdown__item" role="menuitemradio" data-algo="polynomial2" data-min-gcps="6">Polynomial (ordre 2) <span class="quick-algo-dropdown__hint"></span></button></li>
+                        <li role="none"><button type="button" class="quick-algo-dropdown__item" role="menuitemradio" data-algo="polynomial3" data-min-gcps="10">Polynomial (ordre 3) <span class="quick-algo-dropdown__hint"></span></button></li>
+                        <li role="none"><button type="button" class="quick-algo-dropdown__item" role="menuitemradio" data-algo="helmert" data-min-gcps="2">Helmert <span class="quick-algo-dropdown__hint"></span></button></li>
+                        <li role="none"><button type="button" class="quick-algo-dropdown__item" role="menuitemradio" data-algo="affine" data-min-gcps="3" data-unavailable="true" title="Bientôt disponible">Affine <span class="quick-algo-dropdown__soon">(bientôt disponible)</span></button></li>
+                        <li role="none"><button type="button" class="quick-algo-dropdown__item" role="menuitemradio" data-algo="tps" data-min-gcps="3" data-unavailable="true" title="Bientôt disponible">Thin Plate Spline <span class="quick-algo-dropdown__soon">(bientôt disponible)</span></button></li>
+                    </ul>
+                </div>
 
                 <button class="fr-btn fr-btn--secondary" id="btn_display" disabled onclick="display_result(input_ark)">
                     Résultat
@@ -804,8 +821,9 @@
                                 <!-- <caption>Résumé du tableau (accessibilité)</caption> -->
                                 <thead>
                                     <tr>
-                                        <th scope="col">Point source</th>
-                                        <th scope="col">Point cible</th>
+                                        <th scope="col">ID</th>
+                                        <th scope="col">Image source (x, y)</th>
+                                        <th scope="col">Carte cible (lat, lng)</th>
                                         <th scope="col" title="Qualité du géoréférencement (indicateur d'erreur résiduelle)">Q</th>
                                     </tr>
                                 </thead>
@@ -814,6 +832,8 @@
                                 </tbody>
                             </table>
                         </div>
+
+                        <div id="control-points-quality-summary" class="fr-mt-2w" aria-live="polite" hidden></div>
 
                         <div class="fr-toggle fr-toggle--sm fr-mt-2w">
                             <input type="checkbox" class="fr-toggle__input" id="toggle-show-error-vectors">
@@ -1107,17 +1127,17 @@ function openExternalLink(url) {
     <!-- internal -->
     <script src="js/version.js"></script>
     <script src="js/clonelayers.js"></script>
-    <script src="js/init.js"></script>
-    <script src="js/control-points-quality.js"></script>
+    <script src="js/init.js?v=20260917"></script>
+    <script src="js/control-points-quality.js?v=20260921c"></script>
     <!-- <script src="js/simple-layout.js"></script> -->
     <script src="js/advanced-input-system.js"></script>
     <script src="js/map_interactions.js"></script>
     <script src="js/view-sync.js"></script>
-    <script src="js/front_interactions.js?v=20260503"></script>
+    <script src="js/front_interactions.js?v=20260917"></script>
     <script src="js/api_interactions.js"></script>
     <script src="js/gallica-iiif-auth.js"></script>
-    <script src="js/gallica_interactions.js"></script>
-    <script src="js/getParamAtStartup.js"></script>
+    <script src="js/gallica_interactions.js?v=20260917"></script>
+    <script src="js/getParamAtStartup.js?v=20260917"></script>
     <!-- Système d'authentification PTM (avec support JWT anonyme) -->
     <script src="js/ptm-auth.js"></script>
     <script src="js/form-generator.js"></script>
@@ -1136,7 +1156,7 @@ function openExternalLink(url) {
     <script src="js/diagnose-georeferenced-status.js"></script>
     <script src="js/nakala-config.js"></script>
     <script src="js/nakala_test_deposit.js?v=20251002"></script>
-    <!-- Scripts de debug disponibles si nécessaires: debug-status-update.js, status-fixer.js, fix-empty-status-guide.js -->
+    <!-- Scripts de debug disponibles dans tests/js/ si nécessaires: debug-status-update.js, status-fixer.js, fix-empty-status-guide.js -->
 
     <script>
     // =======================================================
@@ -1469,6 +1489,15 @@ function openExternalLink(url) {
         setupModalObserver();
         setupSettingsListener();
         setupBackupListeners();
+
+        // Charger les réglages (localStorage, puis cloud si connecté) dès le
+        // départ plutôt qu'à la première ouverture de la modale Paramètres :
+        // getDefaultAlgorithm() (utilisé par le sélecteur qualité rapide et
+        // le contrôle qualité des points) doit refléter la vraie valeur
+        // sauvegardée dès le chargement de la page, pas seulement une fois
+        // la modale visitée. Le conteneur du formulaire existe déjà dans le
+        // DOM (dans la modale fermée), donc l'initialiser ne l'affiche pas.
+        initSettingsForm();
         
         const loginButton = document.getElementById('login-button-redirect');
         if (loginButton) {

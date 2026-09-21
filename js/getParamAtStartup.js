@@ -1,10 +1,11 @@
 const urlParams = new URLSearchParams(window.location.search);
 ark = urlParams.get('ark');
+const folioParam = urlParams.get('f');
 
 if(ark) {
-    document.getElementById('search-784-input').value = base_url + ark;
-    
-    console.log('Chargement d\'une carte via l\'URL avec ARK:', ark);
+    document.getElementById('search-784-input').value = base_url + ark + (folioParam ? '/' + folioParam + '.item' : '');
+
+    console.log('Chargement d\'une carte via l\'URL avec ARK:', ark, 'feuille:', folioParam || 'f1');
     
     window.addEventListener('load', () => {
         setTimeout(() => {
