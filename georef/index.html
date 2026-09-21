@@ -284,6 +284,153 @@
     });
   }
 
+  function createBaseLayers() {
+    const OpenStreetMap_classique = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+      maxZoom: 21,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Tiles style by <a href="https://www.hotosm.org/" target="_blank">Humanitarian OpenStreetMap Team</a> hosted by <a href="https://openstreetmap.fr/" target="_blank">OpenStreetMap France</a>'
+    });
+
+    const OpenStreetMap_France = L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
+      maxZoom: 20,
+      attribution: '&copy; OpenStreetMap France | &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    });
+
+    const OpenStreetMap_HOT = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+      maxZoom: 21,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Tiles style by <a href="https://www.hotosm.org/" target="_blank">Humanitarian OpenStreetMap Team</a> hosted by <a href="https://openstreetmap.fr/" target="_blank">OpenStreetMap France</a>'
+    });
+
+    const OpenStreetMap_BLK = L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png', {
+      maxZoom: 21,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Tiles style by <a href="https://www.hotosm.org/" target="_blank">Map tiles by Carto, under CC BY 3.0. Data by OpenStreetMap, under ODbL.</a> hosted by <a href="https://openstreetmap.fr/" target="_blank">OpenStreetMap France</a>'
+    });
+
+    const OpenTopoMap = L.tileLayer('http://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+      maxZoom: 21,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Tiles style by <a href="https://opentopomap.org/" target="_blank">Map tiles by Carto, under CC BY 3.0. Data by OpenStreetMap, under ODbL.</a> hosted by <a href="https://openstreetmap.fr/" target="_blank">OpenStreetMap France</a>'
+    });
+
+    const IGN_Plan_actuel = L.tileLayer(
+      "https://data.geopf.fr/wmts?" +
+      "&REQUEST=GetTile&SERVICE=WMTS&VERSION=1.0.0" +
+      "&STYLE=normal" +
+      "&TILEMATRIXSET=PM" +
+      "&FORMAT=image/png" +
+      "&LAYER=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2" +
+      "&TILEMATRIX={z}" +
+      "&TILEROW={y}" +
+      "&TILECOL={x}",
+      {
+        attribution: "IGN-F/Geoportail",
+        minNativeZoom: 0,
+        maxNativeZoom: 19,
+        minZoom: 0,
+        maxZoom: 21,
+        tileSize: 256
+      }
+    );
+
+    const IGN_Ortho = L.tileLayer(
+      "https://data.geopf.fr/wmts?" +
+      "&REQUEST=GetTile&SERVICE=WMTS&VERSION=1.0.0" +
+      "&STYLE=normal" +
+      "&TILEMATRIXSET=PM" +
+      "&FORMAT=image/jpeg" +
+      "&LAYER=ORTHOIMAGERY.ORTHOPHOTOS" +
+      "&TILEMATRIX={z}" +
+      "&TILEROW={y}" +
+      "&TILECOL={x}",
+      {
+        attribution: "IGN-F/Geoportail",
+        minNativeZoom: 0,
+        maxNativeZoom: 19,
+        minZoom: 0,
+        maxZoom: 21,
+        tileSize: 256
+      }
+    );
+
+    const IGN_Scan1950_Histo = L.tileLayer(
+      "https://data.geopf.fr/wmts?" +
+      "&REQUEST=GetTile&SERVICE=WMTS&VERSION=1.0.0" +
+      "&STYLE=normal" +
+      "&TILEMATRIXSET=PM" +
+      "&FORMAT=image/jpeg" +
+      "&LAYER=GEOGRAPHICALGRIDSYSTEMS.MAPS.SCAN50.1950" +
+      "&TILEMATRIX={z}" +
+      "&TILEROW={y}" +
+      "&TILECOL={x}",
+      {
+        attribution: "IGN-F/Geoportail",
+        minNativeZoom: 3,
+        maxNativeZoom: 15,
+        minZoom: 0,
+        maxZoom: 21,
+        tileSize: 256
+      }
+    );
+
+    const IGN_EtatMajor40 = L.tileLayer(
+      "https://data.geopf.fr/wmts?" +
+      "&REQUEST=GetTile&SERVICE=WMTS&VERSION=1.0.0" +
+      "&STYLE=normal" +
+      "&TILEMATRIXSET=PM" +
+      "&FORMAT=image/jpeg" +
+      "&LAYER=GEOGRAPHICALGRIDSYSTEMS.ETATMAJOR40" +
+      "&TILEMATRIX={z}" +
+      "&TILEROW={y}" +
+      "&TILECOL={x}",
+      {
+        attribution: "IGN-F/Geoportail",
+        minNativeZoom: 6,
+        maxNativeZoom: 15,
+        minZoom: 0,
+        maxZoom: 21,
+        tileSize: 256
+      }
+    );
+
+    const Ehess_IGN_Cassini = L.tileLayer.wms('https://ws.sogefi-web.com/wms?', {
+      layers: 'Carte_Cassini',
+      maxZoom: 21,
+      attribution: 'EHESS/IGN/SOGEFI'
+    });
+
+    const CassiniBNFIGN = L.tileLayer(
+      "https://data.geopf.fr/wmts?" +
+      "&REQUEST=GetTile&SERVICE=WMTS&VERSION=1.0.0" +
+      "&STYLE=normal" +
+      "&TILEMATRIXSET=PM_6_14" +
+      "&FORMAT=image/png" +
+      "&LAYER=BNF-IGNF_GEOGRAPHICALGRIDSYSTEMS.CASSINI" +
+      "&TILEMATRIX={z}" +
+      "&TILEROW={y}" +
+      "&TILECOL={x}",
+      {
+        attribution: "BnF/IGN-F/Geoportail",
+        minNativeZoom: 0,
+        maxNativeZoom: 19,
+        minZoom: 0,
+        maxZoom: 21,
+        tileSize: 256
+      }
+    );
+
+    return {
+      "OSM Classique": OpenStreetMap_classique,
+      "OSM France": OpenStreetMap_France,
+      "Humanitarian": OpenStreetMap_HOT,
+      "Black": OpenStreetMap_BLK,
+      "OpenTopoMap": OpenTopoMap,
+      "Plan IGN": IGN_Plan_actuel,
+      "IGN Ortho": IGN_Ortho,
+      "IGN Scan50 Histo": IGN_Scan1950_Histo,
+      "IGN Etat-Major 40": IGN_EtatMajor40,
+      "Carte de Cassini": Ehess_IGN_Cassini,
+      "Carte de Cassini [BNF]": CassiniBNFIGN
+    };
+  }
+
   function initMap(json) {
     const bounds = json.bounds.split(",");
     const long = (parseFloat(bounds[0]) + parseFloat(bounds[2])) / 2;
@@ -295,11 +442,9 @@
     const tile_bounds = L.latLngBounds(corner1, corner2);
 
     let map = L.map('map').setView([lat, long], zoom);
-    
-    let osmLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-    }).addTo(map);
+
+    const baseLayers = createBaseLayers();
+    baseLayers['OSM Classique'].addTo(map);
 
     let galligeoLayer = L.tileLayer(URL_TILE_SERVER_SUB + '12148/' + ark + '/{z}/{x}/{y}.png', {
       minNativeZoom: parseInt(json.minzoom),
@@ -309,6 +454,13 @@
       bounds: tile_bounds,
       attribution: '&copy; Gallica / PTM - Galligeo'
     }).addTo(map);
+
+    const overlays = {
+      "Carte Galligeo": galligeoLayer
+    };
+
+    L.control.layers(baseLayers, overlays, { collapsed: true, position: 'topright' }).addTo(map);
+    map.zoomControl.setPosition('topright');
 
     showResultHeader(map);
 
