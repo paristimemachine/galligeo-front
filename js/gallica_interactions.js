@@ -137,7 +137,7 @@ async function load_ark_picture() {
         
         console.log(`📐 Dimensions scalées calculées: ${document.image_width_scaled} x ${document.image_height_scaled}`);
         
-        var string_url = window.GallicaIIIFAuth.buildImageUrl(input_ark, window.input_folio, { size: '3200,' });
+        var string_url = window.GallicaIIIFAuth.buildImageUrl(input_ark, window.input_folio, { size: `${document.image_width_scaled},` });
 
         console.log(string_url);
 
