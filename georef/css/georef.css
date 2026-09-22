@@ -1,0 +1,191 @@
+html, body, div {
+  margin: 0;
+  padding: 0;
+}
+
+/* Footer collé en bas, comme sur la page principale de l'application :
+   body en colonne flex, #map-viewport prend l'espace restant et le
+   footer garde sa hauteur naturelle en bas. */
+body {
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+#map-viewport {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+#map { position: absolute; top: 0; left: 0; right: 0; bottom: 0; }
+
+/* Le DSFR applique un soulignement animé à tout élément [href] via un double
+   background-image (dégradés), y compris les <a href="#"> des contrôles
+   Leaflet (zoom, sélecteur de couches), d'où les traits parasites et
+   l'icône du sélecteur de couches invisible. On neutralise ce système
+   pour tous les liens internes à la carte et on redonne à Leaflet ses
+   propres background-image / background-position / background-size. */
+#map .leaflet-bar a,
+#map .leaflet-control-layers-toggle {
+  background-color: #fff !important;
+  background-image: none !important;
+  box-sizing: border-box !important;
+  color: #000 !important;
+}
+#map .leaflet-bar a:hover,
+#map .leaflet-bar a:focus {
+  background-color: #f4f4f4 !important;
+}
+#map .leaflet-control-zoom-in,
+#map .leaflet-control-zoom-out {
+  font: bold 18px 'Lucida Console', Monaco, monospace !important;
+}
+#map .leaflet-control-layers-toggle {
+  width: 36px !important;
+  height: 36px !important;
+  line-height: 36px !important;
+  font-size: 18px !important;
+  text-align: center !important;
+}
+#map .leaflet-control-layers-toggle::before {
+  content: "\2630";
+}
+
+.opacity-control-title {
+  color: #161616;
+}
+
+#result-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2000;
+  display: none;
+  align-items: center;
+  gap: 1rem;
+  padding: .5rem 1rem;
+  background: #ffffff;
+  border-bottom: 1px solid var(--border-default-grey, #ddd);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+
+#result-header .header-logo {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+}
+#result-header .header-logo a {
+  /* Neutralise le soulignement animé DSFR (background-image sur tout [href])
+     qui produirait sinon un trait horizontal noir sous le logo. */
+  background-image: none !important;
+}
+#result-header .header-logo img {
+  height: 40px;
+  width: auto;
+  display: block;
+}
+
+#map-metadata {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+#map-metadata .title-row {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+#map-metadata a.map-title {
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.25rem;
+  color: var(--text-title-blue-france, #000091);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+#map-metadata a.gallica-link {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+}
+#map-metadata a.gallica-link img {
+  height: 1rem;
+  width: auto;
+  display: block;
+}
+#map-metadata p {
+  margin: 0;
+  color: var(--text-mention-grey, #666);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#map-metadata .tile-url-row {
+  display: flex;
+  align-items: center;
+  gap: .25rem;
+}
+#map-metadata .tile-url {
+  font-weight: 700;
+  color: var(--text-title-grey, #161616);
+  font-family: monospace;
+}
+
+#tile-url-copy-btn {
+  flex: 0 0 auto;
+  --icon-size: 1rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  min-height: 1.5rem;
+  padding: 0;
+  border-radius: 4px;
+}
+#tile-url-copy-btn::before {
+  margin-right: 0;
+}
+
+#result-header .header-home {
+  flex: 0 0 auto;
+}
+
+.footer {
+  position: relative;
+  width: 100%;
+  background-color: #f6f6f6;
+  border-top: 1px solid #ddd;
+  color: #666;
+  text-align: center;
+  padding: 0.75rem 0;
+  font-size: 0.875rem;
+  z-index: 1000;
+  flex: 0 0 auto;
+}
+
+.footer p {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.footer a {
+  color: #000091;
+  text-decoration: none;
+}
+
+.footer a:hover {
+  text-decoration: underline;
+}
+
+.heart-icon {
+  width: 16px;
+  height: 16px;
+  color: #e74c3c;
+  vertical-align: middle;
+}

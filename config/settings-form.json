@@ -26,6 +26,7 @@
       "placeholder": "Sélectionner une méthode",
       "required": false,
       "defaultValue": "bilinear",
+      "disabled": true,
       "options": [
         { "value": "nearest", "label": "Plus proche voisin", "description": "Rapide mais peut créer des effets de pixellisation", "available": true },
         { "value": "bilinear", "label": "Bilinéaire", "description": "Bon équilibre qualité/performance (recommandé)", "available": false },
@@ -43,26 +44,8 @@
       "defaultValue": "medium",
       "options": [
         { "value": "medium", "label": "Medium", "description": "Qualité standard, traitement plus rapide" },
-        { "value": "hd", "label": "Haute définition", "description": "Meilleure qualité, traitement plus lent" }
+        { "value": "hd", "label": "Haute définition", "description": "Meilleure qualité, traitement plus lent", "available": false }
       ]
-    },
-    {
-      "type": "checkbox",
-      "id": "checkbox-compression",
-      "name": "checkbox-compression",
-      "label": "Activer la compression des images",
-      "hint": "Réduire la taille des fichiers générés (recommandé pour l'archivage)",
-      "required": false,
-      "defaultValue": true
-    },
-    {
-      "type": "checkbox",
-      "id": "checkbox-transparent",
-      "name": "checkbox-transparent",
-      "label": "Rendre transparent le fond des cartes",
-      "hint": "Utilise la valeur 0 pour définir la transparence (utile pour les superpositions)",
-      "required": false,
-      "defaultValue": false
     },
     {
       "type": "checkbox",

@@ -633,8 +633,7 @@
         
         // Fonction pour générer l'URL de la vignette Gallica IIIF
         function generateGallicaThumbnail(arkId) {
-            return `https://openapi.bnf.fr/iiif/image/v3/ark:/12148/${arkId}/f1/full/,480/0/default.webp`;
-            // return `https://gallica.bnf.fr/ark:/12148/${arkId}.thumbnail`;
+            return window.GallicaIIIFAuth.buildThumbnailUrl(arkId);
         }
         
         // Fonction pour générer l'URL Gallica (fallback si pas dans manifest)
@@ -742,7 +741,7 @@
                 // Rate limiting
                 await gallicaRateLimiter.throttle();
                 
-                const manifestUrl = `https://openapi.bnf.fr/iiif/presentation/v3/ark:/12148/${arkId}/manifest.json`;
+                const manifestUrl = window.GallicaIIIFAuth.buildManifestUrl(arkId);
 
                 const response = await window.GallicaIIIFAuth.fetch(manifestUrl);
                 

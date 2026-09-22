@@ -45,7 +45,7 @@ class GallicaMetadataStorage {
         try {
             await this.rateLimiter.throttle();
             
-            const manifestUrl = `https://openapi.bnf.fr/iiif/presentation/v3/ark:/12148/${arkId}/manifest.json`;
+            const manifestUrl = window.GallicaIIIFAuth.buildManifestUrl(arkId);
             const response = await window.GallicaIIIFAuth.fetch(manifestUrl);
             
             if (!response.ok) {
@@ -138,7 +138,7 @@ class GallicaMetadataStorage {
                       '';
             
             // URL vignette
-            const thumbnailUrl = `https://openapi.bnf.fr/iiif/image/v3/ark:/12148/${arkId}/f1/full/,480/0/default.webp`;
+            const thumbnailUrl = window.GallicaIIIFAuth.buildThumbnailUrl(arkId);
             
             return {
                 title: title,
@@ -330,7 +330,7 @@ class GallicaMetadataStorage {
      * Génère l'URL de vignette par défaut
      */
     getDefaultThumbnail(arkId) {
-        return `https://openapi.bnf.fr/iiif/image/v3/ark:/12148/${arkId}/f1/full/,480/0/default.webp`;
+        return window.GallicaIIIFAuth.buildThumbnailUrl(arkId);
     }
     
     /**

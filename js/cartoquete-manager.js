@@ -70,7 +70,7 @@ class CartoqueteManager {
      */
     async getGallicaMetadata(arkId) {
         try {
-            const manifestUrl = `https://openapi.bnf.fr/iiif/presentation/v3/ark:/12148/${arkId}/manifest.json`;
+            const manifestUrl = window.GallicaIIIFAuth.buildManifestUrl(arkId);
             // console.log(`Chargement des métadonnées pour ${arkId}`);
             
             const response = await window.GallicaIIIFAuth.fetch(manifestUrl);
@@ -174,8 +174,7 @@ class CartoqueteManager {
      * Génère l'URL de la vignette pour un ARK
      */
     generateThumbnailUrl(arkId) {
-        // Utiliser l'API IIIF v3 pour générer une vignette de 480px de hauteur en format webp
-        return `https://openapi.bnf.fr/iiif/image/v3/ark:/12148/${arkId}/f1/full/,480/0/default.webp`;
+        return window.GallicaIIIFAuth.buildThumbnailUrl(arkId);
     }
 
     /**

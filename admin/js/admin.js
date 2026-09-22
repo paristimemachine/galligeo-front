@@ -18,7 +18,6 @@
 
 const ADMIN_ORCID        = '0000-0001-9186-0492';
 const API_BASE           = 'https://api.ptm.huma-num.fr/auth';
-const GALLICA_THUMB_BASE = 'https://openapi.bnf.fr/iiif/image/v3/ark:/12148';
 
 // ─── ÉTAT GLOBAL ────────────────────────────────────────────────────────────
 
@@ -331,7 +330,7 @@ function renderMapsTable(maps) {
 
   tbody.innerHTML = maps.map(map => {
     const ark       = map.ark || '—';
-    const thumb     = `${GALLICA_THUMB_BASE}/${encodeURIComponent(ark)}/f1/full/,80/0/default.webp`;
+    const thumb     = window.GallicaIIIFAuth.buildThumbnailUrl(ark, 1, 80);
     const title     = escapeHtml(map.gallicaTitle || ark);
     const status    = map.status || 'unknown';
     const statusBadge = renderStatusBadge(status);
@@ -588,7 +587,7 @@ async function autocompleteMetadataFromBnF() {
   feedback.style.display = 'none';
 
   try {
-    const url = `https://openapi.bnf.fr/iiif/presentation/v3/ark:/12148/${encodeURIComponent(ark)}/manifest.json`;
+    const url = window.GallicaIIIFAuth.buildManifestUrl(ark);
     const response = await window.GallicaIIIFAuth.fetch(url);
     if (!response.ok) throw new Error(`Erreur HTTP ${response.status}`);
 

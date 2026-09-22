@@ -49,6 +49,10 @@ class FormGenerator {
         select.id = field.id;
         select.name = field.name;
 
+        if (field.disabled) {
+            select.disabled = true;
+        }
+
         // Option par défaut
         if (field.placeholder) {
             const defaultOption = document.createElement('option');

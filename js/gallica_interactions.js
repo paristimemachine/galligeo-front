@@ -137,7 +137,7 @@ async function load_ark_picture() {
         
         console.log(`📐 Dimensions scalées calculées: ${document.image_width_scaled} x ${document.image_height_scaled}`);
         
-        var string_url = 'https://openapi.bnf.fr/iiif/image/v3/ark:/12148/'+input_ark+'/'+window.input_folio+'/full/3200,/0/default.webp';
+        var string_url = window.GallicaIIIFAuth.buildImageUrl(input_ark, window.input_folio, { size: '3200,' });
 
         console.log(string_url);
 
@@ -208,7 +208,7 @@ async function load_ark_picture() {
  */
 async function load_image_dimensions_from_iiif_image_api(input_ark) {
     const folio = window.input_folio || 'f1';
-    const infoUrl = `https://openapi.bnf.fr/iiif/image/v3/ark:/12148/${input_ark}/${folio}/info.json`;
+    const infoUrl = window.GallicaIIIFAuth.buildImageInfoUrl(input_ark, folio);
     
     console.log('🔍 Tentative de récupération des dimensions depuis l\'API Image IIIF:', infoUrl);
     
@@ -237,7 +237,7 @@ async function load_image_dimensions_from_iiif_image_api(input_ark) {
 
 async function load_oai_metada(input_ark) {
         
-        var string_url = 'https://openapi.bnf.fr/iiif/presentation/v3/ark:/12148/'+ input_ark +'/manifest.json'
+        var string_url = window.GallicaIIIFAuth.buildManifestUrl(input_ark);
 
         // var input = document.querySelector('#ark_url').value;
         // input_ark = input.substr(input.lastIndexOf("/")+1);

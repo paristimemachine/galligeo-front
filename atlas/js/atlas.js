@@ -207,7 +207,7 @@ async function loadAtlasData(urlSlug) {
 async function fetchBnFMetadata(arkId) {
     const result = { title: null, date: null };
     try {
-        const url = `https://openapi.bnf.fr/iiif/presentation/v3/ark:/12148/${arkId}/manifest.json`;
+        const url = window.GallicaIIIFAuth.buildManifestUrl(arkId);
         const response = await window.GallicaIIIFAuth.fetch(url);
         if (!response.ok) return result;
 
