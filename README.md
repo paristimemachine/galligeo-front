@@ -4,6 +4,9 @@
 
 Galligeo est une application web développée par [Projets Time Machine](https://ptm.huma-num.fr/) qui permet de géoréférencer des cartes historiques issues de la bibliothèque numérique Gallica (BnF). L'outil offre une interface intuitive pour créer des points de contrôle et transformer des cartes anciennes en couches géographiques modernes utilisables dans des systèmes d'information géographique.
 
+- **Galligeo** : [https://app.ptm.huma-num.fr/galligeo/](https://app.ptm.huma-num.fr/galligeo/)
+- **Documentation Galligeo** : [https://doc.ptm.huma-num.fr/galligeo/](https://doc.ptm.huma-num.fr/galligeo/)
+
 ## 🎯 Contexte et objectifs
 
 ### Projets Time Machine
@@ -228,11 +231,12 @@ Ce projet est sous licence [MIT](LICENSE).
 Nous remercions le BnF DataLab pour son soutien financier et son accompagnement technique en appui au projet
 « nom du projet » lauréat de l’appel à projet 2025-2026.
 
-## 📞 Contact
+## 📞 Ressources
 
-- **Site web** : [https://ptm.huma-num.fr/](https://ptm.huma-num.fr/)
 - **Galligeo** : [https://app.ptm.huma-num.fr/galligeo/](https://app.ptm.huma-num.fr/galligeo/)
+- **Documentation Galligeo** : [https://doc.ptm.huma-num.fr/galligeo/](https://doc.ptm.huma-num.fr/galligeo/)
 - **Issues** : [GitHub Issues](https://github.com/paristimemachine/galligeo-front/issues)
+- **Site web PTM** : [https://ptm.huma-num.fr/](https://ptm.huma-num.fr/)
 
 ---
 
