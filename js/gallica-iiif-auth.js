@@ -34,6 +34,9 @@
     const PROACTIVE_REFRESH_MARGIN_MS = 60 * 1000;
     // Nombre de chargements d'images simultanés (évite de saturer l'API BnF)
     const IMAGE_CONCURRENCY = 6;
+    // Délai avant de retenter une requête ayant échoué en erreur réseau/CORS
+    // (cf. commentaire sur `fetch()` ci-dessous)
+    const NETWORK_RETRY_DELAY_MS = 800;
 
     class GallicaIIIFAuth {
         constructor() {
@@ -141,6 +144,16 @@
         /**
          * Équivalent authentifié de `fetch()` pour les URL de l'API BnF.
          * Retente une fois avec un jeton renouvelé si la réponse est 401.
+         *
+         * NB : l'API BnF passe-plat ne renvoie pas toujours l'en-tête CORS
+         * Access-Control-Allow-Origin sur ses réponses d'erreur (401/400...),
+         * probablement lorsqu'elle-même reçoit ponctuellement un refus de
+         * l'upstream BnF (jeton interne à l'API en cours de renouvellement côté
+         * serveur). Dans ce cas le navigateur bloque la réponse en CORS et
+         * `fetch()` lève une erreur générique, sans code HTTP exploitable ici :
+         * impossible de détecter le 401 pour appliquer le retry ci-dessus. On
+         * retente donc une fois après un court délai sur toute erreur réseau,
+         * ces échecs étant le plus souvent transitoires côté API.
          */
         async fetch(url, options = {}, _isRetry = false) {
             const token = await this.getToken();
@@ -148,7 +161,16 @@
             const headers = new Headers(options.headers || {});
             headers.set('Authorization', `Bearer ${token}`);
 
-            const response = await fetch(url, Object.assign({}, options, { headers }));
+            let response;
+            try {
+                response = await fetch(url, Object.assign({}, options, { headers }));
+            } catch (networkError) {
+                if (_isRetry) {
+                    throw networkError;
+                }
+                await new Promise((resolve) => setTimeout(resolve, NETWORK_RETRY_DELAY_MS));
+                return this.fetch(url, options, true);
+            }
 
             if (response.status === 401 && !_isRetry) {
                 await this.getToken(true);

@@ -11,11 +11,12 @@
       "required": false,
       "defaultValue": "polynomial2",
       "options": [
+        { "value": "best", "label": "Meilleur (automatique)", "description": "Laisse l'API choisir automatiquement le modèle le plus adapté aux points de contrôle disponibles (meilleure erreur leave-one-out)", "available": true },
         { "value": "polynomial2", "label": "Polynomial (ordre 2)", "description": "Transformation polynomiale quadratique, 12 paramètres (recommandé pour la plupart des cas, minimum 6 points de contrôle)", "available": true },
         { "value": "polynomial3", "label": "Polynomial (ordre 3)", "description": "Transformation polynomiale cubique, 20 paramètres (déformations plus complexes, minimum 10 points de contrôle bien répartis)", "available": true },
         { "value": "helmert", "label": "Helmert", "description": "Transformation de Helmert (rotation, translation, échelle, minimum 2 points de contrôle)", "available": true },
-        { "value": "affine", "label": "Affine", "description": "Transformation affine (rotation, translation, échelle, cisaillement, minimum 3 points de contrôle)", "available": false },
-        { "value": "tps", "label": "Thin Plate Spline", "description": "Spline de plaque mince (pour les déformations complexes, minimum 3 points de contrôle)", "available": false }
+        { "value": "affine", "label": "Affine", "description": "Transformation affine (rotation, translation, échelle, cisaillement, minimum 3 points de contrôle)", "available": true },
+        { "value": "tps", "label": "Thin Plate Spline", "description": "Spline de plaque mince (pour les déformations complexes, minimum 3 points de contrôle)", "available": true }
       ]
     },
     {

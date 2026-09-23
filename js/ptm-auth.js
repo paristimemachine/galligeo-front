@@ -63,12 +63,6 @@ class PTMAuthFixed {
             return this.token;
         }
 
-        console.log('🔍 Recherche token dans URL:', {
-            href: window.location.href,
-            hash: window.location.hash,
-            search: window.location.search
-        });
-
         const hash = window.location.hash;
         if (hash.includes('token=')) {
             const cleanHash = hash.replace(/^#+/, '#');
@@ -100,7 +94,11 @@ class PTMAuthFixed {
             return this.token;
         }
 
-        console.log('ℹ️ Aucun token trouvé');
+        // Ne logger qu'une fois : getToken() est appelé très souvent via isAuthenticated()
+        if (!this._noTokenLogged) {
+            console.log('ℹ️ Aucun token trouvé');
+            this._noTokenLogged = true;
+        }
         return null;
     }
 

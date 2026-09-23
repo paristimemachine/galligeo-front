@@ -167,13 +167,16 @@ function click_georef(image, points, polygon, input_ark) {
         }
     }
 
+   const georefTransformation = (typeof getDefaultAlgorithm === 'function') ? getDefaultAlgorithm() : 'best';
+
    georef_api_post(urlToAPI, {
      "gallica_ark_url": urlToRessource,
      "folio": folio,
      "image_width": imageWidth,
      "image_height": imageHeight,
      "gcp_pairs": points,
-     "clipping_polygon": polygon
+     "clipping_polygon": polygon,
+     "transformation": georefTransformation
    }).then((data) => {
      console.log(data);
    }).catch((error) => {
@@ -226,6 +229,42 @@ function copyTileUrl() {
     console.error('Erreur lors de la copie du lien des tuiles:', error);
     alert(url);
   });
+}
+
+// Depuis la migration de l'API de géoréférencement (2026-09), POST /georef/
+// n'attend plus la fin du job : il répond 200 immédiatement avec job_id/status/
+// status_url, et les tuiles ne sont réellement disponibles qu'une fois le job
+// passé à "done" (sinon 404 transitoires sur le serveur de tuiles). On
+// interroge donc status_url jusqu'à la fin avant de considérer le
+// géoréférencement comme terminé.
+const GEOREF_POLL_INTERVAL_MS = 2000;
+const GEOREF_POLL_TIMEOUT_MS = 300000; // aligné sur le timeout du POST initial (5 min)
+
+async function pollGeorefJob(statusUrl) {
+  const startedAt = Date.now();
+
+  while (true) {
+    const response = await fetch(statusUrl, { mode: "cors", cache: "no-cache" });
+    if (!response.ok) {
+      throw new Error(`Erreur lors du suivi du géoréférencement: HTTP ${response.status}`);
+    }
+
+    const job = await response.json();
+    console.log('📡 Statut du job de géoréférencement:', job);
+
+    if (job.status === 'done') {
+      return job;
+    }
+    if (job.status === 'failed') {
+      throw new Error(job.error || "Le géoréférencement a échoué côté serveur.");
+    }
+
+    if (Date.now() - startedAt > GEOREF_POLL_TIMEOUT_MS) {
+      throw new Error('Timeout: Le géoréférencement prend trop de temps (>5min)');
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, GEOREF_POLL_INTERVAL_MS));
+  }
 }
 
 async function georef_api_post(url = urlToAPI, data = {}) {
@@ -290,6 +329,19 @@ async function georef_api_post(url = urlToAPI, data = {}) {
     clearTimeout(timeoutId);
 
     if (response.ok) {
+      const acceptedJob = await response.json();
+      console.log('📡 Job de géoréférencement accepté:', acceptedJob);
+
+      if (acceptedJob.status !== 'done') {
+        // Job traité en tâche de fond côté serveur : le bouton reste en état
+        // "chargement" (déjà activé par click_georef) tant que le job n'est
+        // pas terminé, pour ne pas laisser l'utilisateur croire que c'est fini
+        // et éviter de charger des tuiles qui n'existent pas encore.
+        setGeoreferencingButtonState('loading', 'Génération des tuiles...');
+        const statusUrl = new URL(acceptedJob.status_url || `${acceptedJob.job_id}`, url).toString();
+        await pollGeorefJob(statusUrl);
+      }
+
       document.getElementById('btn_display').disabled = false;
       right_map.fire('dataload');
       console.log("Carte géoréférencée !");
@@ -395,7 +447,7 @@ async function georef_api_post(url = urlToAPI, data = {}) {
     document.getElementById('etape-suite').textContent = "Déposer le résultat sur Nakala";
     document.getElementById('steps').setAttribute('data-fr-current-step', '3');
 
-    return response.json();
+    return acceptedJob;
   } else {
     setGeoreferencingButtonState('normal');
     right_map.fire('dataload');

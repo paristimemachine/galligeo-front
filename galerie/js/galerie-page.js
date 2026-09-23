@@ -884,7 +884,10 @@
                 metadata = await fetchGallicaMetadata(mapData.ark);
             }
             
-            const thumbnailUrl = mapData.gallica_thumbnail_url || generateGallicaThumbnail(mapData.ark);
+            // Toujours régénérée (jamais l'URL stockée en base) : l'URL de vignette
+            // dépend de l'API BnF/proxy en place, qui peut changer indépendamment
+            // des métadonnées sauvegardées.
+            const thumbnailUrl = generateGallicaThumbnail(mapData.ark);
             const gallicaUrl = metadata.gallicaUrl || generateGallicaUrl(mapData.ark);
             const georefUrl = generateGeoreferenceUrl(mapData.ark);
             
@@ -1064,7 +1067,7 @@
                                 gallica_title: metadata.title,
                                 gallica_producer: metadata.attribution,
                                 gallica_date: metadata.date,
-                                gallica_thumbnail_url: mapData.gallica_thumbnail_url || generateGallicaThumbnail(mapData.ark),
+                                gallica_thumbnail_url: generateGallicaThumbnail(mapData.ark),
                                 metadata_fetched_at: new Date().toISOString()
                             });
                         }

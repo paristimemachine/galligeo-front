@@ -187,8 +187,18 @@ document.addEventListener('userLoggedIn', async () => {
     await window.anonymousUserManager.migrateAnonymousData();
 });
 
+// Plutôt qu'un polling toutes les 5 s (qui sollicitait isAuthenticated() en
+// boucle), on met à jour les tooltips au chargement puis uniquement lorsque
+// l'état des boutons concernés change.
 document.addEventListener('DOMContentLoaded', () => {
-    setInterval(() => {
-        window.anonymousUserManager.updateUIForAnonymousUser();
-    }, 5000);
+    const manager = window.anonymousUserManager;
+    manager.updateUIForAnonymousUser();
+
+    const observer = new MutationObserver(() => manager.updateUIForAnonymousUser());
+    ['btn_georef', 'btn_deposit'].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) {
+            observer.observe(el, { attributes: true, attributeFilter: ['disabled', 'title'] });
+        }
+    });
 });

@@ -39,18 +39,12 @@ function setSearchInputLoading(isLoading) {
 async function load_ark_picture() {
         console.log("load ark picture");
 
-        var map = left_map;
-
-        map.fire('dataloading');
-
         var input = document.querySelector('#search-784-input').value;
 
         if (input == '' | input == null) {
             document.querySelector('#search-784-input').value = '!!!! Entrer une url Ark Gallica !!!!';
             return;
         }
-
-        setSearchInputLoading(true);
 
         // Parse une URL Gallica du type :
         // https://gallica.bnf.fr/ark:/12148/btv1b550111195
@@ -60,9 +54,27 @@ async function load_ark_picture() {
 
         if (!parsed) {
             document.querySelector('#search-784-input').value = '!!!! URL Ark Gallica invalide !!!!';
-            setSearchInputLoading(false);
             return;
         }
+
+        // Que l'URL vienne d'une saisie manuelle ou d'un lien Cartoquête (paramètre
+        // ?ark=...), on vérifie ici si cette feuille a déjà été géoréférencée, pour
+        // éviter à l'utilisateur de dupliquer un travail déjà fait sans le savoir.
+        if (window.GallicaDuplicateCheck) {
+            const choice = await window.GallicaDuplicateCheck.checkAndPrompt(parsed.arkId, parsed.folioNum);
+            if (choice === 'cancel') {
+                return;
+            }
+        }
+
+        await startArkPictureLoad(parsed);
+}
+
+async function startArkPictureLoad(parsed) {
+        var map = left_map;
+
+        map.fire('dataloading');
+        setSearchInputLoading(true);
 
         input_ark = parsed.arkId;
         window.input_ark = input_ark;

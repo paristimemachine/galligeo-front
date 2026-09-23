@@ -17,7 +17,7 @@ const SETTINGS_KEYS = {
 
 /**
  * Récupère l'algorithme de géoréférencement par défaut
- * @returns {string} L'algorithme sélectionné ('polynomial2', 'polynomial3', 'helmert', 'affine', 'tps')
+ * @returns {string} L'algorithme sélectionné ('best', 'polynomial2', 'polynomial3', 'helmert', 'affine', 'tps')
  */
 function getDefaultAlgorithm() {
     return getAppSetting(SETTINGS_KEYS.ALGORITHM, 'polynomial2');
@@ -147,7 +147,7 @@ function validateSettings() {
     const settings = getAllSettings();
     
     // Vérifier l'algorithme
-    const validAlgorithms = ['polynomial2', 'polynomial3', 'helmert', 'affine', 'tps'];
+    const validAlgorithms = ['best', 'polynomial2', 'polynomial3', 'helmert', 'affine', 'tps'];
     if (!validAlgorithms.includes(settings.algorithm)) {
         errors.push(`Algorithme invalide: ${settings.algorithm}`);
     }

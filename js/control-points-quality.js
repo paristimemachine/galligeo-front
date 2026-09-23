@@ -2,15 +2,17 @@
  * Indicateur de qualité des points de contrôle (colonne "Q").
  *
  * Après chaque changement de la table des points de contrôle, on envoie la liste
- * des paires complètes à l'API de contrôle qualité (service dédié, indépendant du
- * géoréférencement réel) qui renvoie, pour chaque point, une estimation d'erreur
- * en mètres et un tracé GeoJSON prêt à poser sur la carte.
+ * des paires complètes à l'API de contrôle qualité, qui renvoie, pour chaque
+ * point, une estimation d'erreur en mètres et un tracé GeoJSON prêt à poser sur
+ * la carte.
  *
- * Doc API : https://api.ptm.huma-num.fr/galligeo-quality/docs
+ * L'ancien service dédié `galligeo-quality` n'est plus en service : ses endpoints
+ * sont désormais exposés directement sous l'API principale, sous /quality/.
+ * Doc API : https://api.ptm.huma-num.fr/galligeo/docs
  * Contrat détaillé : voir doc/CONTROL_POINTS_QUALITY_API.md
  */
 (function () {
-  const QUALITY_API_BASE = 'https://api.ptm.huma-num.fr/galligeo-quality/';
+  const QUALITY_API_BASE = 'https://api.ptm.huma-num.fr/galligeo/';
   const QUALITY_SUMMARY_URL = QUALITY_API_BASE + 'quality/summary';
 
   // Nombre minimal de paires complètes avant d'envoyer une requête (imposé par
@@ -30,18 +32,21 @@
   const SEVERITY_LABEL_FR = { ok: 'Bonne', watch: 'À surveiller', high: 'Mauvaise', unusable: 'Inutilisable' };
 
   // Les valeurs de select-algo (réglages utilisateur, voir settings-utils.js)
-  // correspondent directement aux noms de modèle attendus par l'API qualité
-  // (helmert, affine, polynomial2, polynomial3, tps).
+  // correspondent directement aux noms de modèle attendus par l'API
+  // (helmert, affine, polynomial2, polynomial3, tps), à l'exception de
+  // "best" qui n'est pas un nom de modèle : il indique qu'on laisse l'API
+  // choisir automatiquement (voir apiTransformation ci-dessous).
 
   // Nombre minimal de paires exigé par l'API pour chaque modèle (voir
-  // GET /galligeo-quality/transformations). En dessous, la requête échoue en
+  // GET /galligeo/transformations). En dessous, la requête échoue en
   // 422 si on force ce modèle : mieux vaut alors laisser l'API choisir seule.
   const API_TRANSFORMATION_MIN_GCPS = {
     helmert: 2,
     affine: 3,
     polynomial2: 6,
     polynomial3: 10,
-    tps: 3
+    tps: 3,
+    best: MIN_POINTS_FOR_QUALITY_CHECK
   };
 
   let debounceTimer = null;
@@ -171,10 +176,11 @@
     refreshQualityCells();
 
     const selectedAlgorithm = typeof getDefaultAlgorithm === 'function' ? getDefaultAlgorithm() : 'polynomial2';
-    // Pas assez de points pour ce modèle précis (ex. polynomial2 exige 6 GCP) :
-    // on n'envoie pas `transformation`, l'API retombe alors sur son choix
-    // automatique plutôt que de renvoyer une erreur 422.
-    const apiTransformation = (selectedAlgorithm && completePairs.length >= (API_TRANSFORMATION_MIN_GCPS[selectedAlgorithm] || 0))
+    // "best" (ou pas assez de points pour le modèle précis choisi, ex.
+    // polynomial2 exige 6 GCP) : on n'envoie pas `transformation`, l'API
+    // retombe alors sur son choix automatique plutôt que de renvoyer une
+    // erreur 422.
+    const apiTransformation = (selectedAlgorithm && selectedAlgorithm !== 'best' && completePairs.length >= (API_TRANSFORMATION_MIN_GCPS[selectedAlgorithm] || 0))
       ? selectedAlgorithm
       : null;
 
@@ -373,6 +379,7 @@
   }
 
   const QUICK_ALGO_LABELS = {
+    best: 'Meilleur (auto)',
     polynomial2: 'Polynomial 2',
     polynomial3: 'Polynomial 3',
     helmert: 'Helmert',
@@ -418,9 +425,10 @@
 
     // Un modèle n'est proposable que si le nombre de paires complètes
     // actuel atteint son minimum de GCP (voir API_TRANSFORMATION_MIN_GCPS /
-    // GET /galligeo-quality/transformations) ET qu'il n'est pas marqué
-    // data-unavailable (affine/tps : pas encore prêts côté backend qualité,
-    // indépendamment du nombre de points).
+    // GET /galligeo/transformations) ET qu'il n'est pas marqué
+    // data-unavailable (mécanisme conservé pour un futur modèle pas encore
+    // prêt côté backend ; toutes les transformations actuelles, dont
+    // affine/tps, sont désormais fonctionnelles).
     function updateItemsAvailability() {
       const completeCount = (window.pointPairs || []).filter(pair => pair.isComplete()).length;
       items.forEach(item => {

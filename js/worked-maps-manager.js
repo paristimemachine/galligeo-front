@@ -62,7 +62,10 @@ class WorkedMapsManager {
                     'Créateur': cachedData.gallica_producer || '',
                     'Date':     cachedData.gallica_date     || ''
                 },
-                thumbnailUrl: cachedData.gallica_thumbnail_url || this.generateThumbnailUrl(arkId),
+                // Toujours régénérée (jamais l'URL stockée en base) : l'URL de vignette
+                // dépend de l'API BnF/proxy en place, qui peut changer indépendamment
+                // des métadonnées (titre/date/producteur), elles bien plus stables.
+                thumbnailUrl: this.generateThumbnailUrl(arkId),
                 gallicaUrl: `https://gallica.bnf.fr/ark:/12148/${arkId}`
             };
         }

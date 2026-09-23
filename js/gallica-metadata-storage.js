@@ -289,7 +289,10 @@ class GallicaMetadataStorage {
                 gallica_title: mapData.gallica_title,
                 gallica_producer: mapData.gallica_producer || 'Bibliothèque nationale de France',
                 gallica_date: mapData.gallica_date || '',
-                gallica_thumbnail_url: mapData.gallica_thumbnail_url || this.getDefaultThumbnail(arkId),
+                // Toujours régénérée (jamais l'URL stockée en base, cf. getDefaultThumbnail) :
+                // l'URL de vignette dépend de l'API BnF/proxy en place, qui peut changer
+                // indépendamment des métadonnées (titre/date/producteur) sauvegardées.
+                gallica_thumbnail_url: this.getDefaultThumbnail(arkId),
                 source: 'database'
             };
             this.cache.set(arkId, metadata);

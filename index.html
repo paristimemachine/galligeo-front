@@ -264,11 +264,12 @@
                             title="Algorithme utilisé pour le contrôle qualité des points (colonne Q). N'affecte pas le géoréférencement, déclenché uniquement par le bouton Géoréférencer.">
                     </button>
                     <ul class="quick-algo-dropdown__menu" id="quick-algo-menu" role="menu" hidden>
+                        <li role="none"><button type="button" class="quick-algo-dropdown__item" role="menuitemradio" data-algo="best" data-min-gcps="3">Meilleur (auto) <span class="quick-algo-dropdown__hint"></span></button></li>
                         <li role="none"><button type="button" class="quick-algo-dropdown__item" role="menuitemradio" data-algo="polynomial2" data-min-gcps="6">Polynomial (ordre 2) <span class="quick-algo-dropdown__hint"></span></button></li>
                         <li role="none"><button type="button" class="quick-algo-dropdown__item" role="menuitemradio" data-algo="polynomial3" data-min-gcps="10">Polynomial (ordre 3) <span class="quick-algo-dropdown__hint"></span></button></li>
                         <li role="none"><button type="button" class="quick-algo-dropdown__item" role="menuitemradio" data-algo="helmert" data-min-gcps="2">Helmert <span class="quick-algo-dropdown__hint"></span></button></li>
-                        <li role="none"><button type="button" class="quick-algo-dropdown__item" role="menuitemradio" data-algo="affine" data-min-gcps="3" data-unavailable="true" title="Bientôt disponible">Affine <span class="quick-algo-dropdown__soon">(bientôt disponible)</span></button></li>
-                        <li role="none"><button type="button" class="quick-algo-dropdown__item" role="menuitemradio" data-algo="tps" data-min-gcps="3" data-unavailable="true" title="Bientôt disponible">Thin Plate Spline <span class="quick-algo-dropdown__soon">(bientôt disponible)</span></button></li>
+                        <li role="none"><button type="button" class="quick-algo-dropdown__item" role="menuitemradio" data-algo="affine" data-min-gcps="3">Affine <span class="quick-algo-dropdown__hint"></span></button></li>
+                        <li role="none"><button type="button" class="quick-algo-dropdown__item" role="menuitemradio" data-algo="tps" data-min-gcps="3">Thin Plate Spline <span class="quick-algo-dropdown__hint"></span></button></li>
                     </ul>
                 </div>
 
@@ -1122,6 +1123,45 @@ function openExternalLink(url) {
     <!-- END Modal détail qualité -->
     <!--  -->
 
+    <!--  -->
+    <!-- Modal carte déjà géoréférencée -->
+    <!--  -->
+    <dialog class="fr-modal" id="fr-modal-ark-duplicate" aria-labelledby="fr-modal-ark-duplicate-title">
+        <div class="fr-container fr-container--fluid fr-container-md">
+            <div class="fr-grid-row fr-grid-row--center">
+                <div class="fr-col-12 fr-col-md-8 fr-col-lg-6">
+                    <div class="fr-modal__body">
+                        <div class="fr-modal__header">
+                            <button type="button" class="fr-link--close fr-link" id="btn-ark-duplicate-cancel">Fermer</button>
+                        </div>
+                        <div class="fr-modal__content">
+                            <h1 id="fr-modal-ark-duplicate-title" class="fr-modal__title">
+                                <span class="fr-icon-information-line fr-icon--lg" aria-hidden="true"></span>
+                                Carte déjà géoréférencée
+                            </h1>
+                            <div id="fr-modal-ark-duplicate-body">
+                                <!-- Contenu généré dynamiquement par gallica-duplicate-check.js -->
+                            </div>
+                        </div>
+                        <div class="fr-modal__footer">
+                            <ul class="fr-btns-group fr-btns-group--right fr-btns-group--inline-reverse fr-btns-group--inline-lg">
+                                <li>
+                                    <button type="button" class="fr-btn" id="btn-ark-duplicate-consult">Consulter le résultat</button>
+                                </li>
+                                <li>
+                                    <button type="button" class="fr-btn fr-btn--secondary" id="btn-ark-duplicate-proceed">Proposer une nouvelle version</button>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </dialog>
+    <!--  -->
+    <!-- END Modal carte déjà géoréférencée -->
+    <!--  -->
+
     <!-- Script en version es6 module et nomodule pour les navigateurs le ne supportant pas -->
     <script type="module" src="node_modules/@gouvfr/dsfr/dist/dsfr.module.min.js"></script>
     <script type="text/javascript" nomodule src="node_modules/@gouvfr/dsfr/dist/dsfr.nomodule.min.js"></script>
@@ -1130,15 +1170,16 @@ function openExternalLink(url) {
     <script src="js/version.js"></script>
     <script src="js/clonelayers.js"></script>
     <script src="js/init.js?v=20260917"></script>
-    <script src="js/control-points-quality.js?v=20260921c"></script>
+    <script src="js/control-points-quality.js?v=20260923a"></script>
     <!-- <script src="js/simple-layout.js"></script> -->
     <script src="js/advanced-input-system.js"></script>
     <script src="js/map_interactions.js"></script>
     <script src="js/view-sync.js"></script>
-    <script src="js/front_interactions.js?v=20260917"></script>
+    <script src="js/front_interactions.js?v=20260923b"></script>
     <script src="js/api_interactions.js"></script>
     <script src="js/gallica-iiif-auth.js"></script>
-    <script src="js/gallica_interactions.js?v=20260917"></script>
+    <script src="js/gallica-duplicate-check.js"></script>
+    <script src="js/gallica_interactions.js?v=20260923"></script>
     <script src="js/getParamAtStartup.js?v=20260917"></script>
     <!-- Système d'authentification PTM (avec support JWT anonyme) -->
     <script src="js/ptm-auth.js"></script>
